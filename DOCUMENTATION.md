@@ -20,18 +20,20 @@
 10. [Merchant System](#10-merchant-system)
 11. [Fame, Titles & Infamy](#11-fame-titles--infamy)
 12. [Local/Global Reputation & Rumor System](#12-localglobal-reputation--rumor-system)
-13. [Creating Items](#13-creating-items)
-14. [Inventory System](#14-inventory-system)
-15. [Loot Tables](#15-loot-tables)
-16. [Effects & Status System](#16-effects--status-system)
-17. [Substance System](#17-substance-system)
-18. [Encounter System](#18-encounter-system)
-19. [Paperdoll System](#19-paperdoll-system)
-20. [Player State Schema](#20-player-state-schema)
-21. [Condition Reference](#21-condition-reference)
-22. [Effect Actions Reference](#22-effect-actions-reference)
-23. [Adding New Content](#23-adding-new-content)
-24. [Performance & Optimization](#24-performance--optimization)
+13. [Location Services (Church, Clinic, Nursery)](#13-location-services-church-clinic-nursery)
+14. [Public Events, Discovery & Barring System](#14-public-events-discovery--barring-system)
+15. [Creating Items](#15-creating-items)
+16. [Inventory System](#16-inventory-system)
+17. [Loot Tables](#17-loot-tables)
+18. [Effects & Status System](#18-effects--status-system)
+19. [Substance System](#19-substance-system)
+20. [Encounter System](#20-encounter-system)
+21. [Paperdoll System](#21-paperdoll-system)
+22. [Player State Schema](#22-player-state-schema)
+23. [Condition Reference](#23-condition-reference)
+24. [Effect Actions Reference](#24-effect-actions-reference)
+25. [Adding New Content](#25-adding-new-content)
+26. [Performance & Optimization](#26-performance--optimization)
 
 ---
 
@@ -1347,7 +1349,444 @@ config: {
 
 ---
 
-## 13. Creating Items
+## 13. Location Services (Church, Clinic, Nursery)
+
+The Location Services system provides specialized healing and treatment options at specific location types. Each service type handles different conditions.
+
+### Service Types and What They Treat
+
+| Service Type | Location Tags | Conditions Treated |
+|-------------|--------------|-------------------|
+| **Church** | `church`, `temple` | Curses, magical hypnosis, magical debuffs, corruption |
+| **Clinic** | `clinic`, `hospital` | STDs, addictions, technological hypnosis (visor), conditioning, abortions |
+| **Nursery** | `nursery`, `birthing_center` | Egg laying, giving birth, pregnancy checkups |
+
+### Location Configuration
+
+Add service tags and configuration to locations:
+
+```json
+{
+  "id": "temple",
+  "name": "Temple of Light",
+  "tags": ["safe", "temple", "church", "healing", "inhabited"],
+  "services": {
+    "church": {
+      "curseRemovalCost": 100,
+      "hypnosisRemovalCost": 150,
+      "purificationCostPerPoint": 5,
+      "charityWorkHours": 4,
+      "creditPerHour": 25
+    }
+  }
+}
+```
+
+```json
+{
+  "id": "crossroads_clinic",
+  "name": "Healer's Rest Clinic",
+  "tags": ["safe", "clinic", "hospital", "healing"],
+  "services": {
+    "clinic": {
+      "stdTreatmentCost": 200,
+      "addictionTreatmentCost": 500,
+      "neuralDeprogrammingCost": 400,
+      "terminationCost": 350,
+      "checkupCost": 50,
+      "healingCostPerHp": 2
+    }
+  }
+}
+```
+
+```json
+{
+  "id": "crossroads_nursery",
+  "name": "Mother's Blessing Nursery",
+  "tags": ["safe", "nursery", "birthing_center"],
+  "services": {
+    "nursery": {
+      "eggLayingCost": 100,
+      "birthCost": 200,
+      "checkupCost": 30,
+      "postpartumCareCost": 150,
+      "consultationCost": 25
+    }
+  }
+}
+```
+
+### Church Services
+
+| Service | Description | Alternative Payment |
+|---------|-------------|---------------------|
+| Remove Curse | Lift curses through holy rites | Charity work |
+| Break Magical Hypnosis | Dispel magical enchantments | Charity work |
+| Purify Corruption | Reduce corruption through ritual | Charity work |
+| Remove Magical Debuffs | Dispel dark magic afflictions | Charity work |
+| Make an Offering | Donate gold for blessings | - |
+| Volunteer Service | Work to earn charity credit | Time |
+
+### Clinic Services
+
+| Service | Description |
+|---------|-------------|
+| Disease Treatment | Cure STDs and infections |
+| Addiction Rehabilitation | Detox from substance addictions |
+| Behavioral Therapy | Treat behavioral addictions |
+| Neural Deprogramming | Remove technological hypnosis (visor, implants) |
+| Cognitive Reconditioning | Remove conditioned responses |
+| Pregnancy Termination | Abort (non-egg, trimester < 3) |
+| Medical Checkup | Identify hidden health issues |
+| Medical Healing | Restore HP |
+
+### Nursery Services
+
+| Service | Description |
+|---------|-------------|
+| Egg Laying Assistance | Safe delivery of eggs |
+| Assisted Birth | Professional midwife assistance |
+| Pregnancy Checkup | Monitor pregnancy health |
+| Postpartum Recovery | Post-birth care and healing |
+| Fertility Consultation | Fertility status information |
+
+### Player State for Conditions
+
+The following fields in PlayerStateSchema track conditions treated by services:
+
+```javascript
+nsfwStats: {
+  curses: [],                    // Active curses (church)
+  debuffs: [],                   // Includes magical debuffs (church)
+  stds: {},                      // STD infections (clinic)
+  behavioralAddictions: {},      // Behavioral patterns (clinic)
+  mentalState: {
+    hypnosisDepth: 0,
+    hypnosisSource: 'magical' | 'technological' | null,
+    hypnosisDevice: null,        // If from visor/device
+    conditioning: []             // Conditioned responses (clinic)
+  },
+  pregnancy: {
+    isPregnant: false,
+    type: 'normal' | 'eggs' | 'parasitic' | 'demonic',
+    trimester: 0,
+    fetusCount: 1,
+    eggCount: 0,
+    complications: []
+  }
+},
+substanceState: {
+  addictions: {}                 // Substance addictions (clinic)
+}
+```
+
+### Condition Routing Reference
+
+| Condition Type | Service Location |
+|---------------|------------------|
+| `curse` | Church |
+| `magical_hypnosis` | Church |
+| `magical_debuff` | Church |
+| `corruption` | Church |
+| `std` | Clinic |
+| `addiction` | Clinic |
+| `behavioral_addiction` | Clinic |
+| `tech_hypnosis` | Clinic |
+| `visor_hypnosis` | Clinic |
+| `conditioning` | Clinic |
+| `abortion` | Clinic |
+| `egg_laying` | Nursery |
+| `birth` | Nursery |
+| `pregnancy` | Nursery |
+
+### Service Definitions Data File
+
+Create `public/datapacks/core/services/location_services.json`:
+
+```json
+{
+  "church": {
+    "curseRemovalCost": 100,
+    "hypnosisRemovalCost": 150,
+    "purificationCostPerPoint": 5,
+    "charityWorkHours": 4,
+    "creditPerHour": 25,
+    "maxPurificationPerVisit": 30
+  },
+  "clinic": {
+    "stdTreatmentCost": 200,
+    "addictionTreatmentCost": 500,
+    "addictionTreatmentHours": 24,
+    "behavioralTherapyCost": 300,
+    "neuralDeprogrammingCost": 400,
+    "terminationCost": 350,
+    "checkupCost": 50,
+    "healingCostPerHp": 2
+  },
+  "nursery": {
+    "eggLayingCost": 100,
+    "birthCost": 200,
+    "checkupCost": 30,
+    "postpartumCareCost": 150,
+    "consultationCost": 25
+  }
+}
+```
+
+### Integration in Scenes
+
+Add service triggers through scene effects:
+
+```json
+{
+  "effects": [
+    { "type": "add_curse", "curseId": "curse_of_lust", "severity": 50 },
+    { "type": "add_std", "stdId": "common_infection", "severity": 30 },
+    { "type": "set_hypnosis", "depth": 40, "source": "magical" },
+    { "type": "set_hypnosis", "depth": 60, "source": "technological", "device": "mind_visor" },
+    { "type": "set_pregnant", "type": "eggs", "eggCount": 3, "fatherType": "insect" }
+  ]
+}
+```
+
+---
+
+## 14. Public Events, Discovery & Barring System
+
+This system handles what happens when NSFW events occur in public, hidden location tags, and location access restrictions.
+
+### Core Concepts
+
+1. **Public Events**: NSFW actions (sex, birth, etc.) outside private areas can be witnessed
+2. **Hidden Tags**: Location tags like `corrupted`, `blessed`, `cursed` are hidden until discovered
+3. **Location Barring**: Locations can ban players who misbehave, with redemption tasks
+
+### Public Event Processing
+
+When NSFW events happen outside private locations:
+
+```javascript
+// Process a public NSFW event
+const result = publicEventSystem.processPublicEvent(
+  'public_birth',  // Event type
+  location,        // Current location
+  playerState,     // Player state
+  { passedOut: false }  // Event details
+);
+
+// Result includes:
+// - witnessed: boolean
+// - witnesses: array of NPCs/passersby
+// - rumors: generated rumors
+// - infamyGains: local or global infamy
+// - locationReactions: special reactions (barring, scenes)
+```
+
+### NSFW Event Types
+
+| Event Type | Base Severity | Rumor Type | Infamy Type |
+|------------|--------------|------------|-------------|
+| `public_sex` | 30 | slut | slut |
+| `public_birth` | 20 | mysterious | slut |
+| `public_egg_laying` | 25 | mysterious | slut |
+| `public_masturbation` | 15 | slut | slut |
+| `public_nudity` | 10 | slut | slut |
+| `public_transformation` | 25 | corrupted | corrupted |
+| `public_corruption` | 35 | corrupted | corrupted |
+
+### Witness Chance by Location
+
+| Location Type | Base Chance |
+|--------------|-------------|
+| `city` | 80% |
+| `town` | 70% |
+| `tavern` | 70% |
+| `inn` | 60% |
+| `temple/church` | 60% |
+| `village` | 50% |
+| `road` | 30% |
+| `path` | 20% |
+| `forest` | 15% |
+| `cave` | 10% |
+| `dungeon` | 5% |
+
+Modifiers: Night time -50%, peak hours +20%, large location +30%
+
+### Hidden Tags System
+
+Location tags can be hidden until discovered through various conditions:
+
+```json
+{
+  "id": "remote_chapel",
+  "tags": ["temple", "church"],
+  "hiddenTags": {
+    "corrupted": {
+      "alwaysHidden": false,
+      "discoveryConditions": {
+        "interactions": {
+          "type": "investigate",
+          "min": 2,
+          "max": 4
+        }
+      },
+      "discoveryScene": "discover_corrupted_chapel",
+      "discoveryMessage": "You discover a hidden basement..."
+    }
+  }
+}
+```
+
+### Discovery Condition Types
+
+| Condition | Description | Example |
+|-----------|-------------|---------|
+| `interactions` | Random count of specific action | Sleep 1-3 times |
+| `quest` | Complete a specific quest | `"quest": "investigate_chapel"` |
+| `stats` | Meet stat requirements | `"stats": { "skills.knowledge.arcana": 30 }` |
+| `item` | Have a specific item | `"item": "ancient_key"` |
+| `flag` | Have a world flag set | `"flag": "knows_secret"` |
+
+### Always Visible Tags
+
+These tags are never hidden:
+- `town`, `village`, `city`, `forest`, `cave`, `dungeon`
+- `inn`, `tavern`, `road`, `path`, `building`
+- `outdoor`, `indoor`, `shop`, `market`
+- `temple`, `church`, `clinic`, `nursery`
+
+### Hidden Tag Types
+
+These tags should be hidden until discovered:
+- `corrupted`, `blessed`, `cursed`, `shady`
+- `divine`, `haunted`, `safe`, `dangerous`
+- `unique`, `secret`, `hidden`, `forbidden`
+- `demonic`, `holy`, `tainted`, `purified`
+
+### Location NSFW Reactions
+
+Locations can define custom reactions to NSFW events:
+
+```json
+{
+  "nsfwReactions": {
+    "public_sex": {
+      "scene": "chapel_offering",
+      "conditions": {
+        "hasDiscoveredTag": "corrupted"
+      },
+      "infamyModifier": 0.3
+    },
+    "experiment": {
+      "scene": "shady_clinic_experiment",
+      "conditions": {
+        "playerStat": { "stat": "currentHp", "max": 20 },
+        "random": 0.4
+      }
+    }
+  }
+}
+```
+
+### Witness Configuration
+
+Custom witness chances per location:
+
+```json
+{
+  "witnessConfig": {
+    "baseChance": 0.4,
+    "npcWitnessChance": 0.8
+  }
+}
+```
+
+### Location Barring
+
+Players can be barred from locations for misbehavior:
+
+```javascript
+// Barring increases with each offense
+// Churches: 5% base + 10% per offense
+// More severe events have higher bar chance
+
+// Redemption tasks are generated based on offenses:
+{
+  "redemptionTasks": [
+    { "type": "gold", "amount": 100, "paid": false },
+    { "type": "charity", "hours": 4, "completed": 0 },
+    { "type": "quest", "questId": "church_redemption" },
+    { "type": "time", "hours": 168, "startedAt": null }
+  ]
+}
+```
+
+### Player State Fields
+
+```javascript
+// Revealed hidden tags
+revealedTags: {
+  "remote_chapel": ["corrupted"]
+},
+
+// Interaction tracking
+locationInteractions: {
+  "blessed_clearing": {
+    visits: 3, sleeps: 2, searches: 0
+  }
+},
+
+// Location bans
+locationBans: {
+  "temple": {
+    banned: true,
+    reason: "public_indecency",
+    redemptionTasks: [...]
+  }
+},
+
+// Discovery progress
+discoveryProgress: {
+  "blessed_clearing": {
+    "blessed": {
+      interactionsRequired: 2,
+      currentInteractions: 1,
+      discovered: false
+    }
+  }
+}
+```
+
+### Reputation Impact
+
+- **Inhabited locations**: Local infamy increases (slow burn)
+- **Wilderness**: Global infamy increases (smaller impact)
+- **Churches**: 1.5x infamy multiplier
+- **Divine locations**: 1.8x multiplier
+- **Corrupted/shady**: 0.5x multiplier (they approve)
+
+### Example: Corrupted Church Flow
+
+1. Player visits St. Aldric's Chapel (tags show: `temple`, `church`, `???`)
+2. Player investigates 2-4 times (random requirement)
+3. Discovery scene plays, reveals `corrupted` tag
+4. Player does NSFW act in front of chapel
+5. Corrupted church reacts with `corrupted_interest` scene instead of barring
+6. Player gains less infamy (corrupted locations are more accepting)
+
+### Example: Blessed Clearing Flow
+
+1. Player visits Moonlit Clearing (tags show: `forest`, `outdoor`, `???`, `???`)
+2. Player sleeps there 1-3 times (random requirement)
+3. Discovery: "This clearing must be blessed!" - reveals `blessed` tag
+4. Player visits 3-5 more times
+5. Discovery: "It's safe here." - reveals `safe` tag
+6. Both hidden tags now visible
+
+---
+
+## 15. Creating Items
 
 ### Item Types
 
@@ -1456,7 +1895,7 @@ config: {
 
 ---
 
-## 14. Inventory System
+## 16. Inventory System
 
 ### Item User Flags
 
@@ -1507,7 +1946,7 @@ class InventorySystem {
 
 ---
 
-## 15. Loot Tables
+## 17. Loot Tables
 
 ### Basic Loot Table
 
@@ -1567,7 +2006,7 @@ class InventorySystem {
 
 ---
 
-## 16. Effects & Status System
+## 18. Effects & Status System
 
 ### Buff Effect
 
@@ -1639,7 +2078,7 @@ class InventorySystem {
 
 ---
 
-## 17. Substance System
+## 19. Substance System
 
 ### Delivery Methods
 
@@ -1699,7 +2138,7 @@ class InventorySystem {
 
 ---
 
-## 18. Encounter System
+## 20. Encounter System
 
 ### Encounter Types
 
@@ -1745,7 +2184,7 @@ class InventorySystem {
 
 ---
 
-## 19. Paperdoll System
+## 21. Paperdoll System
 
 ### Body Regions
 
@@ -1789,7 +2228,7 @@ class InventorySystem {
 
 ---
 
-## 20. Player State Schema
+## 22. Player State Schema
 
 ```javascript
 const playerState = {
@@ -1842,7 +2281,7 @@ const playerState = {
 
 ---
 
-## 21. Condition Reference
+## 23. Condition Reference
 
 ### Stat Conditions
 ```json
@@ -1892,7 +2331,7 @@ const playerState = {
 
 ---
 
-## 22. Effect Actions Reference
+## 24. Effect Actions Reference
 
 ### Stat Modifications
 ```json
@@ -1933,7 +2372,7 @@ const playerState = {
 
 ---
 
-## 23. Adding New Content
+## 25. Adding New Content
 
 ### Step-by-Step: Adding a New Merchant
 
@@ -2009,7 +2448,7 @@ const playerState = {
 
 ---
 
-## 24. Performance & Optimization
+## 26. Performance & Optimization
 
 ### Best Practices
 

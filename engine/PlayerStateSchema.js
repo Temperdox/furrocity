@@ -380,7 +380,37 @@ export const comprehensivePlayerState = {
       brainwashingProgress: 0,
       conditioning: [],  // { trigger, response, strength }
       triggers: [],
-      mantras: []
+      mantras: [],
+      // Hypnosis source tracking for treatment
+      hypnosisSource: null,  // 'magical' | 'technological' | 'natural' | null
+      hypnosisDevice: null   // Item ID if from visor/device
+    },
+
+    // Pregnancy state
+    pregnancy: {
+      isPregnant: false,
+      type: null,           // 'normal' | 'eggs' | 'parasitic' | 'demonic'
+      fatherType: null,     // Species/type of the father
+      fatherId: null,       // NPC ID if applicable
+      conceptionDate: null,
+      dueDate: null,
+      trimester: 0,         // 0-3
+      fetusCount: 1,
+      eggCount: 0,          // For egg-laying pregnancy
+      complications: [],
+      visible: false,       // Shows in appearance
+      history: []           // Past pregnancies
+    },
+
+    // Sexually transmitted diseases/infections
+    stds: {
+      // [stdId]: {
+      //   contracted: timestamp,
+      //   stage: 'incubating' | 'active' | 'chronic',
+      //   severity: 0-100,
+      //   symptoms: [],
+      //   treatable: true
+      // }
     }
   },
   
@@ -540,7 +570,66 @@ export const comprehensivePlayerState = {
   
   // Fast travel
   unlockedFastTravel: [],
-  
+
+  // ============================================================================
+  // LOCATION DISCOVERY & TRACKING
+  // ============================================================================
+
+  // Hidden tags that have been revealed
+  revealedTags: {
+    // [locationId]: ['corrupted', 'blessed', 'haunted', ...]
+  },
+
+  // Interaction counts per location (for discovery triggers)
+  locationInteractions: {
+    // [locationId]: {
+    //   visits: 0,
+    //   sleeps: 0,
+    //   searches: 0,
+    //   prayers: 0,
+    //   nsfwEvents: 0,
+    //   lastInteraction: null
+    // }
+  },
+
+  // Locations player is banned/barred from
+  locationBans: {
+    // [locationId]: {
+    //   banned: true,
+    //   reason: 'public_indecency',
+    //   bannedAt: timestamp,
+    //   redemptionTasks: [
+    //     { type: 'quest', questId: 'help_church', completed: false },
+    //     { type: 'gold', amount: 500, paid: false },
+    //     { type: 'time', hours: 168, startedAt: null }
+    //   ],
+    //   offenseCount: 3,
+    //   offenseHistory: []
+    // }
+  },
+
+  // Track NSFW offenses at locations (before ban)
+  locationOffenses: {
+    // [locationId]: {
+    //   count: 0,
+    //   lastOffense: null,
+    //   offenseTypes: ['public_birth', 'public_sex', ...],
+    //   witnessed: true/false for each
+    // }
+  },
+
+  // Discovery progress for hidden location features
+  discoveryProgress: {
+    // [locationId]: {
+    //   [hiddenFeatureId]: {
+    //     interactionsRequired: 3,  // Rolled from range
+    //     currentInteractions: 1,
+    //     discovered: false,
+    //     discoveredAt: null
+    //   }
+    // }
+  },
+
   // World flags (story progress, choices made)
   worldFlags: {},
   

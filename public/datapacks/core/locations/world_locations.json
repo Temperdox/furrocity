@@ -65,8 +65,8 @@
     "locked": false,
     "initiallyUnlocked": true,
 
-    "neighbors": ["starting_inn", "blacksmith", "temple", "market_district"],
-    "connectedLocations": ["starting_inn", "blacksmith", "temple", "market", "north_road", "forest_path"],
+    "neighbors": ["starting_inn", "blacksmith", "temple", "crossroads_clinic", "crossroads_nursery", "market_district"],
+    "connectedLocations": ["starting_inn", "blacksmith", "temple", "crossroads_clinic", "crossroads_nursery", "market", "north_road", "forest_path"],
 
     "mapData": {
       "localMapPosition": { "x": 250, "y": 250 },
@@ -497,11 +497,11 @@
   {
     "id": "temple",
     "name": "Temple of Light",
-    "description": "A sacred temple dedicated to the gods of purity and healing.",
+    "description": "A sacred temple dedicated to the gods of purity and healing. The priests here can lift curses and dispel dark magic.",
     "type": "building",
     "locationType": "local",
     "parentRegion": "crossroads",
-    "tags": ["safe", "temple", "healing", "quest", "inhabited"],
+    "tags": ["safe", "temple", "church", "healing", "quest", "inhabited"],
 
     "inhabited": true,
     "buildings": 1,
@@ -541,9 +541,122 @@
     },
 
     "services": {
-      "heal": { "cost": 0 },
-      "removeCurse": { "cost": 100, "requirement": { "corruption": { "lt": 50 } } },
-      "purgeCorruption": { "cost": 50, "amount": 10 }
+      "church": {
+        "curseRemovalCost": 100,
+        "hypnosisRemovalCost": 150,
+        "purificationCostPerPoint": 5,
+        "charityWorkHours": 4,
+        "creditPerHour": 25
+      }
+    }
+  },
+  {
+    "id": "crossroads_clinic",
+    "name": "Healer's Rest Clinic",
+    "description": "A modest medical clinic run by trained healers. They handle ailments that require scientific rather than divine intervention.",
+    "type": "building",
+    "locationType": "local",
+    "parentRegion": "crossroads",
+    "tags": ["safe", "clinic", "hospital", "healing", "inhabited"],
+
+    "inhabited": true,
+    "buildings": 1,
+    "markets": 0,
+
+    "locked": false,
+    "initiallyUnlocked": true,
+
+    "neighbors": ["town_square"],
+    "connectedLocations": ["town_square"],
+
+    "mapData": {
+      "localMapPosition": { "x": 220, "y": 290 },
+      "icon": "clinic",
+      "iconSize": "medium"
+    },
+
+    "titleDisplay": {
+      "fontTag": "friendly_town",
+      "subtitle": "Professional Medical Care"
+    },
+
+    "features": {
+      "heal": true,
+      "medical": true
+    },
+
+    "npcs": ["doctor_marcus", "nurse_helen"],
+
+    "encounterChance": 0,
+
+    "ambiance": {
+      "music": "calm_ambient",
+      "sounds": ["soft_chatter", "bottles_clinking"]
+    },
+
+    "services": {
+      "clinic": {
+        "stdTreatmentCost": 200,
+        "addictionTreatmentCost": 500,
+        "neuralDeprogrammingCost": 400,
+        "terminationCost": 350,
+        "checkupCost": 50,
+        "healingCostPerHp": 2
+      }
+    }
+  },
+  {
+    "id": "crossroads_nursery",
+    "name": "Mother's Blessing Nursery",
+    "description": "A warm and welcoming birthing center staffed by experienced midwives. They assist with all manner of births and egg layings.",
+    "type": "building",
+    "locationType": "local",
+    "parentRegion": "crossroads",
+    "tags": ["safe", "nursery", "birthing_center", "inhabited"],
+
+    "inhabited": true,
+    "buildings": 1,
+    "markets": 0,
+
+    "locked": false,
+    "initiallyUnlocked": true,
+
+    "neighbors": ["town_square"],
+    "connectedLocations": ["town_square"],
+
+    "mapData": {
+      "localMapPosition": { "x": 150, "y": 290 },
+      "icon": "nursery",
+      "iconSize": "medium"
+    },
+
+    "titleDisplay": {
+      "fontTag": "friendly_town",
+      "subtitle": "Care for Mother and Child"
+    },
+
+    "features": {
+      "birthing": true,
+      "nursery": true
+    },
+
+    "npcs": ["midwife_rose", "caretaker_lily"],
+
+    "encounterChance": 0,
+
+    "ambiance": {
+      "music": "gentle_lullaby",
+      "sounds": ["soft_cooing", "gentle_humming"]
+    },
+
+    "services": {
+      "nursery": {
+        "eggLayingCost": 100,
+        "birthCost": 200,
+        "checkupCost": 30,
+        "postpartumCareCost": 150,
+        "consultationCost": 25
+      }
     }
   },
   {
@@ -766,5 +879,355 @@
     },
 
     "dangerLevel": 5
+  },
+  {
+    "id": "remote_chapel",
+    "name": "St. Aldric's Chapel",
+    "description": "A small chapel in a remote village. The priests seem... overly welcoming.",
+    "type": "building",
+    "locationType": "local",
+    "parentRegion": "crossroads",
+    "tags": ["temple", "church", "quest", "inhabited"],
+
+    "hiddenTags": {
+      "corrupted": {
+        "alwaysHidden": false,
+        "discoveryConditions": {
+          "interactions": {
+            "type": "investigate",
+            "min": 2,
+            "max": 4
+          }
+        },
+        "discoveryScene": "discover_corrupted_chapel",
+        "discoveryMessage": "You discover a hidden basement beneath the altar... This chapel worships something far darker than the gods of light."
+      },
+      "shady": {
+        "alwaysHidden": true
+      }
+    },
+
+    "nsfwReactions": {
+      "corrupted_interest": {
+        "scene": "corrupted_chapel_interest",
+        "conditions": {
+          "minOffenses": 1
+        }
+      },
+      "public_sex": {
+        "scene": "chapel_offering",
+        "conditions": {
+          "hasDiscoveredTag": "corrupted"
+        },
+        "infamyModifier": 0.3
+      }
+    },
+
+    "witnessConfig": {
+      "baseChance": 0.4,
+      "npcWitnessChance": 0.8
+    },
+
+    "inhabited": true,
+    "buildings": 1,
+    "markets": 0,
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "or",
+      "conditions": [
+        { "type": "quest_active", "quest": "investigate_chapel" },
+        { "type": "visited_location", "location": "darkwood_forest" }
+      ]
+    },
+
+    "neighbors": ["remote_village"],
+    "connectedLocations": ["remote_village"],
+
+    "mapData": {
+      "localMapPosition": { "x": 80, "y": 400 },
+      "icon": "chapel",
+      "iconSize": "medium"
+    },
+
+    "titleDisplay": {
+      "fontTag": "holy",
+      "subtitle": "A Quiet Place of Worship"
+    },
+
+    "features": {
+      "curseRemoval": true,
+      "corruptionPurge": true
+    },
+
+    "npcs": ["father_aldric", "acolyte_sister"],
+
+    "encounterChance": 0,
+
+    "ambiance": {
+      "music": "sacred_theme",
+      "sounds": ["choir", "whispers"]
+    },
+
+    "services": {
+      "church": {
+        "curseRemovalCost": 50,
+        "charityWorkHours": 2
+      }
+    }
+  },
+  {
+    "id": "blessed_clearing",
+    "name": "Moonlit Clearing",
+    "description": "A peaceful clearing deep in the forest. Something about this place feels... comforting.",
+    "type": "outdoor",
+    "locationType": "local",
+    "parentRegion": "darkwood",
+    "tags": ["forest", "outdoor", "rest"],
+
+    "hiddenTags": {
+      "blessed": {
+        "alwaysHidden": false,
+        "discoveryConditions": {
+          "interactions": {
+            "type": "sleep",
+            "min": 1,
+            "max": 3
+          }
+        },
+        "discoveryScene": "discover_blessed_clearing",
+        "discoveryMessage": "As you wake, you feel incredibly refreshed. A warm light seems to linger in the air... This clearing must be blessed!"
+      },
+      "safe": {
+        "alwaysHidden": false,
+        "discoveryConditions": {
+          "interactions": {
+            "type": "visit",
+            "min": 3,
+            "max": 5
+          }
+        },
+        "discoveryMessage": "After visiting several times, you notice creatures avoid this place. It's safe here."
+      }
+    },
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "or",
+      "conditions": [
+        { "type": "visited_location", "location": "darkwood_forest" }
+      ]
+    },
+
+    "neighbors": ["darkwood_forest"],
+    "connectedLocations": ["darkwood_forest"],
+
+    "mapData": {
+      "localMapPosition": { "x": 150, "y": 250 },
+      "icon": "clearing",
+      "iconSize": "medium"
+    },
+
+    "titleDisplay": {
+      "fontTag": "mystical",
+      "subtitle": "A Tranquil Haven"
+    },
+
+    "features": {
+      "rest": true
+    },
+
+    "effects": {
+      "onRest": {
+        "healMultiplier": 1.5,
+        "corruptionReduction": 2
+      }
+    },
+
+    "encounterChance": 0,
+
+    "ambiance": {
+      "music": "peaceful_forest",
+      "sounds": ["wind_leaves", "soft_chimes"]
+    },
+
+    "dangerLevel": 0
+  },
+  {
+    "id": "back_alley_clinic",
+    "name": "Doc Vex's Clinic",
+    "description": "A run-down clinic in the back alleys. The prices are suspiciously cheap.",
+    "type": "building",
+    "locationType": "local",
+    "parentRegion": "crossroads",
+    "tags": ["clinic", "hospital", "healing", "hidden"],
+
+    "hiddenTags": {
+      "shady": {
+        "alwaysHidden": false,
+        "discoveryConditions": {
+          "interactions": {
+            "type": "visit",
+            "min": 2,
+            "max": 4
+          }
+        },
+        "discoveryMessage": "You notice strange equipment in the back room, and the doc's smile is a bit too eager..."
+      },
+      "dangerous": {
+        "alwaysHidden": true
+      }
+    },
+
+    "nsfwReactions": {
+      "experiment": {
+        "scene": "shady_clinic_experiment",
+        "conditions": {
+          "playerStat": {
+            "stat": "currentHp",
+            "max": 20
+          },
+          "random": 0.4
+        }
+      },
+      "public_birth": {
+        "scene": "clinic_birth_complication",
+        "conditions": {
+          "hasDiscoveredTag": "shady"
+        }
+      }
+    },
+
+    "witnessConfig": {
+      "baseChance": 0.3,
+      "npcWitnessChance": 1.0
+    },
+
+    "inhabited": true,
+    "buildings": 1,
+    "markets": 0,
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "or",
+      "conditions": [
+        { "type": "flag", "flag": "knows_back_alleys" },
+        { "type": "stat", "stat": "infamy.criminal", "operator": ">=", "value": 10 }
+      ]
+    },
+
+    "neighbors": ["town_square"],
+    "connectedLocations": ["town_square"],
+
+    "mapData": {
+      "localMapPosition": { "x": 280, "y": 350 },
+      "icon": "clinic_shady",
+      "iconSize": "small"
+    },
+
+    "titleDisplay": {
+      "fontTag": "drug_den",
+      "subtitle": "Questionable Medical Care"
+    },
+
+    "features": {
+      "heal": true,
+      "medical": true
+    },
+
+    "npcs": ["doc_vex"],
+
+    "encounterChance": 0,
+
+    "ambiance": {
+      "music": "hazy_ambient",
+      "sounds": ["dripping", "distant_screams"]
+    },
+
+    "services": {
+      "clinic": {
+        "stdTreatmentCost": 50,
+        "addictionTreatmentCost": 100,
+        "terminationCost": 75,
+        "checkupCost": 10,
+        "healingCostPerHp": 0.5
+      }
+    }
+  },
+  {
+    "id": "haunted_manor",
+    "name": "Blackwood Manor",
+    "description": "An abandoned manor on the hill. Locals say it's haunted, but you see lights in the windows at night.",
+    "type": "building",
+    "locationType": "local",
+    "parentRegion": "crossroads",
+    "tags": ["building", "dangerous", "exploration"],
+
+    "hiddenTags": {
+      "haunted": {
+        "alwaysHidden": false,
+        "discoveryConditions": {
+          "interactions": {
+            "type": "explore",
+            "min": 1,
+            "max": 2
+          }
+        },
+        "discoveryScene": "manor_ghost_encounter",
+        "discoveryMessage": "A chill runs down your spine as translucent figures drift through the walls. This place is definitely haunted."
+      },
+      "cursed": {
+        "alwaysHidden": false,
+        "discoveryConditions": {
+          "quest": "manor_investigation",
+          "stats": {
+            "skills.knowledge.arcana": 30
+          }
+        },
+        "discoveryScene": "manor_curse_discovery",
+        "discoveryMessage": "Your arcane knowledge reveals a dark curse binding this place. The spirits here cannot rest."
+      }
+    },
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "or",
+      "conditions": [
+        { "type": "quest_active", "quest": "manor_investigation" },
+        { "type": "level", "operator": ">=", "value": 5 }
+      ]
+    },
+
+    "neighbors": ["north_road"],
+    "connectedLocations": ["north_road", "town_square"],
+
+    "mapData": {
+      "localMapPosition": { "x": 100, "y": 120 },
+      "icon": "manor_haunted",
+      "iconSize": "large"
+    },
+
+    "titleDisplay": {
+      "fontTag": "dungeon",
+      "subtitle": "Where Shadows Linger"
+    },
+
+    "discoverableWhileExploring": true,
+    "discoveryChance": 0.1,
+
+    "encounterChance": 0.5,
+    "encounterTable": "haunted_manor",
+    "enemyTables": ["ghosts", "undead"],
+
+    "ambiance": {
+      "music": "haunted_ambient",
+      "sounds": ["creaking", "whispers", "distant_moans"]
+    },
+
+    "dangerLevel": 3
   }
 ]

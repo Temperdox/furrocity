@@ -11,7 +11,12 @@ import { UnlockSystem } from '../engine/UnlockSystem.js';
 import { LocationSystem } from '../engine/LocationSystem.js';
 import ReputationSystem from '../engine/ReputationSystem.js';
 import RumorSystem from '../engine/RumorSystem.js';
+import LocationServices from '../engine/LocationServices.js';
+import LocationDiscoverySystem from '../engine/LocationDiscoverySystem.js';
+import PublicEventSystem from '../engine/PublicEventSystem.js';
+import LocationBarringSystem from '../engine/LocationBarringSystem.js';
 import RumorConfrontation, { RumorConfrontationResult } from './components/ui/RumorConfrontation.jsx';
+import ServiceInteraction, { ServiceResult } from './components/ui/ServiceInteraction.jsx';
 
 // ============================================================================
 // GAME DATA STRUCTURES (JSON-DRIVEN CONTENT)
@@ -5749,6 +5754,12 @@ const Game = () => {
   const [showRumorResult, setShowRumorResult] = useState(false);
   const [rumorResult, setRumorResult] = useState(null);
 
+  // Service interaction state (church, clinic, nursery)
+  const [showServiceInteraction, setShowServiceInteraction] = useState(false);
+  const [serviceInteractionData, setServiceInteractionData] = useState(null);
+  const [showServiceResult, setShowServiceResult] = useState(false);
+  const [serviceResult, setServiceResult] = useState(null);
+
   // Engine system refs
   const inventorySystemRef = useRef(null);
   const fameSystemRef = useRef(null);
@@ -5757,6 +5768,10 @@ const Game = () => {
   const locationSystemRef = useRef(null);
   const reputationSystemRef = useRef(null);
   const rumorSystemRef = useRef(null);
+  const locationServicesRef = useRef(null);
+  const discoverySystemRef = useRef(null);
+  const publicEventSystemRef = useRef(null);
+  const barringSystemRef = useRef(null);
   const systemsInitializedRef = useRef(false);
 
   // Initialize engine systems
@@ -5811,6 +5826,52 @@ const Game = () => {
       reputationSystemRef.current = new ReputationSystem(fameSystemRef.current);
       reputationSystemRef.current.initialize(GameData.locations);
       rumorSystemRef.current = new RumorSystem(reputationSystemRef.current);
+
+      // Initialize location services (church, clinic, nursery)
+      locationServicesRef.current = new LocationServices();
+      // Service definitions will be loaded from datapacks in production
+      const serviceDefinitions = {
+        church: {
+          curseRemovalCost: 100,
+          hypnosisRemovalCost: 150,
+          purificationCostPerPoint: 5,
+          debuffRemovalCost: 75,
+          charityWorkHours: 4,
+          creditPerHour: 25,
+          maxPurificationPerVisit: 30
+        },
+        clinic: {
+          stdTreatmentCost: 200,
+          addictionTreatmentCost: 500,
+          addictionTreatmentHours: 24,
+          behavioralTherapyCost: 300,
+          therapySessions: 3,
+          neuralDeprogrammingCost: 400,
+          conditioningRemovalCost: 250,
+          terminationCost: 350,
+          terminationRecoveryHours: 8,
+          checkupCost: 50,
+          healingCostPerHp: 2
+        },
+        nursery: {
+          eggLayingCost: 100,
+          birthCost: 200,
+          checkupCost: 30,
+          postpartumCareCost: 150,
+          consultationCost: 25,
+          recoveryBonus: 2.0
+        }
+      };
+      locationServicesRef.current.initialize(serviceDefinitions);
+
+      // Initialize location discovery, public event, and barring systems
+      discoverySystemRef.current = new LocationDiscoverySystem();
+      barringSystemRef.current = new LocationBarringSystem();
+      publicEventSystemRef.current = new PublicEventSystem(
+        reputationSystemRef.current,
+        rumorSystemRef.current,
+        discoverySystemRef.current
+      );
 
       // Initialize merchant data from GameData merchants
       // Since we don't have full DataRegistry integration, we'll manually populate merchants
@@ -6420,6 +6481,111 @@ const Game = () => {
     setRumorConfrontationData(null);
   }, []);
 
+  // Location services handlers (church, clinic, nursery)
+  const handleOpenServices = useCallback((location) => {
+    if (!locationServicesRef.current) return;
+
+    const services = locationServicesRef.current.getServicesAtLocation(location, player);
+    if (services.length > 0) {
+      setServiceInteractionData({
+        location,
+        services,
+        serviceDefinitions: locationServicesRef.current.serviceDefinitions
+      });
+      setShowServiceInteraction(true);
+    } else {
+      toast.info('Services', 'No services are currently available here.');
+    }
+  }, [player, toast]);
+
+  const handleSelectService = useCallback((service) => {
+    // Optional: track selected service for UI purposes
+  }, []);
+
+  const handleConfirmService = useCallback(({ service, paymentMethod, cost, options }) => {
+    if (!locationServicesRef.current) return;
+
+    // Deduct payment
+    if (paymentMethod === 'gold' && cost > 0) {
+      if (player.gold < cost) {
+        toast.error('Payment', 'Not enough gold!');
+        return;
+      }
+      setPlayer(prev => ({ ...prev, gold: prev.gold - cost }));
+    } else if (paymentMethod === 'charity' && cost > 0) {
+      if ((player.charityCredit || 0) < cost) {
+        toast.error('Payment', 'Not enough charity credit!');
+        return;
+      }
+      setPlayer(prev => ({ ...prev, charityCredit: (prev.charityCredit || 0) - cost }));
+    }
+
+    // Process the service
+    const result = locationServicesRef.current.processService(service.id, player, options);
+
+    // Apply state changes
+    if (result.stateChanges) {
+      setPlayer(prev => {
+        const newState = { ...prev };
+        for (const [path, value] of Object.entries(result.stateChanges)) {
+          const keys = path.split('.');
+          let target = newState;
+          for (let i = 0; i < keys.length - 1; i++) {
+            if (!target[keys[i]]) target[keys[i]] = {};
+            target = target[keys[i]];
+          }
+          target[keys[keys.length - 1]] = value;
+        }
+        return newState;
+      });
+    }
+
+    // Handle time passage effects
+    const timePassed = result.effects?.find(e => e.type === 'time_passed');
+    if (timePassed) {
+      // Advance game time by hours
+      setPlayer(prev => ({
+        ...prev,
+        currentTime: {
+          ...prev.currentTime,
+          hour: (prev.currentTime?.hour || 8) + timePassed.hours
+        }
+      }));
+    }
+
+    // Handle blessing effects
+    const blessing = result.effects?.find(e => e.type === 'blessing_received');
+    if (blessing) {
+      // Add temporary buff
+      setPlayer(prev => ({
+        ...prev,
+        activeBuffs: [
+          ...(prev.activeBuffs || []),
+          {
+            id: blessing.blessing,
+            appliedAt: Date.now(),
+            duration: blessing.duration
+          }
+        ]
+      }));
+    }
+
+    // Show result
+    setServiceResult(result);
+    setShowServiceInteraction(false);
+    setShowServiceResult(true);
+  }, [player, toast]);
+
+  const handleCloseServices = useCallback(() => {
+    setShowServiceInteraction(false);
+    setServiceInteractionData(null);
+  }, []);
+
+  const handleServiceResultClose = useCallback(() => {
+    setShowServiceResult(false);
+    setServiceResult(null);
+  }, []);
+
   // Combat action handler
   const handleCombatAction = (action, param) => {
     switch (action) {
@@ -6877,6 +7043,27 @@ const Game = () => {
         <RumorConfrontationResult
           result={rumorResult}
           onClose={handleRumorResultClose}
+        />
+      )}
+
+      {/* Service Interaction Modal (Church, Clinic, Nursery) */}
+      {showServiceInteraction && serviceInteractionData && (
+        <ServiceInteraction
+          services={serviceInteractionData.services}
+          location={serviceInteractionData.location}
+          playerState={player}
+          serviceDefinitions={serviceInteractionData.serviceDefinitions}
+          onSelectService={handleSelectService}
+          onConfirmService={handleConfirmService}
+          onClose={handleCloseServices}
+        />
+      )}
+
+      {/* Service Result Modal */}
+      {showServiceResult && serviceResult && (
+        <ServiceResult
+          result={serviceResult}
+          onClose={handleServiceResultClose}
         />
       )}
 

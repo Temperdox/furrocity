@@ -1,0 +1,169 @@
+{
+  "church": {
+    "name": "Church Services",
+    "description": "Holy services for spiritual ailments",
+    "curseRemovalCost": 100,
+    "hypnosisRemovalCost": 150,
+    "purificationCostPerPoint": 5,
+    "debuffRemovalCost": 75,
+    "charityWorkHours": 4,
+    "charityWorkHoursPerPoint": 0.5,
+    "creditPerHour": 25,
+    "maxPurificationPerVisit": 30,
+    "dialogue": {
+      "greeting": "Welcome, child. The light embraces all who seek its warmth.",
+      "curseRemoval": "Through prayer and holy rites, we shall lift this darkness from you.",
+      "hypnosisRemoval": "Your mind has been clouded by dark magic. Let the light dispel it.",
+      "purification": "The corruption within you can be cleansed, one prayer at a time.",
+      "tithe": "Your generosity honors the gods. May their blessings be upon you.",
+      "volunteer": "Service to others is service to the divine. Your help is most welcome.",
+      "farewell": "Go with the light, child. May it guide your path."
+    },
+    "blessings": {
+      "minor_blessing": {
+        "name": "Minor Blessing",
+        "description": "A small blessing that provides minor protection",
+        "effects": [
+          { "type": "resistance", "stat": "corruption", "value": 5 },
+          { "type": "resistance", "stat": "dark", "value": 5 }
+        ]
+      },
+      "blessing": {
+        "name": "Blessing",
+        "description": "A blessing that provides good protection",
+        "effects": [
+          { "type": "resistance", "stat": "corruption", "value": 15 },
+          { "type": "resistance", "stat": "dark", "value": 10 },
+          { "type": "resistance", "stat": "charm", "value": 10 }
+        ]
+      },
+      "greater_blessing": {
+        "name": "Greater Blessing",
+        "description": "A powerful blessing with strong protection",
+        "effects": [
+          { "type": "resistance", "stat": "corruption", "value": 25 },
+          { "type": "resistance", "stat": "dark", "value": 20 },
+          { "type": "resistance", "stat": "charm", "value": 20 },
+          { "type": "resistance", "stat": "hypnosis", "value": 15 }
+        ]
+      }
+    },
+    "requirements": {
+      "curseRemoval": {
+        "corruption": { "lt": 75 }
+      },
+      "purification": {
+        "corruption": { "gt": 0 }
+      }
+    }
+  },
+
+  "clinic": {
+    "name": "Medical Clinic",
+    "description": "Professional medical services",
+    "stdTreatmentCost": 200,
+    "addictionTreatmentCost": 500,
+    "addictionTreatmentHours": 24,
+    "behavioralTherapyCost": 300,
+    "therapySessions": 3,
+    "neuralDeprogrammingCost": 400,
+    "conditioningRemovalCost": 250,
+    "terminationCost": 350,
+    "terminationRecoveryHours": 8,
+    "checkupCost": 50,
+    "healingCostPerHp": 2,
+    "dialogue": {
+      "greeting": "Welcome to the clinic. How can we help you today?",
+      "stdTreatment": "We can treat that infection with our modern medicines. The procedure is straightforward.",
+      "addictionTreatment": "Addiction recovery is a journey. Our detox program will help you take the first steps.",
+      "behavioralTherapy": "Behavioral patterns can be changed with proper guidance. Let's work on this together.",
+      "neuralDeprogramming": "Technological conditioning requires specialized treatment. We have the equipment for it.",
+      "termination": "This is a serious procedure. We'll ensure it's done safely and with proper care.",
+      "checkup": "A thorough examination will tell us everything we need to know.",
+      "farewell": "Take care of yourself. Come back if you need anything."
+    },
+    "stds": {
+      "common_infection": {
+        "name": "Common Infection",
+        "treatmentCost": 100,
+        "treatmentTime": 1
+      },
+      "serious_infection": {
+        "name": "Serious Infection",
+        "treatmentCost": 300,
+        "treatmentTime": 3
+      },
+      "magical_disease": {
+        "name": "Magical Disease",
+        "treatmentCost": 500,
+        "treatmentTime": 5,
+        "requiresSpecialist": true
+      }
+    }
+  },
+
+  "nursery": {
+    "name": "Birthing Center & Nursery",
+    "description": "Professional care for pregnancy and birth",
+    "eggLayingCost": 100,
+    "birthCost": 200,
+    "checkupCost": 30,
+    "postpartumCareCost": 150,
+    "consultationCost": 25,
+    "recoveryBonus": 2.0,
+    "dialogue": {
+      "greeting": "Welcome to the nursery. We're here to help with all your maternal needs.",
+      "eggLaying": "We have comfortable facilities for egg laying. Our staff will assist you through the process.",
+      "birth": "Our midwives are experienced with all types of births. You're in good hands.",
+      "checkup": "Regular checkups are important. Let's see how everything is progressing.",
+      "postpartum": "Recovery after birth is crucial. Let us help you get back on your feet.",
+      "consultation": "Let's discuss your fertility and answer any questions you might have.",
+      "farewell": "Best of luck with your little ones. Come back anytime."
+    },
+    "complications": {
+      "none": {
+        "description": "No complications",
+        "riskModifier": 1.0
+      },
+      "multiple": {
+        "description": "Multiple pregnancy",
+        "riskModifier": 1.5,
+        "costMultiplier": 1.5
+      },
+      "crossSpecies": {
+        "description": "Cross-species pregnancy",
+        "riskModifier": 2.0,
+        "costMultiplier": 2.0
+      },
+      "demonic": {
+        "description": "Demonic pregnancy",
+        "riskModifier": 3.0,
+        "costMultiplier": 3.0,
+        "requiresSpecialist": true
+      }
+    }
+  },
+
+  "serviceTypes": {
+    "church": ["curse", "magical_hypnosis", "magical_debuff", "corruption", "blessing"],
+    "clinic": ["std", "addiction", "behavioral_addiction", "tech_hypnosis", "conditioning", "abortion", "healing"],
+    "nursery": ["egg_laying", "birth", "pregnancy_checkup", "postpartum", "fertility"]
+  },
+
+  "conditionRouting": {
+    "curse": "church",
+    "magical_hypnosis": "church",
+    "magical_debuff": "church",
+    "corruption": "church",
+    "std": "clinic",
+    "addiction": "clinic",
+    "behavioral_addiction": "clinic",
+    "tech_hypnosis": "clinic",
+    "conditioning": "clinic",
+    "visor_hypnosis": "clinic",
+    "abortion": "clinic",
+    "egg_laying": "nursery",
+    "birth": "nursery",
+    "pregnancy": "nursery"
+  }
+}
