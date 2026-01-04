@@ -1,0 +1,121 @@
+{
+  "entries": [
+    {
+      "id": "forest_common",
+      "name": "Forest Common Loot",
+      "tags": ["forest", "common", "outdoor"],
+      "entries": [
+        { "type": "item", "itemId": "health_potion_small", "weight": 30, "count": { "min": 1, "max": 2 } },
+        { "type": "item", "itemId": "herb_healing", "weight": 25, "count": { "min": 1, "max": 3 } },
+        { "type": "item", "itemId": "gold", "weight": 40, "count": { "min": 5, "max": 25 } },
+        { "type": "item", "itemId": "wood_stick", "weight": 20, "count": { "min": 1, "max": 2 } },
+        { "type": "item", "itemId": "wild_berries", "weight": 15, "count": { "min": 2, "max": 5 } },
+        { "type": "nothing", "weight": 10 }
+      ],
+      "modifiers": {
+        "luck_scaling": { "enabled": true, "per_point": 0.02 },
+        "level_scaling": { "enabled": false }
+      },
+      "roll_count": { "min": 1, "max": 2 }
+    },
+    {
+      "id": "forest_uncommon",
+      "name": "Forest Uncommon Loot",
+      "tags": ["forest", "uncommon", "outdoor"],
+      "conditions": {
+        "player_level_min": 3
+      },
+      "entries": [
+        { "type": "item", "itemId": "health_potion", "weight": 25 },
+        { "type": "item", "itemId": "stamina_potion", "weight": 20 },
+        { "type": "item", "itemId": "rusty_dagger", "weight": 10, "rarity_scaling": true },
+        { "type": "item", "itemId": "leather_scraps", "weight": 20, "count": { "min": 1, "max": 3 } },
+        { "type": "item", "itemId": "gold", "weight": 30, "count": { "min": 15, "max": 50 } },
+        { "type": "table_reference", "tableId": "global_consumables", "weight": 15 }
+      ],
+      "modifiers": {
+        "luck_scaling": { "enabled": true, "per_point": 0.025 },
+        "level_scaling": { "enabled": true, "item_level_variance": 2 }
+      },
+      "roll_count": { "min": 1, "max": 2 }
+    },
+    {
+      "id": "forest_rare",
+      "name": "Forest Rare Loot",
+      "tags": ["forest", "rare", "outdoor"],
+      "conditions": {
+        "player_level_min": 5
+      },
+      "entries": [
+        { "type": "item", "itemId": "iron_sword", "weight": 15, "rarity_scaling": true },
+        { "type": "item", "itemId": "leather_armor", "weight": 12, "rarity_scaling": true },
+        { "type": "item", "itemId": "rare_herb", "weight": 20, "count": { "min": 1, "max": 2 } },
+        { "type": "item", "itemId": "gold", "weight": 25, "count": { "min": 50, "max": 150 } },
+        { "type": "item", "itemId": "health_potion_large", "weight": 18 },
+        { "type": "item", "itemId": "antidote", "weight": 10 }
+      ],
+      "modifiers": {
+        "luck_scaling": { "enabled": true, "per_point": 0.03, "affects_rarities": ["rare", "epic"] },
+        "level_scaling": { "enabled": true, "item_level_variance": 1 }
+      },
+      "roll_count": { "min": 1, "max": 1 }
+    },
+    {
+      "id": "forest_beast_drops",
+      "name": "Beast Creature Drops",
+      "tags": ["forest", "beast", "animal", "creature_drop"],
+      "entries": [
+        { "type": "item", "itemId": "beast_pelt", "weight": 40, "count": { "min": 1, "max": 2 } },
+        { "type": "item", "itemId": "beast_fang", "weight": 30, "count": { "min": 1, "max": 3 } },
+        { "type": "item", "itemId": "beast_claw", "weight": 25, "count": { "min": 1, "max": 2 } },
+        { "type": "item", "itemId": "raw_meat", "weight": 35, "count": { "min": 1, "max": 2 } },
+        { "type": "item", "itemId": "beast_essence", "weight": 5, "rarity_scaling": true }
+      ],
+      "roll_count": { "min": 1, "max": 3 }
+    },
+    {
+      "id": "forest_goblin_drops",
+      "name": "Goblin Drops",
+      "tags": ["forest", "goblin", "humanoid", "creature_drop"],
+      "entries": [
+        { "type": "item", "itemId": "gold", "weight": 50, "count": { "min": 5, "max": 20 } },
+        { "type": "item", "itemId": "goblin_ear", "weight": 35 },
+        { "type": "item", "itemId": "rusty_dagger", "weight": 20 },
+        { "type": "item", "itemId": "crude_lockpick", "weight": 10 },
+        { "type": "item", "itemId": "stolen_trinket", "weight": 15, "rarity_scaling": true }
+      ],
+      "roll_count": { "min": 1, "max": 2 }
+    },
+    {
+      "id": "forest_feral_nsfw",
+      "name": "Feral Creature NSFW Drops",
+      "tags": ["forest", "feral", "nsfw", "attracts_feral"],
+      "entries": [
+        { "type": "item", "itemId": "beast_musk", "weight": 30 },
+        { "type": "item", "itemId": "pheromone_gland", "weight": 20 },
+        { "type": "item", "itemId": "aphrodisiac_herb", "weight": 25, "count": { "min": 1, "max": 2 } },
+        { "type": "item", "itemId": "feral_essence", "weight": 15 },
+        { "type": "item", "itemId": "heat_suppressant", "weight": 10 }
+      ],
+      "roll_count": { "min": 0, "max": 1 }
+    },
+    {
+      "id": "forest_bandit_drops",
+      "name": "Bandit Drops",
+      "tags": ["forest", "bandit", "humanoid", "creature_drop"],
+      "entries": [
+        { "type": "item", "itemId": "gold", "weight": 45, "count": { "min": 15, "max": 50 } },
+        { "type": "item", "itemId": "iron_dagger", "weight": 20, "rarity_scaling": true },
+        { "type": "item", "itemId": "leather_armor_piece", "weight": 15 },
+        { "type": "item", "itemId": "rope", "weight": 12, "count": { "min": 1, "max": 2 } },
+        { "type": "item", "itemId": "lockpick", "weight": 8 },
+        { "type": "item", "itemId": "stolen_goods", "weight": 10, "rarity_scaling": true }
+      ],
+      "modifiers": {
+        "luck_scaling": { "enabled": true },
+        "level_scaling": { "enabled": true, "item_level_variance": 2 }
+      },
+      "roll_count": { "min": 1, "max": 3 }
+    }
+  ]
+}

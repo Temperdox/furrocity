@@ -1,0 +1,87 @@
+{
+  "entries": [
+    {
+      "id": "town_day_common",
+      "name": "Town Daytime",
+      "tags": ["town", "daytime", "safe", "common"],
+      "conditions": {
+        "time_of_day": ["day", "dusk"]
+      },
+      "encounters": [
+        { "type": "social", "npcId": "town_merchant", "weight": 30 },
+        { "type": "social", "npcId": "town_guard", "weight": 20 },
+        { "type": "ambient", "description": "Townsfolk go about their daily business.", "weight": 30 },
+        { "type": "event", "eventId": "street_performance", "weight": 10 },
+        { "type": "social", "npcId": "beggar", "weight": 10 }
+      ],
+      "loot_tables": ["town_common"],
+      "rate_multiplier": 0.3
+    },
+    {
+      "id": "town_night_common",
+      "name": "Town Nighttime",
+      "tags": ["town", "night", "night_active"],
+      "conditions": {
+        "time_of_day": ["night", "midnight"]
+      },
+      "encounters": [
+        { "type": "social", "npcId": "night_guard", "weight": 25 },
+        { "type": "social", "npcId": "drunk_patron", "weight": 20 },
+        { "type": "ambient", "description": "The streets are quiet except for distant tavern music.", "weight": 25 },
+        { "type": "enemy", "enemyId": "pickpocket", "weight": 15 },
+        { "type": "event", "eventId": "mysterious_stranger", "weight": 15 }
+      ],
+      "loot_tables": ["town_common"],
+      "rate_multiplier": 0.5
+    },
+    {
+      "id": "town_alley_dangerous",
+      "name": "Town Alley Dangers",
+      "tags": ["town", "alley", "dangerous", "attracts_opportunistic"],
+      "conditions": {
+        "location_tags": ["alley"]
+      },
+      "encounters": [
+        { "type": "enemy", "enemyId": "mugger", "weight": 35, "count": { "min": 1, "max": 2 } },
+        { "type": "predatory", "enemyId": "alley_thug", "weight": 25, "count": { "min": 2, "max": 3 } },
+        { "type": "trap", "trapId": "ambush_net", "weight": 15 },
+        { "type": "social", "npcId": "shady_dealer", "weight": 15 },
+        { "type": "ambient", "description": "Shadows shift unnervingly in the narrow passage.", "weight": 10 }
+      ],
+      "loot_tables": ["town_common", "global_consumables"],
+      "rate_multiplier": 1.5
+    },
+    {
+      "id": "town_exposed_attention",
+      "name": "Town Exposed Attention",
+      "tags": ["town", "attracts_humanoid", "attracts_lustful"],
+      "encounters": [
+        { "type": "social", "npcId": "leering_crowd", "weight": 30 },
+        { "type": "social", "npcId": "concerned_citizen", "weight": 20 },
+        { "type": "predatory", "enemyId": "opportunist", "weight": 25 },
+        { "type": "event", "eventId": "public_humiliation", "weight": 15 },
+        { "type": "social", "npcId": "guard_harassment", "weight": 10 }
+      ],
+      "loot_tables": [],
+      "rate_multiplier": 2.0
+    },
+    {
+      "id": "town_intoxicated",
+      "name": "Town While Intoxicated",
+      "tags": ["town", "attracts_opportunistic", "attracts_predatory"],
+      "conditions": {
+        "player_conditions": [
+          { "type": "intoxication_level", "operator": ">=", "value": 50 }
+        ]
+      },
+      "encounters": [
+        { "type": "predatory", "enemyId": "opportunist", "weight": 35 },
+        { "type": "social", "npcId": "helpful_stranger", "weight": 20 },
+        { "type": "event", "eventId": "robbed_while_drunk", "weight": 25 },
+        { "type": "ambient", "description": "The world spins as you stumble through the streets.", "weight": 20 }
+      ],
+      "loot_tables": [],
+      "rate_multiplier": 1.8
+    }
+  ]
+}

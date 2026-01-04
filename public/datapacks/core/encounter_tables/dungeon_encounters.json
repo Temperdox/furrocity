@@ -1,0 +1,108 @@
+{
+  "entries": [
+    {
+      "id": "dungeon_common",
+      "name": "Dungeon Common",
+      "tags": ["dungeon", "common", "dangerous"],
+      "encounters": [
+        { "type": "enemy", "enemyId": "dungeon_slime", "weight": 25, "count": { "min": 1, "max": 3 } },
+        { "type": "enemy", "enemyId": "skeleton", "weight": 25, "count": { "min": 1, "max": 2 } },
+        { "type": "enemy", "enemyId": "giant_rat", "weight": 20, "count": { "min": 2, "max": 4 } },
+        { "type": "trap", "trapId": "spike_trap", "weight": 15 },
+        { "type": "ambient", "description": "Water drips somewhere in the darkness.", "weight": 15 }
+      ],
+      "loot_tables": ["dungeon_common", "global_consumables"],
+      "rate_multiplier": 1.5
+    },
+    {
+      "id": "dungeon_deep",
+      "name": "Deep Dungeon",
+      "tags": ["dungeon", "deep", "very_dangerous"],
+      "conditions": {
+        "location_tags": ["deep"],
+        "danger_level_min": 3
+      },
+      "encounters": [
+        { "type": "enemy", "enemyId": "dungeon_golem", "weight": 20 },
+        { "type": "enemy", "enemyId": "dark_knight", "weight": 15 },
+        { "type": "enemy", "enemyId": "ghoul", "weight": 25, "count": { "min": 1, "max": 2 } },
+        { "type": "predatory", "enemyId": "mimic", "weight": 15 },
+        { "type": "trap", "trapId": "poison_dart_trap", "weight": 15 },
+        { "type": "ambient", "description": "Ancient evil permeates these halls.", "weight": 10 }
+      ],
+      "loot_tables": ["dungeon_treasure", "dungeon_common"],
+      "rate_multiplier": 2.0
+    },
+    {
+      "id": "dungeon_corrupted",
+      "name": "Corrupted Dungeon",
+      "tags": ["dungeon", "corrupted", "attracts_demon", "attracts_corrupted"],
+      "conditions": {
+        "location_tags": ["corrupted"]
+      },
+      "encounters": [
+        { "type": "enemy", "enemyId": "corrupted_slime", "weight": 25, "count": { "min": 1, "max": 2 } },
+        { "type": "lustful", "enemyId": "lesser_succubus", "weight": 20 },
+        { "type": "enemy", "enemyId": "imp", "weight": 20, "count": { "min": 2, "max": 4 } },
+        { "type": "predatory", "enemyId": "tentacle_monster", "weight": 15 },
+        { "type": "event", "eventId": "corruption_font", "weight": 10 },
+        { "type": "ambient", "description": "Dark whispers echo in your mind.", "weight": 10 }
+      ],
+      "loot_tables": ["dungeon_nsfw", "dungeon_common"],
+      "rate_multiplier": 1.8
+    },
+    {
+      "id": "dungeon_pheromone",
+      "name": "Dungeon Pheromone Attraction",
+      "tags": ["dungeon", "attracts_feral", "attracts_beast"],
+      "encounters": [
+        { "type": "enemy", "enemyId": "dungeon_beast", "weight": 35, "count": { "min": 1, "max": 2 } },
+        { "type": "predatory", "enemyId": "feral_horror", "weight": 25 },
+        { "type": "lustful", "enemyId": "beast_hybrid", "weight": 20 },
+        { "type": "enemy", "enemyId": "giant_spider", "weight": 20, "count": { "min": 1, "max": 3 } }
+      ],
+      "loot_tables": ["dungeon_common", "forest_beast_drops"],
+      "rate_multiplier": 2.2
+    },
+    {
+      "id": "dungeon_lustful",
+      "name": "Dungeon Lustful",
+      "tags": ["dungeon", "attracts_lustful", "nsfw"],
+      "encounters": [
+        { "type": "lustful", "enemyId": "succubus", "weight": 25 },
+        { "type": "lustful", "enemyId": "incubus", "weight": 25 },
+        { "type": "predatory", "enemyId": "tentacle_monster", "weight": 20 },
+        { "type": "lustful", "enemyId": "lust_slime", "weight": 20 },
+        { "type": "event", "eventId": "aphrodisiac_trap", "weight": 10 }
+      ],
+      "loot_tables": ["dungeon_nsfw", "global_nsfw_common"],
+      "rate_multiplier": 1.8
+    },
+    {
+      "id": "dungeon_boss",
+      "name": "Dungeon Boss Room",
+      "tags": ["dungeon", "boss", "very_dangerous"],
+      "conditions": {
+        "location_tags": ["boss_room"]
+      },
+      "encounters": [
+        { "type": "enemy", "enemyId": "dungeon_boss", "weight": 100 }
+      ],
+      "loot_tables": ["dungeon_treasure", "global_rare_drops"],
+      "rate_multiplier": 1.0
+    },
+    {
+      "id": "dungeon_predatory",
+      "name": "Dungeon Predatory",
+      "tags": ["dungeon", "attracts_predatory", "attracts_opportunistic"],
+      "encounters": [
+        { "type": "predatory", "enemyId": "lurking_horror", "weight": 30 },
+        { "type": "predatory", "enemyId": "mimic", "weight": 25 },
+        { "type": "trap", "trapId": "restraint_trap", "weight": 20 },
+        { "type": "enemy", "enemyId": "ghoul", "weight": 25, "count": { "min": 2, "max": 3 } }
+      ],
+      "loot_tables": ["dungeon_common", "dungeon_treasure"],
+      "rate_multiplier": 2.0
+    }
+  ]
+}

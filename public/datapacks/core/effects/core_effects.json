@@ -1,0 +1,706 @@
+[
+  {
+    "id": "poison",
+    "name": "Poison",
+    "description": "Taking damage over time from poison.",
+    "type": "debuff",
+    "tags": ["poison", "dot", "nature"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "poison" },
+    "stackBehavior": "stack",
+    "maxStacks": 5,
+    "duration": {
+      "type": "turns",
+      "value": 5
+    },
+    "modifiers": [],
+    "triggers": {
+      "onTurnStart": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "damage",
+            "amount": { "type": "perStack", "perStack": 3 },
+            "damageType": "poison"
+          }
+        }
+      ],
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "showToast",
+            "toastType": "debuff",
+            "title": "Poisoned!",
+            "message": "You feel the venom coursing through your veins..."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bleeding",
+    "name": "Bleeding",
+    "description": "Losing health from open wounds.",
+    "type": "debuff",
+    "tags": ["bleed", "dot", "physical"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "bleeding" },
+    "stackBehavior": "stack",
+    "maxStacks": 3,
+    "duration": {
+      "type": "turns",
+      "value": 3
+    },
+    "modifiers": [],
+    "triggers": {
+      "onTurnEnd": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "damage",
+            "amount": { "type": "perStack", "perStack": 5 },
+            "damageType": "physical"
+          }
+        }
+      ],
+      "onHeal": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "removeEffect",
+            "effectId": "bleeding"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "strength_up",
+    "name": "Strength Up",
+    "description": "Increased physical power.",
+    "type": "buff",
+    "tags": ["buff", "strength", "physical"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "strength_up" },
+    "stackBehavior": "refresh",
+    "duration": {
+      "type": "turns",
+      "value": 5
+    },
+    "modifiers": [
+      {
+        "stat": "strength",
+        "operation": "percent",
+        "value": 25
+      },
+      {
+        "stat": "attack",
+        "operation": "percent",
+        "value": 15
+      }
+    ],
+    "triggers": {
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "showToast",
+            "toastType": "buff",
+            "title": "Strength Up!",
+            "message": "+25% Strength"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "evasion_up",
+    "name": "Evasion Up",
+    "description": "Increased dodge chance.",
+    "type": "buff",
+    "tags": ["buff", "evasion", "speed"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "evasion_up" },
+    "stackBehavior": "refresh",
+    "duration": {
+      "type": "turns",
+      "value": 3
+    },
+    "modifiers": [
+      {
+        "stat": "evasion",
+        "operation": "percent",
+        "value": 30
+      }
+    ]
+  },
+  {
+    "id": "restrained_rope",
+    "name": "Rope Bound",
+    "description": "Bound by ropes, movement restricted.",
+    "type": "restraint",
+    "tags": ["restraint", "rope", "bondage"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "bound" },
+    "stackBehavior": "replace",
+    "duration": {
+      "type": "untilCondition",
+      "condition": { "type": "isRestrained", "not": true }
+    },
+    "modifiers": [
+      {
+        "stat": "evasion",
+        "operation": "percent",
+        "value": -50
+      },
+      {
+        "stat": "attack",
+        "operation": "percent",
+        "value": -30
+      }
+    ],
+    "applyConditions": {
+      "not": { "type": "hasTag", "tag": "immune_restraint" }
+    },
+    "triggers": {
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "addRestraint",
+            "restraintType": "rope_bind",
+            "hp": 30
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "curse_lust",
+    "name": "Curse of Lust",
+    "description": "An insidious curse that increases vulnerability.",
+    "type": "curse",
+    "tags": ["curse", "lust", "nsfw"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "cursed" },
+    "stackBehavior": "intensify",
+    "duration": {
+      "type": "permanent"
+    },
+    "modifiers": [
+      {
+        "stat": "willpower",
+        "operation": "percent",
+        "value": -20
+      },
+      {
+        "stat": "corruptionResistance",
+        "operation": "percent",
+        "value": -30
+      }
+    ],
+    "triggers": {
+      "onTurnEnd": [
+        {
+          "condition": {
+            "type": "random",
+            "chance": 0.1
+          },
+          "action": {
+            "type": "modifyCorruption",
+            "amount": 1
+          }
+        }
+      ],
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "showToast",
+            "toastType": "curse",
+            "title": "Cursed!",
+            "message": "A dark desire takes hold..."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "hypnotized",
+    "name": "Hypnotized",
+    "description": "Mind clouded by hypnotic influence.",
+    "type": "debuff",
+    "tags": ["hypnosis", "mind", "control", "nsfw"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "hypnotized" },
+    "stackBehavior": "intensify",
+    "duration": {
+      "type": "turns",
+      "value": 3
+    },
+    "modifiers": [
+      {
+        "stat": "willpower",
+        "operation": "percent",
+        "value": -50
+      },
+      {
+        "stat": "evasion",
+        "operation": "percent",
+        "value": -25
+      }
+    ],
+    "applyConditions": {
+      "not": { "type": "hasTag", "tag": "immune_hypnosis" }
+    },
+    "triggers": {
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "showToast",
+            "toastType": "debuff",
+            "title": "Hypnotized...",
+            "message": "Your mind grows hazy..."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "aroused",
+    "name": "Aroused",
+    "description": "Distracted by physical sensations.",
+    "type": "status",
+    "tags": ["arousal", "nsfw", "distraction"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "aroused" },
+    "stackBehavior": "stack",
+    "maxStacks": 10,
+    "duration": {
+      "type": "turns",
+      "value": 10
+    },
+    "modifiers": [
+      {
+        "stat": "willpower",
+        "operation": "flat",
+        "value": -1,
+        "condition": { "type": "stackCount", "operator": "gte", "value": 1 }
+      },
+      {
+        "stat": "intelligence",
+        "operation": "flat",
+        "value": -1,
+        "condition": { "type": "stackCount", "operator": "gte", "value": 5 }
+      }
+    ],
+    "triggers": {
+      "onStack": [
+        {
+          "condition": { "type": "stackCount", "operator": "gte", "value": 10 },
+          "action": {
+            "type": "triggerScene",
+            "sceneId": "climax_scene"
+          }
+        }
+      ],
+      "onTurnEnd": [
+        {
+          "condition": {
+            "type": "stackCount",
+            "operator": "gte",
+            "value": 5
+          },
+          "action": {
+            "type": "modifyCorruption",
+            "amount": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "corruption_aura",
+    "name": "Corruption Aura",
+    "description": "Surrounded by corrupting influence.",
+    "type": "environment",
+    "tags": ["corruption", "aura", "environment"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "corrupted" },
+    "stackBehavior": "replace",
+    "duration": {
+      "type": "untilCombatEnd"
+    },
+    "modifiers": [
+      {
+        "stat": "corruptionResistance",
+        "operation": "percent",
+        "value": -25
+      }
+    ],
+    "triggers": {
+      "onTurnStart": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "modifyCorruption",
+            "amount": 2
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "addiction_cum",
+    "name": "Cum Addiction",
+    "description": "An insatiable craving that grows stronger.",
+    "type": "addiction",
+    "tags": ["addiction", "nsfw", "permanent"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "addicted" },
+    "stackBehavior": "intensify",
+    "duration": {
+      "type": "permanent"
+    },
+    "modifiers": [
+      {
+        "stat": "willpower",
+        "operation": "percent",
+        "value": -10,
+        "condition": { "type": "always" }
+      }
+    ],
+    "triggers": {
+      "onTurnStart": [
+        {
+          "condition": {
+            "or": [
+              { "type": "random", "chance": 0.05 }
+            ]
+          },
+          "action": {
+            "type": "applyEffect",
+            "effectId": "aroused",
+            "stacks": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "magic_damage_small",
+    "name": "Magic Damage",
+    "description": "Arcane energy burns the target.",
+    "type": "instant",
+    "tags": ["magic", "damage", "instant"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "magic_up" },
+    "duration": {
+      "type": "instant"
+    },
+    "triggers": {
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "damage",
+            "amount": { "type": "random", "min": 5, "max": 10 },
+            "damageType": "magic"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "regen",
+    "name": "Regeneration",
+    "description": "Health slowly recovers.",
+    "type": "buff",
+    "tags": ["buff", "heal", "regen"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "regen_hp" },
+    "stackBehavior": "stack",
+    "maxStacks": 3,
+    "duration": {
+      "type": "turns",
+      "value": 5
+    },
+    "triggers": {
+      "onTurnStart": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "heal",
+            "amount": { "type": "perStack", "perStack": 5 }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "pheromone_emitting",
+    "name": "Pheromone Emitting",
+    "description": "Your body is releasing powerful pheromones, attracting nearby creatures.",
+    "type": "debuff",
+    "tags": ["pheromone", "nsfw", "attracts"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "pheromone_emitting" },
+    "stackBehavior": "replace",
+    "duration": {
+      "type": "turns",
+      "value": 20
+    },
+    "modifiers": [
+      {
+        "stat": "stealth",
+        "operation": "percent",
+        "value": -50
+      }
+    ],
+    "triggers": {
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "showToast",
+            "toastType": "debuff",
+            "title": "Pheromones!",
+            "message": "Your scent will attract nearby creatures..."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "in_heat",
+    "name": "In Heat",
+    "description": "An overwhelming biological urge clouds your mind.",
+    "type": "debuff",
+    "tags": ["heat", "nsfw", "attracts", "arousal"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "in_heat" },
+    "stackBehavior": "replace",
+    "duration": {
+      "type": "turns",
+      "value": 50
+    },
+    "modifiers": [
+      {
+        "stat": "willpower",
+        "operation": "percent",
+        "value": -40
+      },
+      {
+        "stat": "intelligence",
+        "operation": "percent",
+        "value": -20
+      },
+      {
+        "stat": "stealth",
+        "operation": "percent",
+        "value": -75
+      }
+    ],
+    "triggers": {
+      "onTurnStart": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "applyEffect",
+            "effectId": "aroused",
+            "stacks": 1
+          }
+        }
+      ],
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "showToast",
+            "toastType": "debuff",
+            "title": "In Heat!",
+            "message": "Your body burns with need..."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "charmed",
+    "name": "Charmed",
+    "description": "You find it hard to resist the charmer's suggestions.",
+    "type": "debuff",
+    "tags": ["charm", "mind", "control"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "charmed" },
+    "stackBehavior": "intensify",
+    "duration": {
+      "type": "turns",
+      "value": 5
+    },
+    "modifiers": [
+      {
+        "stat": "willpower",
+        "operation": "percent",
+        "value": -30
+      }
+    ],
+    "applyConditions": {
+      "not": { "type": "hasTag", "tag": "immune_charm" }
+    }
+  },
+  {
+    "id": "burning",
+    "name": "Burning",
+    "description": "Engulfed in flames, taking fire damage.",
+    "type": "debuff",
+    "tags": ["fire", "dot", "elemental"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "burning" },
+    "stackBehavior": "stack",
+    "maxStacks": 5,
+    "duration": {
+      "type": "turns",
+      "value": 3
+    },
+    "triggers": {
+      "onTurnEnd": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "damage",
+            "amount": { "type": "perStack", "perStack": 4 },
+            "damageType": "fire"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "frozen",
+    "name": "Frozen",
+    "description": "Encased in ice, movement severely restricted.",
+    "type": "debuff",
+    "tags": ["ice", "slow", "elemental"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "frozen" },
+    "stackBehavior": "replace",
+    "duration": {
+      "type": "turns",
+      "value": 2
+    },
+    "modifiers": [
+      {
+        "stat": "speed",
+        "operation": "percent",
+        "value": -75
+      },
+      {
+        "stat": "evasion",
+        "operation": "percent",
+        "value": -50
+      }
+    ]
+  },
+  {
+    "id": "stunned",
+    "name": "Stunned",
+    "description": "Unable to act this turn.",
+    "type": "debuff",
+    "tags": ["stun", "incapacitate"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "stunned" },
+    "stackBehavior": "replace",
+    "duration": {
+      "type": "turns",
+      "value": 1
+    },
+    "modifiers": [
+      {
+        "stat": "canAct",
+        "operation": "set",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": "defense_up",
+    "name": "Defense Up",
+    "description": "Increased protection against attacks.",
+    "type": "buff",
+    "tags": ["buff", "defense"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "defense_up" },
+    "stackBehavior": "refresh",
+    "duration": {
+      "type": "turns",
+      "value": 5
+    },
+    "modifiers": [
+      {
+        "stat": "defense",
+        "operation": "percent",
+        "value": 25
+      }
+    ]
+  },
+  {
+    "id": "chastity_denial",
+    "name": "Chastity Denial",
+    "description": "Prevented from achieving release.",
+    "type": "status",
+    "tags": ["chastity", "denial", "nsfw"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "chastity" },
+    "stackBehavior": "replace",
+    "duration": {
+      "type": "untilCondition",
+      "condition": { "type": "hasEquipment", "slot": "genitals", "not": true }
+    },
+    "modifiers": [
+      {
+        "stat": "canClimax",
+        "operation": "set",
+        "value": false
+      }
+    ],
+    "triggers": {
+      "onStack": [
+        {
+          "condition": { "type": "arousal", "operator": "gte", "value": 10 },
+          "action": {
+            "type": "modifyCorruption",
+            "amount": 2
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "collared",
+    "name": "Collared",
+    "description": "Wearing a collar marks your submission.",
+    "type": "status",
+    "tags": ["collar", "submissive", "nsfw"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "collared" },
+    "stackBehavior": "replace",
+    "duration": {
+      "type": "untilCondition",
+      "condition": { "type": "hasEquipment", "slot": "neck", "not": true }
+    },
+    "modifiers": [
+      {
+        "stat": "willpower",
+        "operation": "percent",
+        "value": -10
+      }
+    ]
+  },
+  {
+    "id": "exposed",
+    "name": "Exposed",
+    "description": "Your body is on display, affecting your confidence.",
+    "type": "status",
+    "tags": ["exposure", "nsfw", "vulnerability"],
+    "icon": { "type": "sprite", "sheetId": "effects", "iconId": "exposed" },
+    "stackBehavior": "replace",
+    "duration": {
+      "type": "untilCondition",
+      "condition": { "type": "exposureLevel", "operator": "lt", "value": 50 }
+    },
+    "modifiers": [
+      {
+        "stat": "evasion",
+        "operation": "percent",
+        "value": -15
+      },
+      {
+        "stat": "willpower",
+        "operation": "percent",
+        "value": -20
+      }
+    ]
+  }
+]

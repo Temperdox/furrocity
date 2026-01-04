@@ -1,0 +1,78 @@
+{
+  "entries": [
+    {
+      "id": "global_consumables",
+      "name": "Standard Consumables",
+      "tags": ["consumable", "common"],
+      "entries": [
+        { "type": "item", "itemId": "health_potion_small", "weight": 35 },
+        { "type": "item", "itemId": "stamina_potion_small", "weight": 30 },
+        { "type": "item", "itemId": "antidote_minor", "weight": 15 },
+        { "type": "item", "itemId": "bandage", "weight": 25, "count": { "min": 1, "max": 3 } },
+        { "type": "item", "itemId": "ration", "weight": 20, "count": { "min": 1, "max": 2 } }
+      ],
+      "roll_count": { "min": 1, "max": 1 }
+    },
+    {
+      "id": "global_gold",
+      "name": "Gold Drops",
+      "tags": ["gold", "currency"],
+      "entries": [
+        { "type": "item", "itemId": "gold", "weight": 100, "count": { "min": 1, "max": 100 } }
+      ],
+      "modifiers": {
+        "level_scaling": {
+          "enabled": true,
+          "item_level_offset": 0,
+          "item_level_variance": 0
+        }
+      },
+      "roll_count": { "min": 1, "max": 1 }
+    },
+    {
+      "id": "global_nsfw_common",
+      "name": "Common NSFW Items",
+      "tags": ["nsfw", "common"],
+      "entries": [
+        { "type": "item", "itemId": "aphrodisiac_weak", "weight": 25 },
+        { "type": "item", "itemId": "lubricant", "weight": 30 },
+        { "type": "item", "itemId": "revealing_underwear", "weight": 20 },
+        { "type": "item", "itemId": "purity_suppressant", "weight": 15 },
+        { "type": "item", "itemId": "arousal_suppressant", "weight": 10 }
+      ],
+      "roll_count": { "min": 0, "max": 1 }
+    },
+    {
+      "id": "global_materials",
+      "name": "Crafting Materials",
+      "tags": ["material", "crafting"],
+      "entries": [
+        { "type": "item", "itemId": "iron_ore", "weight": 20, "count": { "min": 1, "max": 3 } },
+        { "type": "item", "itemId": "leather_scraps", "weight": 25, "count": { "min": 1, "max": 4 } },
+        { "type": "item", "itemId": "cloth_scraps", "weight": 25, "count": { "min": 1, "max": 4 } },
+        { "type": "item", "itemId": "wood", "weight": 20, "count": { "min": 1, "max": 5 } },
+        { "type": "item", "itemId": "thread", "weight": 15, "count": { "min": 1, "max": 3 } }
+      ],
+      "roll_count": { "min": 1, "max": 2 }
+    },
+    {
+      "id": "global_rare_drops",
+      "name": "Rare Bonus Drops",
+      "tags": ["rare", "bonus"],
+      "conditions": {
+        "player_level_min": 5
+      },
+      "entries": [
+        { "type": "item", "itemId": "skill_book_random", "weight": 5, "rarity_scaling": true },
+        { "type": "item", "itemId": "enchanted_gem", "weight": 10, "rarity_scaling": true },
+        { "type": "item", "itemId": "rare_material", "weight": 15, "rarity_scaling": true },
+        { "type": "item", "itemId": "treasure_map", "weight": 8 },
+        { "type": "nothing", "weight": 62 }
+      ],
+      "modifiers": {
+        "luck_scaling": { "enabled": true, "per_point": 0.05 }
+      },
+      "roll_count": { "min": 0, "max": 1 }
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "entries": [
+    {
+      "id": "forest_day_common",
+      "name": "Forest Daytime Common",
+      "tags": ["forest", "daytime", "common"],
+      "conditions": {
+        "time_of_day": ["dawn", "day", "dusk"]
+      },
+      "encounters": [
+        { "type": "enemy", "enemyId": "forest_wolf", "weight": 30, "count": { "min": 1, "max": 2 } },
+        { "type": "enemy", "enemyId": "forest_goblin", "weight": 25, "count": { "min": 1, "max": 3 } },
+        { "type": "ambient", "description": "A gentle breeze rustles through the leaves.", "weight": 20 },
+        { "type": "event", "eventId": "forest_foraging", "weight": 15 },
+        { "type": "social", "npcId": "traveling_merchant", "weight": 10 }
+      ],
+      "loot_tables": ["forest_common", "global_consumables"],
+      "rate_multiplier": 1.0
+    },
+    {
+      "id": "forest_night_common",
+      "name": "Forest Nighttime Common",
+      "tags": ["forest", "night", "night_active", "dangerous"],
+      "conditions": {
+        "time_of_day": ["night", "midnight"]
+      },
+      "encounters": [
+        { "type": "enemy", "enemyId": "forest_wolf", "weight": 35, "count": { "min": 2, "max": 4 }, "pack_behavior": true },
+        { "type": "enemy", "enemyId": "night_goblin", "weight": 25, "count": { "min": 2, "max": 4 } },
+        { "type": "enemy", "enemyId": "forest_bandit", "weight": 20, "count": { "min": 1, "max": 2 } },
+        { "type": "ambient", "description": "Eerie sounds echo through the darkness.", "weight": 15 },
+        { "type": "trap", "trapId": "hidden_snare", "weight": 5 }
+      ],
+      "loot_tables": ["forest_uncommon", "forest_beast_drops"],
+      "rate_multiplier": 1.3
+    },
+    {
+      "id": "forest_feral_attracted",
+      "name": "Forest Feral Attraction",
+      "tags": ["forest", "attracts_feral", "attracts_beast", "attracts_animal"],
+      "conditions": {
+        "player_conditions": [
+          { "type": "has_debuff", "debuff": "pheromone_emitting" }
+        ]
+      },
+      "encounters": [
+        { "type": "enemy", "enemyId": "feral_wolf_alpha", "weight": 30 },
+        { "type": "enemy", "enemyId": "feral_wolf", "weight": 40, "count": { "min": 2, "max": 5 }, "pack_behavior": true },
+        { "type": "enemy", "enemyId": "feral_bear", "weight": 20 },
+        { "type": "lustful", "enemyId": "lust_beast", "weight": 10 }
+      ],
+      "loot_tables": ["forest_beast_drops", "forest_feral_nsfw"],
+      "rate_multiplier": 2.0
+    },
+    {
+      "id": "forest_humanoid_attracted",
+      "name": "Forest Humanoid Attraction",
+      "tags": ["forest", "attracts_humanoid", "attracts_opportunistic"],
+      "encounters": [
+        { "type": "enemy", "enemyId": "forest_bandit", "weight": 40, "count": { "min": 1, "max": 3 } },
+        { "type": "predatory", "enemyId": "forest_bandit_lustful", "weight": 25, "count": { "min": 1, "max": 2 } },
+        { "type": "enemy", "enemyId": "forest_goblin", "weight": 20, "count": { "min": 2, "max": 4 } },
+        { "type": "social", "npcId": "suspicious_traveler", "weight": 15 }
+      ],
+      "loot_tables": ["forest_bandit_drops", "global_nsfw_common"],
+      "rate_multiplier": 1.5
+    },
+    {
+      "id": "forest_lustful",
+      "name": "Forest Lustful Encounters",
+      "tags": ["forest", "attracts_lustful", "nsfw"],
+      "encounters": [
+        { "type": "lustful", "enemyId": "forest_satyr", "weight": 30 },
+        { "type": "lustful", "enemyId": "dryad", "weight": 25 },
+        { "type": "predatory", "enemyId": "tentacle_plant", "weight": 20 },
+        { "type": "lustful", "enemyId": "nymph", "weight": 15 },
+        { "type": "event", "eventId": "aphrodisiac_pollen", "weight": 10 }
+      ],
+      "loot_tables": ["forest_feral_nsfw", "global_nsfw_common"],
+      "rate_multiplier": 1.4
+    },
+    {
+      "id": "forest_corrupted",
+      "name": "Corrupted Forest Encounters",
+      "tags": ["forest", "corrupted", "attracts_demon", "attracts_corrupted"],
+      "conditions": {
+        "location_tags": ["corrupted"]
+      },
+      "encounters": [
+        { "type": "enemy", "enemyId": "corrupted_wolf", "weight": 30, "count": { "min": 1, "max": 2 } },
+        { "type": "enemy", "enemyId": "lesser_imp", "weight": 25, "count": { "min": 2, "max": 4 } },
+        { "type": "predatory", "enemyId": "corruption_slime", "weight": 20 },
+        { "type": "lustful", "enemyId": "minor_succubus", "weight": 15 },
+        { "type": "ambient", "description": "Dark energy pulses through the corrupted earth.", "weight": 10 }
+      ],
+      "loot_tables": ["dungeon_nsfw", "forest_uncommon"],
+      "rate_multiplier": 1.6
+    },
+    {
+      "id": "forest_rare_events",
+      "name": "Forest Rare Events",
+      "tags": ["forest", "rare", "special"],
+      "conditions": {
+        "player_level_min": 5
+      },
+      "encounters": [
+        { "type": "event", "eventId": "fairy_circle", "weight": 20 },
+        { "type": "social", "npcId": "forest_hermit", "weight": 25 },
+        { "type": "event", "eventId": "hidden_treasure", "weight": 15 },
+        { "type": "enemy", "enemyId": "forest_guardian", "weight": 10 },
+        { "type": "helpful", "npcId": "forest_spirit", "weight": 30 }
+      ],
+      "loot_tables": ["forest_rare", "global_rare_drops"],
+      "rate_multiplier": 0.5
+    },
+    {
+      "id": "forest_predatory",
+      "name": "Forest Predatory Encounters",
+      "tags": ["forest", "attracts_predatory", "dangerous"],
+      "encounters": [
+        { "type": "predatory", "enemyId": "forest_stalker", "weight": 30 },
+        { "type": "predatory", "enemyId": "ambush_bandit", "weight": 35, "count": { "min": 2, "max": 3 } },
+        { "type": "trap", "trapId": "bandit_snare", "weight": 20 },
+        { "type": "predatory", "enemyId": "hungry_wolf_pack", "weight": 15, "count": { "min": 3, "max": 5 }, "pack_behavior": true }
+      ],
+      "loot_tables": ["forest_bandit_drops", "forest_beast_drops"],
+      "rate_multiplier": 1.8
+    }
+  ]
+}

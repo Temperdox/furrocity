@@ -1,0 +1,426 @@
+[
+  {
+    "id": "intro_full",
+    "name": "The Beginning",
+    "description": "Full introduction sequence",
+    "tags": ["intro", "story", "vanilla"],
+    "location": "starting_inn",
+    "onEnter": [
+      { "type": "playMusic", "trackId": "tavern_ambient" }
+    ],
+    "nodes": [
+      {
+        "type": "dialogue",
+        "speaker": "Narrator",
+        "text": "You awaken in an unfamiliar room. The smell of ale and woodsmoke fills the air. Through a dusty window, pale morning light filters in.",
+        "emotion": "neutral"
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Narrator", 
+        "text": "Your head throbs with a dull ache. You remember... nothing. Only fragments of darkness and whispered words.",
+        "emotion": "mysterious"
+      },
+      {
+        "type": "dialogue",
+        "text": "A knock at the door startles you.",
+        "effects": [
+          { "type": "playSound", "soundId": "knock_door" }
+        ]
+      },
+      {
+        "type": "choice",
+        "prompt": "What do you do?",
+        "choices": [
+          {
+            "id": "answer_door",
+            "text": "Answer the door",
+            "goto": 5
+          },
+          {
+            "id": "ignore_door",
+            "text": "Ignore it and search the room",
+            "gotoLabel": "search_room"
+          },
+          {
+            "id": "hide",
+            "text": "Hide under the bed",
+            "requiresTags": ["comedy"],
+            "gotoLabel": "hide_sequence"
+          }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Innkeeper Mary",
+        "speakerImage": "/npcs/mary.png",
+        "text": "Good morning, traveler! I hope you slept well. Breakfast is ready downstairs if you're hungry.",
+        "emotion": "friendly"
+      },
+      {
+        "type": "choice",
+        "choices": [
+          {
+            "id": "ask_questions",
+            "text": "Ask her about this place",
+            "actions": [
+              { "type": "modifyRelationship", "npcId": "innkeeper_mary", "amount": 5 }
+            ],
+            "gotoLabel": "mary_exposition"
+          },
+          {
+            "id": "go_breakfast",
+            "text": "Thank her and head to breakfast",
+            "nextScene": "inn_breakfast"
+          },
+          {
+            "id": "ask_about_self",
+            "text": "Ask if she knows who you are",
+            "gotoLabel": "mary_identity"
+          }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "label": "search_room",
+        "text": "You quickly search the small room. On a nightstand, you find a small pouch of coins and a worn journal.",
+        "effects": [
+          { "type": "playSound", "soundId": "item_pickup" }
+        ]
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "giveItem", "itemId": "gold_pouch_small" },
+          { "type": "giveItem", "itemId": "mysterious_journal" },
+          { "type": "showToast", "toastType": "item", "title": "Found Items", "message": "Gold pouch and journal added to inventory" }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "The knock comes again, more insistent this time.",
+        "goto": 4
+      },
+      {
+        "type": "dialogue",
+        "label": "hide_sequence",
+        "text": "You dive under the bed in a moment of panic. Dust fills your nostrils.",
+        "emotion": "comedy"
+      },
+      {
+        "type": "dialogue",
+        "text": "The door creaks open. You see a pair of worn boots approach.",
+        "speaker": "Innkeeper Mary"
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Innkeeper Mary",
+        "text": "...Are you under the bed? I can see your feet, dear.",
+        "emotion": "amused"
+      },
+      {
+        "type": "dialogue",
+        "text": "Well, this is embarrassing. You crawl out, covered in dust bunnies.",
+        "goto": 5
+      },
+      {
+        "type": "dialogue",
+        "label": "mary_exposition",
+        "speaker": "Innkeeper Mary",
+        "text": "This is the Weary Traveler Inn, at the Crossroads. We get all sorts passing through - merchants, adventurers, and... others."
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Innkeeper Mary",
+        "text": "The town square is just outside. There's a blacksmith, temple, and market if you need supplies.",
+        "variants": [
+          {
+            "condition": { "type": "stat", "stat": "intelligence", "operator": "gte", "value": 7 },
+            "text": "The town square is just outside. I notice you have a keen look about you - the temple has a library you might find interesting."
+          }
+        ]
+      },
+      {
+        "type": "choice",
+        "choices": [
+          {
+            "id": "continue_to_breakfast",
+            "text": "Thank her and head downstairs",
+            "nextScene": "inn_breakfast"
+          },
+          {
+            "id": "ask_about_dangers",
+            "text": "Are there dangers nearby?",
+            "gotoLabel": "mary_dangers"
+          }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "label": "mary_dangers",
+        "speaker": "Innkeeper Mary",
+        "text": "The Darkwood Forest to the east has grown... strange lately. Folk have gone missing. And there are rumors of bandits on the north road.",
+        "emotion": "concerned"
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "setFlag", "flag": "knows_about_darkwood", "value": true },
+          { "type": "setFlag", "flag": "knows_about_bandits", "value": true }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Innkeeper Mary",
+        "text": "Best be careful if you venture out there. Now, come get some breakfast!",
+        "nextScene": "inn_breakfast"
+      },
+      {
+        "type": "dialogue",
+        "label": "mary_identity",
+        "speaker": "Innkeeper Mary",
+        "text": "You came in last night during the storm. Paid for the room in advance and went straight to bed. Didn't give a name.",
+        "emotion": "curious"
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Innkeeper Mary",
+        "text": "Are you... alright, traveler? You look like you've seen a ghost.",
+        "variants": [
+          {
+            "condition": { "type": "nsfwStat", "stat": "corruption", "operator": "gte", "value": 10 },
+            "text": "Are you... alright, traveler? There's something different about you. A darkness in your eyes."
+          }
+        ]
+      },
+      {
+        "type": "branch",
+        "branches": [
+          {
+            "condition": { "type": "stat", "stat": "charm", "operator": "gte", "value": 6 },
+            "gotoLabel": "mary_concerned"
+          }
+        ],
+        "default": {
+          "gotoLabel": "mary_brushoff"
+        }
+      },
+      {
+        "type": "dialogue",
+        "label": "mary_concerned",
+        "speaker": "Innkeeper Mary",
+        "text": "If you need to talk, I'm here. Come, let's get some food in you. Everything seems better after breakfast.",
+        "actions": [
+          { "type": "modifyRelationship", "npcId": "innkeeper_mary", "amount": 10 }
+        ],
+        "nextScene": "inn_breakfast"
+      },
+      {
+        "type": "dialogue",
+        "label": "mary_brushoff",
+        "speaker": "Innkeeper Mary",
+        "text": "Well, it's not my business to pry. Breakfast is downstairs whenever you're ready.",
+        "emotion": "neutral"
+      },
+      {
+        "type": "end",
+        "outcome": "intro_complete"
+      }
+    ],
+    "onExit": [
+      { "type": "setFlag", "flag": "intro_completed", "value": true },
+      { "type": "unlockAchievement", "achievementId": "first_steps" }
+    ]
+  },
+  {
+    "id": "inn_breakfast",
+    "name": "Morning Meal",
+    "description": "Breakfast at the inn",
+    "tags": ["story", "vanilla", "inn"],
+    "location": "starting_inn",
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "The common room is warm and inviting. A fire crackles in the hearth, and the smell of bacon fills the air."
+      },
+      {
+        "type": "dialogue",
+        "text": "A few other patrons are scattered about - a merchant counting coins, a hooded figure in the corner, and a bard tuning his lute."
+      },
+      {
+        "type": "choice",
+        "prompt": "Where do you sit?",
+        "choices": [
+          {
+            "id": "sit_alone",
+            "text": "Take a quiet table alone",
+            "gotoLabel": "breakfast_alone"
+          },
+          {
+            "id": "sit_bard",
+            "text": "Sit near the bard",
+            "gotoLabel": "breakfast_bard"
+          },
+          {
+            "id": "sit_hooded",
+            "text": "Approach the hooded figure",
+            "showIf": { "type": "stat", "stat": "willpower", "operator": "gte", "value": 5 },
+            "gotoLabel": "breakfast_mysterious"
+          }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "label": "breakfast_alone",
+        "text": "You find a quiet corner and settle in. Mary brings you a plate of eggs, bacon, and fresh bread."
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "heal", "amount": 10 },
+          { "type": "showToast", "toastType": "heal", "title": "Breakfast", "message": "Restored 10 HP" }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "As you eat, you overhear snippets of conversation...",
+        "goto": 20
+      },
+      {
+        "type": "dialogue",
+        "label": "breakfast_bard",
+        "speaker": "Bard Tom",
+        "speakerImage": "/npcs/tom_bard.png",
+        "text": "Ah, a fellow early riser! Care to hear a song while you break your fast?",
+        "emotion": "cheerful"
+      },
+      {
+        "type": "choice",
+        "choices": [
+          {
+            "id": "accept_song",
+            "text": "I'd like that",
+            "gotoLabel": "bard_song"
+          },
+          {
+            "id": "ask_news",
+            "text": "What news do you carry?",
+            "gotoLabel": "bard_news"
+          },
+          {
+            "id": "decline",
+            "text": "Perhaps later",
+            "goto": 4
+          }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "label": "bard_song",
+        "speaker": "Bard Tom",
+        "text": "He plays a haunting melody about a fallen hero and lost love. Despite yourself, you feel moved."
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "modifyRelationship", "npcId": "bard_tom", "amount": 5 },
+          { "type": "heal", "amount": 15 }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "The music seems to ease your troubled mind.",
+        "goto": 20
+      },
+      {
+        "type": "dialogue",
+        "label": "bard_news",
+        "speaker": "Bard Tom",
+        "text": "Trouble in the Darkwood, strange lights at night. The old witch's hut has been smoking again. And..." 
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Bard Tom",
+        "text": "He leans closer. 'The temple priests are worried. They speak of corruption spreading. Be careful, friend.'",
+        "emotion": "serious"
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "setFlag", "flag": "knows_about_witch", "value": true },
+          { "type": "setFlag", "flag": "knows_about_corruption", "value": true }
+        ]
+      },
+      {
+        "type": "end",
+        "outcome": "breakfast_complete"
+      },
+      {
+        "type": "dialogue",
+        "label": "breakfast_mysterious",
+        "text": "The hooded figure watches you approach. You feel an unsettling chill as you draw near.",
+        "emotion": "mysterious"
+      },
+      {
+        "type": "statCheck",
+        "stat": "willpower",
+        "difficulty": 6,
+        "onSuccess": {
+          "gotoLabel": "mysterious_success"
+        },
+        "onFailure": {
+          "gotoLabel": "mysterious_failure"
+        }
+      },
+      {
+        "type": "dialogue",
+        "label": "mysterious_success",
+        "speaker": "Hooded Figure",
+        "text": "'You have a strong will,' a female voice says. 'That will serve you well in the days to come.'",
+        "emotion": "cryptic"
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Hooded Figure",
+        "text": "'Seek the temple. Ask about the corruption. You may find... answers.' She rises and leaves without another word."
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "setFlag", "flag": "mysterious_hint", "value": true },
+          { "type": "startQuest", "questId": "investigate_corruption" }
+        ]
+      },
+      {
+        "type": "end",
+        "outcome": "mysterious_encounter"
+      },
+      {
+        "type": "dialogue",
+        "label": "mysterious_failure",
+        "text": "As you approach, a wave of dizziness washes over you. When your vision clears, the figure is gone.",
+        "emotion": "unsettling"
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "modifyCorruption", "amount": 2 },
+          { "type": "showToast", "toastType": "debuff", "title": "Strange Presence", "message": "+2 Corruption" }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "You shake your head and return to your meal, but the unease lingers."
+      },
+      {
+        "type": "dialogue",
+        "label": 20,
+        "text": "After finishing your meal, you feel ready to face the day. The world awaits."
+      },
+      {
+        "type": "end",
+        "outcome": "breakfast_complete"
+      }
+    ]
+  }
+]

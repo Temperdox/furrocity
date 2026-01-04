@@ -1,0 +1,593 @@
+[
+  {
+    "id": "bandit_defeat_normal_1",
+    "name": "Bandit Capture",
+    "description": "Captured by bandits after defeat",
+    "tags": ["defeat", "bandit", "vanilla", "capture"],
+    "category": "normal",
+    "enemyType": "bandit",
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "The world fades to black as the bandit's blow connects. When you awaken, your hands are bound."
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Bandit Leader",
+        "text": "'Well, well. Looks like we've got ourselves a prisoner. Let's see what valuables you're carrying.'",
+        "emotion": "threatening"
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "removeGold", "amount": 50, "percent": 0.5 },
+          { "type": "showToast", "toastType": "warning", "title": "Robbed!", "message": "Lost half your gold" }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "They rifle through your belongings, taking what they want. After what feels like hours, they grow bored."
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Bandit Leader",
+        "text": "'Dump 'em outside. They're not worth the trouble of keeping around.'",
+        "emotion": "dismissive"
+      },
+      {
+        "type": "dialogue",
+        "text": "You're dragged to the edge of their camp and left in the dirt. Eventually, you manage to free yourself."
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "setLocation", "locationId": "north_road" },
+          { "type": "heal", "amount": 10 }
+        ]
+      },
+      {
+        "type": "end",
+        "outcome": "defeat_released"
+      }
+    ]
+  },
+  {
+    "id": "bandit_defeat_normal_2",
+    "name": "Bandit Ransom",
+    "description": "Bandits demand ransom for your release",
+    "tags": ["defeat", "bandit", "vanilla", "capture"],
+    "category": "normal",
+    "enemyType": "bandit",
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "You wake up in a dim, damp cellar. Ropes bite into your wrists."
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Bandit",
+        "text": "'You're awake. Good. The boss wants to talk about how you're gonna pay for your freedom.'"
+      },
+      {
+        "type": "choice",
+        "prompt": "How do you respond?",
+        "choices": [
+          {
+            "id": "pay_ransom",
+            "text": "Pay the ransom (100 gold)",
+            "showIf": { "type": "gold", "operator": "gte", "value": 100 },
+            "gotoLabel": "ransom_paid"
+          },
+          {
+            "id": "refuse_ransom",
+            "text": "Refuse to pay",
+            "gotoLabel": "ransom_refused"
+          },
+          {
+            "id": "charm_escape",
+            "text": "Try to talk your way out",
+            "showIf": { "type": "stat", "stat": "charm", "operator": "gte", "value": 8 },
+            "gotoLabel": "charm_success"
+          }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "label": "ransom_paid",
+        "text": "You reluctantly hand over the gold. The bandit cuts your bonds."
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "removeGold", "amount": 100 },
+          { "type": "setLocation", "locationId": "north_road" }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "'Pleasure doing business with ya. Now get lost before we change our minds.'",
+        "speaker": "Bandit"
+      },
+      {
+        "type": "end",
+        "outcome": "defeat_ransomed"
+      },
+      {
+        "type": "dialogue",
+        "label": "ransom_refused",
+        "text": "The bandit's face hardens. 'Then you'll work off your debt. Take 'em to the mines.'"
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "modifyCorruption", "amount": 5 },
+          { "type": "damageHealth", "amount": 10 }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "After days of brutal labor, you finally manage to escape during a shift change."
+      },
+      {
+        "type": "end",
+        "outcome": "defeat_escaped"
+      },
+      {
+        "type": "dialogue",
+        "label": "charm_success",
+        "text": "You spin a tale of powerful friends and terrible vengeance. The bandit's confidence wavers."
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Bandit",
+        "text": "'...Fine. Get out of here. But if I see you again, you're dead.'",
+        "emotion": "frustrated"
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "setLocation", "locationId": "north_road" }
+        ]
+      },
+      {
+        "type": "end",
+        "outcome": "defeat_charmed"
+      }
+    ]
+  },
+  {
+    "id": "bandit_surrender_nsfw_1",
+    "name": "Bandit's Plaything",
+    "description": "Surrendering to aroused bandits - explicit content",
+    "tags": ["surrender", "bandit", "nsfw", "domination", "humiliation"],
+    "category": "nsfw",
+    "enemyType": "bandit",
+    "requiresTags": ["domination", "humiliation"],
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "You drop your weapon and raise your hands. The bandit's eyes gleam with cruel amusement."
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Bandit",
+        "text": "'Now that's more like it. On your knees.'",
+        "emotion": "dominant"
+      },
+      {
+        "type": "dialogue",
+        "text": "[Scene continues based on enabled content tags...]"
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "modifyCorruption", "amount": 15 },
+          { "type": "applyEffect", "effectId": "aroused", "stacks": 5 }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "After having their way with you, the bandits leave you on the roadside, clothes disheveled and pride wounded."
+      },
+      {
+        "type": "end",
+        "outcome": "surrender_nsfw"
+      }
+    ]
+  },
+  {
+    "id": "wolf_defeat_normal_1",
+    "name": "Left for Dead",
+    "description": "Wolves lose interest after defeating you",
+    "tags": ["defeat", "wolf", "beast", "vanilla"],
+    "category": "normal",
+    "enemyType": "forest_wolf",
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "The wolf's fangs tear at your arm as you fall. Pain explodes through your body."
+      },
+      {
+        "type": "dialogue",
+        "text": "The pack circles you, snarling. But as you lie still, playing dead, they seem to lose interest."
+      },
+      {
+        "type": "dialogue",
+        "text": "One by one, they pad away into the shadows of the forest. You're left bleeding but alive."
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "applyEffect", "effectId": "bleeding", "stacks": 2 },
+          { "type": "damageClothing", "slot": "all", "amount": 20 }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "You struggle to your feet, wounds aching. You need to find help soon."
+      },
+      {
+        "type": "end",
+        "outcome": "defeat_survived"
+      }
+    ]
+  },
+  {
+    "id": "wolf_defeat_normal_2",
+    "name": "Dragged to the Den",
+    "description": "Wolves drag you back to their den",
+    "tags": ["defeat", "wolf", "beast", "vanilla", "capture"],
+    "category": "normal",
+    "enemyType": "forest_wolf",
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "Powerful jaws clamp onto your leg. The alpha wolf drags you, helpless, through the underbrush."
+      },
+      {
+        "type": "dialogue",
+        "text": "You're brought to a cave mouth - the wolf den. The pack watches with hungry eyes."
+      },
+      {
+        "type": "dialogue",
+        "text": "Hours pass. The wolves seem to be saving you for later. When their guard slips, you might escape..."
+      },
+      {
+        "type": "choice",
+        "prompt": "What do you do?",
+        "choices": [
+          {
+            "id": "wait_escape",
+            "text": "Wait for an opportunity",
+            "gotoLabel": "escape_attempt"
+          },
+          {
+            "id": "fight_back",
+            "text": "Fight your way out",
+            "showIf": { "type": "stat", "stat": "strength", "operator": "gte", "value": 8 },
+            "gotoLabel": "fight_escape"
+          }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "label": "escape_attempt",
+        "text": "When the alpha leaves to hunt, you slowly, painfully crawl toward freedom."
+      },
+      {
+        "type": "statCheck",
+        "stat": "evasion",
+        "difficulty": 5,
+        "onSuccess": {
+          "gotoLabel": "escaped"
+        },
+        "onFailure": {
+          "gotoLabel": "caught"
+        }
+      },
+      {
+        "type": "dialogue",
+        "label": "escaped",
+        "text": "You slip away into the forest, heart pounding. Behind you, a howl of frustration echoes through the trees."
+      },
+      {
+        "type": "end",
+        "outcome": "defeat_escaped"
+      },
+      {
+        "type": "dialogue",
+        "label": "caught",
+        "text": "A young wolf spots you and barks an alarm. You're dragged back, earning fresh wounds for your trouble."
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "damageHealth", "amount": 15 },
+          { "type": "applyEffect", "effectId": "bleeding" }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "Eventually, a passing hunter's horn scares the pack away. You're left battered but free."
+      },
+      {
+        "type": "end",
+        "outcome": "defeat_rescued"
+      },
+      {
+        "type": "dialogue",
+        "label": "fight_escape",
+        "text": "With a surge of desperate strength, you kick the nearest wolf and sprint for the exit."
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "damageHealth", "amount": 10 }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "Teeth snap at your heels, but you burst into the daylight and don't stop running."
+      },
+      {
+        "type": "end",
+        "outcome": "defeat_fought_free"
+      }
+    ]
+  },
+  {
+    "id": "slime_defeat_normal_1",
+    "name": "Engulfed",
+    "description": "Slime engulfs you",
+    "tags": ["defeat", "slime", "ooze", "vanilla", "dissolving"],
+    "category": "normal",
+    "enemyType": "slime",
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "The slime oozes over you, its acidic body burning wherever it touches. Your vision blurs."
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "damageClothing", "slot": "all", "amount": 30 }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "When you wake, you're covered in sticky residue. Your clothes are partially dissolved, but you're alive."
+      },
+      {
+        "type": "dialogue",
+        "text": "The slime seems to have moved on, perhaps seeking easier prey. You need new clothes..."
+      },
+      {
+        "type": "end",
+        "outcome": "defeat_dissolved"
+      }
+    ]
+  },
+  {
+    "id": "slime_surrender_nsfw_1",
+    "name": "Slime Embrace",
+    "description": "Surrendering to slime - explicit tentacle content",
+    "tags": ["surrender", "slime", "ooze", "nsfw", "tentacle", "penetration"],
+    "category": "nsfw",
+    "enemyType": "slime",
+    "requiresTags": ["tentacle", "penetration"],
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "You stop resisting, and the slime takes this as an invitation. Its body flows around you..."
+      },
+      {
+        "type": "dialogue",
+        "text": "[Scene continues based on enabled content tags - tentacle, penetration, etc.]"
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "modifyCorruption", "amount": 20 },
+          { "type": "applyEffect", "effectId": "aroused", "stacks": 8 },
+          { "type": "damageClothing", "slot": "all", "amount": 50 }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "When the slime finally releases you, you're left trembling and changed. Something dark stirs within..."
+      },
+      {
+        "type": "end",
+        "outcome": "surrender_nsfw_slime"
+      }
+    ]
+  },
+  {
+    "id": "succubus_defeat_normal_1",
+    "name": "Soul Drain",
+    "description": "Succubus drains your energy",
+    "tags": ["defeat", "succubus", "demon", "vanilla", "drain"],
+    "category": "normal",
+    "enemyType": "succubus",
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "The succubus's magic overwhelms you. Your strength fades as darkness claims your vision."
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Succubus",
+        "speakerImage": "/enemies/succubus.png",
+        "text": "'Mmm, your essence is... exquisite. I'll leave you alive. For now. You may yet provide more entertainment.'",
+        "emotion": "seductive"
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "modifyCorruption", "amount": 25 },
+          { "type": "applyEffect", "effectId": "curse_lust" }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "You wake alone, feeling hollow and changed. A dark hunger stirs within you that wasn't there before."
+      },
+      {
+        "type": "end",
+        "outcome": "defeat_drained"
+      }
+    ]
+  },
+  {
+    "id": "succubus_surrender_nsfw_1",
+    "name": "Willing Thrall",
+    "description": "Surrendering to the succubus - explicit domination content",
+    "tags": ["surrender", "succubus", "demon", "nsfw", "domination", "mind_control", "corruption"],
+    "category": "nsfw",
+    "enemyType": "succubus",
+    "requiresTags": ["domination", "mind_control"],
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "You lower your weapon and drop to your knees. The succubus smiles, her eyes glowing with dark pleasure."
+      },
+      {
+        "type": "dialogue",
+        "speaker": "Succubus",
+        "text": "'A wise choice, little mortal. I do so enjoy willing playthings...'",
+        "emotion": "dominant"
+      },
+      {
+        "type": "dialogue",
+        "text": "[Scene continues based on enabled content tags - domination, mind_control, corruption, etc.]"
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "modifyCorruption", "amount": 35 },
+          { "type": "applyEffect", "effectId": "hypnotized" },
+          { "type": "applyEffect", "effectId": "curse_lust" },
+          { "type": "applyEffect", "effectId": "aroused", "stacks": 10 }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "Hours later - or was it days? - you wake with dark memories and darker urges. The succubus's mark burns on your skin."
+      },
+      {
+        "type": "end",
+        "outcome": "surrender_nsfw_succubus"
+      }
+    ]
+  },
+  {
+    "id": "tentacle_plant_defeat_normal_1",
+    "name": "Trapped in Vines",
+    "description": "Tentacle plant captures you",
+    "tags": ["defeat", "plant", "tentacle", "vanilla", "restraint"],
+    "category": "normal",
+    "enemyType": "tentacle_plant",
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "Vines wrap around your limbs, pulling you toward the massive plant's maw. You struggle helplessly."
+      },
+      {
+        "type": "dialogue",
+        "text": "The plant secretes a numbing pollen. Your struggles weaken as drowsiness overtakes you."
+      },
+      {
+        "type": "dialogue",
+        "text": "When you wake, you're on the forest floor, covered in sap. The plant seems to have rejected you as prey."
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "applyEffect", "effectId": "poison" },
+          { "type": "damageClothing", "slot": "all", "amount": 25 }
+        ]
+      },
+      {
+        "type": "end",
+        "outcome": "defeat_rejected"
+      }
+    ]
+  },
+  {
+    "id": "tentacle_plant_surrender_nsfw_1",
+    "name": "Willing Breeding",
+    "description": "Surrendering to tentacle plant - explicit content",
+    "tags": ["surrender", "plant", "tentacle", "nsfw", "tentacle", "penetration", "oviposition"],
+    "category": "nsfw",
+    "enemyType": "tentacle_plant",
+    "requiresTags": ["tentacle", "penetration"],
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "You stop fighting the vines. They seem to pulse with excitement at your compliance."
+      },
+      {
+        "type": "dialogue",
+        "text": "[Scene continues based on enabled content tags - tentacle, penetration, oviposition, etc.]"
+      },
+      {
+        "type": "action",
+        "actions": [
+          { "type": "modifyCorruption", "amount": 25 },
+          { "type": "applyEffect", "effectId": "aroused", "stacks": 10 },
+          { "type": "damageClothing", "slot": "all", "amount": 75 }
+        ]
+      },
+      {
+        "type": "dialogue",
+        "text": "The plant eventually releases you, satisfied. Strange warmth spreads through your body..."
+      },
+      {
+        "type": "end",
+        "outcome": "surrender_nsfw_plant"
+      }
+    ]
+  },
+  {
+    "id": "generic_victory_1",
+    "name": "Triumphant",
+    "description": "Generic victory celebration",
+    "tags": ["victory", "vanilla", "generic"],
+    "category": "normal",
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "Your enemies lie defeated before you. You take a moment to catch your breath and assess your wounds."
+      },
+      {
+        "type": "dialogue",
+        "text": "Victory is yours. You search the area for anything of value."
+      },
+      {
+        "type": "end",
+        "outcome": "victory"
+      }
+    ]
+  },
+  {
+    "id": "fled_narrow_escape_1",
+    "name": "Narrow Escape",
+    "description": "Just barely escaped combat",
+    "tags": ["fled", "vanilla", "generic"],
+    "category": "normal",
+    "nodes": [
+      {
+        "type": "dialogue",
+        "text": "You turn and run, adrenaline pumping through your veins. Behind you, angry shouts fade into the distance."
+      },
+      {
+        "type": "dialogue",
+        "text": "When you finally stop, lungs burning, you realize you've escaped. This time."
+      },
+      {
+        "type": "end",
+        "outcome": "fled"
+      }
+    ]
+  }
+]

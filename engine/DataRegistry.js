@@ -1,12 +1,26 @@
 /**
  * DataRegistry - Async content lookup system with lazy loading and caching
- * 
+ *
+ * Now supports the DataPack system for modular, tag-based content loading
+ * with sprite sheets, loot tables, and encounter tables.
+ *
  * Usage:
  *   const registry = new DataRegistry('/content/manifest.json');
  *   await registry.init();
  *   const sword = await registry.getItem('iron_sword');
  *   const goblins = await registry.queryItemsByTag('goblin');
+ *
+ * DataPack Mode:
+ *   const registry = new DataRegistry({ useDataPacks: true });
+ *   await registry.init();
+ *   // All content now loaded from /datapacks/
  */
+
+import DataPackManager from './DataPackManager.js';
+import SpriteSheetManager from './SpriteSheetManager.js';
+import ConditionEvaluator from './ConditionEvaluator.js';
+import LootTableSystem from './LootTableSystem.js';
+import EncounterTableSystem from './EncounterTableSystem.js';
 
 // Simple LRU Cache implementation
 class LRUCache {
@@ -139,8 +153,15 @@ class ContentCache {
 
 // Main Data Registry
 export class DataRegistry {
-  constructor(manifestUrl = '/content/manifest.json', options = {}) {
-    this.manifestUrl = manifestUrl;
+  constructor(manifestUrlOrOptions = '/content/manifest.json', options = {}) {
+    // Handle new options-only constructor format
+    if (typeof manifestUrlOrOptions === 'object') {
+      options = manifestUrlOrOptions;
+      this.manifestUrl = options.manifestUrl || '/content/manifest.json';
+    } else {
+      this.manifestUrl = manifestUrlOrOptions;
+    }
+
     this.manifest = null;
     this.indexes = {};
     this.loadedChunks = new Map(); // chunkId -> chunk data
@@ -149,7 +170,41 @@ export class DataRegistry {
     this.pendingChunks = new Map(); // chunkId -> Promise (prevent duplicate fetches)
     this.baseUrl = options.baseUrl || '/content';
     this.initialized = false;
-    
+
+    // DataPack system
+    this.useDataPacks = options.useDataPacks || false;
+    this.dataPacksPath = options.dataPacksPath || '/datapacks';
+
+    /**
+     * DataPackManager instance (when using datapacks)
+     * @type {DataPackManager|null}
+     */
+    this.dataPackManager = null;
+
+    /**
+     * SpriteSheetManager instance
+     * @type {SpriteSheetManager|null}
+     */
+    this.spriteManager = null;
+
+    /**
+     * ConditionEvaluator instance
+     * @type {ConditionEvaluator|null}
+     */
+    this.conditionEvaluator = null;
+
+    /**
+     * LootTableSystem instance
+     * @type {LootTableSystem|null}
+     */
+    this.lootTableSystem = null;
+
+    /**
+     * EncounterTableSystem instance
+     * @type {EncounterTableSystem|null}
+     */
+    this.encounterTableSystem = null;
+
     // Content type configurations
     this.contentTypes = {
       items: { idPrefix: 'item:', chunkPrefix: 'items_' },
@@ -161,13 +216,14 @@ export class DataRegistry {
       achievements: { idPrefix: 'achievement:', chunkPrefix: 'achievements_' },
       dialogues: { idPrefix: 'dialogue:', chunkPrefix: 'dialogues_' },
       skills: { idPrefix: 'skill:', chunkPrefix: 'skills_' },
-      quests: { idPrefix: 'quest:', chunkPrefix: 'quests_' }
+      quests: { idPrefix: 'quest:', chunkPrefix: 'quests_' },
+      substances: { idPrefix: 'substance:', chunkPrefix: 'substances_' }
     };
   }
 
   async init() {
     if (this.initialized) return;
-    
+
     // Initialize IndexedDB cache
     if (this.persistentCache) {
       try {
@@ -177,14 +233,56 @@ export class DataRegistry {
         this.persistentCache = null;
       }
     }
-    
-    // Load manifest
-    await this.loadManifest();
-    
-    // Load indexes
-    await this.loadIndexes();
-    
+
+    // Use DataPack system if enabled
+    if (this.useDataPacks) {
+      await this.initDataPacks();
+    } else {
+      // Legacy initialization
+      await this.loadManifest();
+      await this.loadIndexes();
+    }
+
     this.initialized = true;
+  }
+
+  /**
+   * Initialize the DataPack system and all subsystems
+   * @returns {Promise<void>}
+   */
+  async initDataPacks() {
+    console.log('Initializing DataPack system...');
+
+    // Create and initialize DataPackManager
+    this.dataPackManager = new DataPackManager({
+      baseDir: this.dataPacksPath
+    });
+    await this.dataPackManager.loadAllPacks();
+
+    // Get merged manifest for compatibility
+    this.manifest = this.dataPackManager.getMergedManifest();
+
+    // Initialize SpriteSheetManager
+    this.spriteManager = new SpriteSheetManager();
+    await this.spriteManager.loadSpriteSheets(this.dataPackManager);
+
+    // Initialize ConditionEvaluator
+    this.conditionEvaluator = new ConditionEvaluator();
+    await this.conditionEvaluator.initialize(this.dataPackManager);
+
+    // Initialize LootTableSystem
+    this.lootTableSystem = new LootTableSystem({
+      packManager: this.dataPackManager
+    });
+    await this.lootTableSystem.initialize(this.dataPackManager, this.conditionEvaluator);
+
+    // Initialize EncounterTableSystem
+    this.encounterTableSystem = new EncounterTableSystem({
+      packManager: this.dataPackManager
+    });
+    await this.encounterTableSystem.initialize(this.dataPackManager, this.conditionEvaluator);
+
+    console.log('DataPack system initialized successfully');
   }
 
   async loadManifest() {
@@ -330,13 +428,19 @@ export class DataRegistry {
   // ========================================
 
   async getItem(itemId) {
+    // DataPack mode
+    if (this.useDataPacks && this.dataPackManager) {
+      return this.dataPackManager.getContentById('items', itemId);
+    }
+
+    // Legacy mode
     const cacheKey = `item:${itemId}`;
-    
+
     // Check memory cache
     if (this.itemCache.has(cacheKey)) {
       return this.itemCache.get(cacheKey);
     }
-    
+
     // Find and load chunk
     const chunkId = this._findChunkForId('items', itemId);
     if (chunkId) {
@@ -347,25 +451,29 @@ export class DataRegistry {
         return item;
       }
     }
-    
+
     // Fallback: search all item chunks
-    const itemChunks = Object.keys(this.manifest.chunks).filter(k => k.startsWith('items_'));
-    for (const chunkId of itemChunks) {
-      const chunk = await this.loadChunk(chunkId);
+    const itemChunks = Object.keys(this.manifest.chunks || {}).filter(k => k.startsWith('items_'));
+    for (const chId of itemChunks) {
+      const chunk = await this.loadChunk(chId);
       const item = chunk.items?.[itemId] || chunk[itemId];
       if (item) {
         this.itemCache.set(cacheKey, item);
         return item;
       }
     }
-    
+
     return null;
   }
 
   async getScene(sceneId) {
+    if (this.useDataPacks && this.dataPackManager) {
+      return this.dataPackManager.getContentById('scenes', sceneId);
+    }
+
     const cacheKey = `scene:${sceneId}`;
     if (this.itemCache.has(cacheKey)) return this.itemCache.get(cacheKey);
-    
+
     const chunkId = this._findChunkForId('scenes', sceneId);
     if (chunkId) {
       const chunk = await this.loadChunk(chunkId);
@@ -379,9 +487,13 @@ export class DataRegistry {
   }
 
   async getEnemy(enemyId) {
+    if (this.useDataPacks && this.dataPackManager) {
+      return this.dataPackManager.getContentById('enemies', enemyId);
+    }
+
     const cacheKey = `enemy:${enemyId}`;
     if (this.itemCache.has(cacheKey)) return this.itemCache.get(cacheKey);
-    
+
     const chunkId = this._findChunkForId('enemies', enemyId);
     if (chunkId) {
       const chunk = await this.loadChunk(chunkId);
@@ -395,9 +507,13 @@ export class DataRegistry {
   }
 
   async getLocation(locationId) {
+    if (this.useDataPacks && this.dataPackManager) {
+      return this.dataPackManager.getContentById('locations', locationId);
+    }
+
     const cacheKey = `location:${locationId}`;
     if (this.itemCache.has(cacheKey)) return this.itemCache.get(cacheKey);
-    
+
     const chunkId = this._findChunkForId('locations', locationId);
     if (chunkId) {
       const chunk = await this.loadChunk(chunkId);
@@ -411,9 +527,13 @@ export class DataRegistry {
   }
 
   async getNpc(npcId) {
+    if (this.useDataPacks && this.dataPackManager) {
+      return this.dataPackManager.getContentById('npcs', npcId);
+    }
+
     const cacheKey = `npc:${npcId}`;
     if (this.itemCache.has(cacheKey)) return this.itemCache.get(cacheKey);
-    
+
     const chunkId = this._findChunkForId('npcs', npcId);
     if (chunkId) {
       const chunk = await this.loadChunk(chunkId);
@@ -427,9 +547,13 @@ export class DataRegistry {
   }
 
   async getEffect(effectId) {
+    if (this.useDataPacks && this.dataPackManager) {
+      return this.dataPackManager.getContentById('effects', effectId);
+    }
+
     const cacheKey = `effect:${effectId}`;
     if (this.itemCache.has(cacheKey)) return this.itemCache.get(cacheKey);
-    
+
     const chunkId = this._findChunkForId('effects', effectId);
     if (chunkId) {
       const chunk = await this.loadChunk(chunkId);
@@ -437,6 +561,31 @@ export class DataRegistry {
       if (effect) {
         this.itemCache.set(cacheKey, effect);
         return effect;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get a substance by ID
+   * @param {string} substanceId - Substance ID
+   * @returns {Promise<Object|null>}
+   */
+  async getSubstance(substanceId) {
+    if (this.useDataPacks && this.dataPackManager) {
+      return this.dataPackManager.getContentById('substances', substanceId);
+    }
+
+    const cacheKey = `substance:${substanceId}`;
+    if (this.itemCache.has(cacheKey)) return this.itemCache.get(cacheKey);
+
+    const chunkId = this._findChunkForId('substances', substanceId);
+    if (chunkId) {
+      const chunk = await this.loadChunk(chunkId);
+      const substance = chunk.substances?.[substanceId] || chunk[substanceId];
+      if (substance) {
+        this.itemCache.set(cacheKey, substance);
+        return substance;
       }
     }
     return null;
@@ -647,6 +796,9 @@ export class DataRegistry {
   clearCache() {
     this.itemCache.clear();
     this.loadedChunks.clear();
+    if (this.conditionEvaluator) {
+      this.conditionEvaluator.clearCache();
+    }
   }
 
   async clearPersistentCache() {
@@ -656,11 +808,420 @@ export class DataRegistry {
   }
 
   getStats() {
-    return {
+    const stats = {
       loadedChunks: this.loadedChunks.size,
       cachedItems: this.itemCache.cache.size,
-      manifestVersion: this.manifest?.version
+      manifestVersion: this.manifest?.version,
+      useDataPacks: this.useDataPacks
     };
+
+    if (this.useDataPacks) {
+      stats.dataPackStats = {
+        loadedPacks: this.dataPackManager?.getLoadedPacks()?.length || 0,
+        sprites: this.spriteManager?.getStats() || null,
+        lootTables: this.lootTableSystem?.getStats() || null,
+        encounterTables: this.encounterTableSystem?.getStats() || null,
+        conditions: this.conditionEvaluator?.getStats() || null
+      };
+    }
+
+    return stats;
+  }
+
+  // ========================================
+  // DATAPACK API - Sprites, Loot, Encounters
+  // ========================================
+
+  /**
+   * Get sprite icon data
+   * @param {string} iconId - Icon identifier
+   * @returns {Object|null} Icon data with sheet, position, dimensions
+   */
+  getIcon(iconId) {
+    if (!this.spriteManager) return null;
+    return this.spriteManager.getIcon(iconId);
+  }
+
+  /**
+   * Render an icon to a canvas
+   * @param {string} iconId - Icon identifier
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   * @param {number} x - X position
+   * @param {number} y - Y position
+   * @param {number} [width] - Optional width
+   * @param {number} [height] - Optional height
+   * @returns {boolean} Whether icon was rendered
+   */
+  renderIcon(iconId, ctx, x, y, width, height) {
+    if (!this.spriteManager) return false;
+    return this.spriteManager.renderIcon(iconId, ctx, x, y, width, height);
+  }
+
+  /**
+   * Resolve an icon reference (handles both emoji and sprite formats)
+   * @param {string|Object} iconRef - Icon reference
+   * @returns {Object} Resolved icon info
+   */
+  resolveIcon(iconRef) {
+    if (!this.spriteManager) {
+      return { type: 'emoji', value: iconRef };
+    }
+    return this.spriteManager.resolveIconReference(iconRef);
+  }
+
+  /**
+   * Create an img element for an icon
+   * @param {string} iconId - Icon identifier
+   * @param {Object} [options] - Options (scale, className, alt)
+   * @returns {HTMLImageElement|null}
+   */
+  createIconElement(iconId, options) {
+    if (!this.spriteManager) return null;
+    return this.spriteManager.createIconElement(iconId, options);
+  }
+
+  // ========================================
+  // CONTENT ICON HELPERS - Get icons from content
+  // ========================================
+
+  /**
+   * Get the icon for an item
+   * @param {Object|string} itemOrId - Item data or item ID
+   * @returns {Promise<Object>} Resolved icon info
+   */
+  async getItemIcon(itemOrId) {
+    let item = itemOrId;
+    if (typeof itemOrId === 'string') {
+      item = await this.getItem(itemOrId);
+    }
+    if (!item) return { type: 'unknown', value: null };
+    return this.resolveIcon(item.icon);
+  }
+
+  /**
+   * Get the icon for an effect/debuff
+   * @param {Object|string} effectOrId - Effect data or effect ID
+   * @returns {Promise<Object>} Resolved icon info
+   */
+  async getEffectIcon(effectOrId) {
+    let effect = effectOrId;
+    if (typeof effectOrId === 'string') {
+      effect = await this.getEffect(effectOrId);
+    }
+    if (!effect) return { type: 'unknown', value: null };
+    return this.resolveIcon(effect.icon);
+  }
+
+  /**
+   * Get the icon for an enemy
+   * @param {Object|string} enemyOrId - Enemy data or enemy ID
+   * @returns {Promise<Object>} Resolved icon info
+   */
+  async getEnemyIcon(enemyOrId) {
+    let enemy = enemyOrId;
+    if (typeof enemyOrId === 'string') {
+      enemy = await this.getEnemy(enemyOrId);
+    }
+    if (!enemy) return { type: 'unknown', value: null };
+    return this.resolveIcon(enemy.icon);
+  }
+
+  /**
+   * Get the icon for a location
+   * @param {Object|string} locationOrId - Location data or location ID
+   * @returns {Promise<Object>} Resolved icon info
+   */
+  async getLocationIcon(locationOrId) {
+    let location = locationOrId;
+    if (typeof locationOrId === 'string') {
+      location = await this.getLocation(locationOrId);
+    }
+    if (!location) return { type: 'unknown', value: null };
+
+    // Locations may use type-based icons
+    if (location.icon) {
+      return this.resolveIcon(location.icon);
+    }
+
+    // Fallback to type-based UI icon
+    const typeIconMap = {
+      building: 'location_safe',
+      dungeon: 'location_dungeon',
+      outdoor: 'location_forest',
+      town: 'location_town'
+    };
+    const fallbackIconId = typeIconMap[location.type] || 'location_safe';
+    return this.resolveIcon({ type: 'sprite', sheetId: 'ui_icons', iconId: fallbackIconId });
+  }
+
+  /**
+   * Get the icon for an action (enemy action, player action, etc.)
+   * @param {Object} action - Action data with icon field
+   * @returns {Object} Resolved icon info
+   */
+  getActionIcon(action) {
+    if (!action) return { type: 'unknown', value: null };
+    if (action.icon) {
+      return this.resolveIcon(action.icon);
+    }
+    // Fallback based on action type
+    return this.resolveIcon({ type: 'sprite', sheetId: 'ui_icons', iconId: 'action_skill' });
+  }
+
+  /**
+   * Render an item's icon to a canvas
+   * @param {Object|string} itemOrId - Item data or item ID
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   * @param {number} x - X position
+   * @param {number} y - Y position
+   * @param {number} [size] - Icon size (square)
+   * @returns {Promise<boolean>} Whether icon was rendered
+   */
+  async renderItemIcon(itemOrId, ctx, x, y, size = 32) {
+    const iconInfo = await this.getItemIcon(itemOrId);
+    if (iconInfo.type === 'sprite' && iconInfo.iconId) {
+      return this.renderIcon(iconInfo.iconId, ctx, x, y, size, size);
+    }
+    return false;
+  }
+
+  /**
+   * Render an effect's icon to a canvas
+   * @param {Object|string} effectOrId - Effect data or effect ID
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   * @param {number} x - X position
+   * @param {number} y - Y position
+   * @param {number} [size] - Icon size (square)
+   * @returns {Promise<boolean>} Whether icon was rendered
+   */
+  async renderEffectIcon(effectOrId, ctx, x, y, size = 32) {
+    const iconInfo = await this.getEffectIcon(effectOrId);
+    if (iconInfo.type === 'sprite' && iconInfo.iconId) {
+      return this.renderIcon(iconInfo.iconId, ctx, x, y, size, size);
+    }
+    return false;
+  }
+
+  /**
+   * Render an enemy's icon to a canvas
+   * @param {Object|string} enemyOrId - Enemy data or enemy ID
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   * @param {number} x - X position
+   * @param {number} y - Y position
+   * @param {number} [size] - Icon size (square)
+   * @returns {Promise<boolean>} Whether icon was rendered
+   */
+  async renderEnemyIcon(enemyOrId, ctx, x, y, size = 48) {
+    const iconInfo = await this.getEnemyIcon(enemyOrId);
+    if (iconInfo.type === 'sprite' && iconInfo.iconId) {
+      return this.renderIcon(iconInfo.iconId, ctx, x, y, size, size);
+    }
+    return false;
+  }
+
+  /**
+   * Create an HTML element for an item's icon
+   * @param {Object|string} itemOrId - Item data or item ID
+   * @param {Object} [options] - Options for createIconElement
+   * @returns {Promise<HTMLElement|null>}
+   */
+  async createItemIconElement(itemOrId, options = {}) {
+    const iconInfo = await this.getItemIcon(itemOrId);
+    if (iconInfo.type === 'sprite' && iconInfo.iconId) {
+      return this.createIconElement(iconInfo.iconId, options);
+    }
+    return null;
+  }
+
+  /**
+   * Create an HTML element for an effect's icon
+   * @param {Object|string} effectOrId - Effect data or effect ID
+   * @param {Object} [options] - Options for createIconElement
+   * @returns {Promise<HTMLElement|null>}
+   */
+  async createEffectIconElement(effectOrId, options = {}) {
+    const iconInfo = await this.getEffectIcon(effectOrId);
+    if (iconInfo.type === 'sprite' && iconInfo.iconId) {
+      return this.createIconElement(iconInfo.iconId, options);
+    }
+    return null;
+  }
+
+  /**
+   * Create an HTML element for an enemy's icon
+   * @param {Object|string} enemyOrId - Enemy data or enemy ID
+   * @param {Object} [options] - Options for createIconElement
+   * @returns {Promise<HTMLElement|null>}
+   */
+  async createEnemyIconElement(enemyOrId, options = {}) {
+    const iconInfo = await this.getEnemyIcon(enemyOrId);
+    if (iconInfo.type === 'sprite' && iconInfo.iconId) {
+      return this.createIconElement(iconInfo.iconId, { scale: 1.5, ...options });
+    }
+    return null;
+  }
+
+  /**
+   * Get a UI icon by category
+   * @param {string} category - Icon category (stat, action, rarity, etc.)
+   * @param {string} name - Icon name within category
+   * @returns {Object} Resolved icon info
+   */
+  getUIIcon(category, name) {
+    const iconId = `${category}_${name}`;
+    return this.resolveIcon({ type: 'sprite', sheetId: 'ui_icons', iconId });
+  }
+
+  /**
+   * Get a stat icon
+   * @param {string} statName - Stat name (strength, vitality, etc.)
+   * @returns {Object} Resolved icon info
+   */
+  getStatIcon(statName) {
+    return this.getUIIcon('stat', statName);
+  }
+
+  /**
+   * Get an action icon
+   * @param {string} actionName - Action name (attack, defend, flee, etc.)
+   * @returns {Object} Resolved icon info
+   */
+  getActionTypeIcon(actionName) {
+    return this.getUIIcon('action', actionName);
+  }
+
+  /**
+   * Get a rarity icon/indicator
+   * @param {string} rarity - Rarity level (common, uncommon, rare, etc.)
+   * @returns {Object} Resolved icon info
+   */
+  getRarityIcon(rarity) {
+    return this.getUIIcon('rarity', rarity);
+  }
+
+  /**
+   * Batch resolve icons for multiple items
+   * @param {Object[]} items - Array of items with icon fields
+   * @returns {Map<string, Object>} Map of item ID to resolved icon info
+   */
+  resolveItemIcons(items) {
+    const iconMap = new Map();
+    for (const item of items) {
+      if (item && item.id) {
+        iconMap.set(item.id, this.resolveIcon(item.icon));
+      }
+    }
+    return iconMap;
+  }
+
+  /**
+   * Batch resolve icons for multiple effects
+   * @param {Object[]} effects - Array of effects with icon fields
+   * @returns {Map<string, Object>} Map of effect ID to resolved icon info
+   */
+  resolveEffectIcons(effects) {
+    const iconMap = new Map();
+    for (const effect of effects) {
+      if (effect && effect.id) {
+        iconMap.set(effect.id, this.resolveIcon(effect.icon));
+      }
+    }
+    return iconMap;
+  }
+
+  /**
+   * Generate loot from context tags
+   * @param {string[]} contextTags - Tags from location, enemy, etc.
+   * @param {Object} playerState - Player state for modifiers
+   * @param {number} [rollCount] - Optional roll count override
+   * @returns {Object[]} Generated loot items
+   */
+  generateLoot(contextTags, playerState, rollCount = null) {
+    if (!this.lootTableSystem) return [];
+
+    const tables = this.lootTableSystem.selectTables(contextTags, playerState);
+    return this.lootTableSystem.generateLoot(tables, playerState, rollCount);
+  }
+
+  /**
+   * Get loot tables matching tags
+   * @param {string[]} tags - Tags to match
+   * @returns {Object[]} Matching loot tables
+   */
+  getLootTablesByTags(tags) {
+    if (!this.lootTableSystem) return [];
+    return this.lootTableSystem.getTablesByTags(tags);
+  }
+
+  /**
+   * Roll for an encounter at a location
+   * @param {Object} location - Location data
+   * @param {Object} playerState - Player state
+   * @returns {Object} Encounter roll result
+   */
+  rollForEncounter(location, playerState) {
+    if (!this.encounterTableSystem) {
+      return { shouldEncounter: false, adjustedChance: 0 };
+    }
+    return this.encounterTableSystem.rollForEncounter(location, playerState);
+  }
+
+  /**
+   * Get encounter tables matching location and player state
+   * @param {string[]} locationTags - Location tags
+   * @param {Object} playerState - Player state
+   * @returns {Object} Selection result with tables and metadata
+   */
+  selectEncounterTables(locationTags, playerState) {
+    if (!this.encounterTableSystem) {
+      return { tables: [], metadata: [], allContextTags: locationTags };
+    }
+    return this.encounterTableSystem.selectEncounterTables(locationTags, playerState);
+  }
+
+  /**
+   * Get active condition modifiers for player state
+   * @param {Object} playerState - Player state
+   * @returns {Object} Active modifiers
+   */
+  getActiveModifiers(playerState) {
+    if (!this.conditionEvaluator) {
+      return { encounterTags: [], encounterRateMultiplier: 1.0, lootModifiers: {} };
+    }
+    return this.conditionEvaluator.getActiveEncounterModifiers(playerState);
+  }
+
+  /**
+   * Get loaded data packs info
+   * @returns {Object[]} Array of pack info
+   */
+  getLoadedPacks() {
+    if (!this.dataPackManager) return [];
+    return this.dataPackManager.getLoadedPacks();
+  }
+
+  /**
+   * Reload a specific data pack (for development)
+   * @param {string} packId - Pack ID to reload
+   * @returns {Promise<void>}
+   */
+  async reloadPack(packId) {
+    if (!this.dataPackManager) {
+      throw new Error('DataPack system not enabled');
+    }
+
+    await this.dataPackManager.reloadPack(packId);
+
+    // Reinitialize subsystems
+    if (this.spriteManager) {
+      await this.spriteManager.reload(this.dataPackManager);
+    }
+    if (this.lootTableSystem) {
+      await this.lootTableSystem.initialize(this.dataPackManager, this.conditionEvaluator);
+    }
+    if (this.encounterTableSystem) {
+      await this.encounterTableSystem.initialize(this.dataPackManager, this.conditionEvaluator);
+    }
   }
 }
 

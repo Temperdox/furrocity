@@ -1,0 +1,61 @@
+{
+  "id": "core",
+  "name": "Core Game Content",
+  "version": "1.0.0",
+  "author": "Furrocity Team",
+  "description": "Base game content including items, enemies, locations, and game mechanics",
+  "dependencies": [],
+  "loadPriority": 0,
+
+  "contentTypes": {
+    "sprites": {
+      "path": "sprites/",
+      "files": ["spritesheets.json"]
+    },
+    "conditions": {
+      "path": "conditions/",
+      "files": ["encounter_conditions.json", "loot_conditions.json"]
+    },
+    "loot_tables": {
+      "path": "loot_tables/",
+      "files": [
+        "forest_loot.json",
+        "town_loot.json",
+        "dungeon_loot.json",
+        "global_loot.json"
+      ]
+    },
+    "encounter_tables": {
+      "path": "encounter_tables/",
+      "files": [
+        "forest_encounters.json",
+        "town_encounters.json",
+        "dungeon_encounters.json"
+      ]
+    },
+    "items": {
+      "path": "items/",
+      "files": ["weapons_armor.json", "clothing_paperdoll.json", "consumables.json"]
+    },
+    "enemies": {
+      "path": "enemies/",
+      "files": ["forest_enemies.json", "town_enemies.json", "dungeon_enemies.json"]
+    },
+    "locations": {
+      "path": "locations/",
+      "files": ["world_locations.json"]
+    },
+    "effects": {
+      "path": "effects/",
+      "files": ["core_effects.json"]
+    },
+    "substances": {
+      "path": "substances/",
+      "files": ["core_substances.json"]
+    },
+    "scenes": {
+      "path": "scenes/",
+      "files": ["intro_scenes.json"]
+    }
+  }
+}

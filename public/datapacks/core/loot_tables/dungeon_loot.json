@@ -1,0 +1,52 @@
+{
+  "entries": [
+    {
+      "id": "dungeon_common",
+      "name": "Dungeon Common Loot",
+      "tags": ["dungeon", "common", "dangerous"],
+      "entries": [
+        { "type": "item", "itemId": "gold", "weight": 35, "count": { "min": 20, "max": 60 } },
+        { "type": "item", "itemId": "health_potion", "weight": 25 },
+        { "type": "item", "itemId": "torch", "weight": 20, "count": { "min": 1, "max": 2 } },
+        { "type": "item", "itemId": "rusty_key", "weight": 10 },
+        { "type": "item", "itemId": "bone_fragment", "weight": 15, "count": { "min": 1, "max": 3 } }
+      ],
+      "roll_count": { "min": 1, "max": 2 }
+    },
+    {
+      "id": "dungeon_treasure",
+      "name": "Dungeon Treasure",
+      "tags": ["dungeon", "treasure", "rare"],
+      "conditions": {
+        "player_level_min": 5
+      },
+      "entries": [
+        { "type": "item", "itemId": "gold", "weight": 30, "count": { "min": 100, "max": 300 } },
+        { "type": "item", "itemId": "enchanted_weapon", "weight": 10, "rarity_scaling": true },
+        { "type": "item", "itemId": "enchanted_armor", "weight": 8, "rarity_scaling": true },
+        { "type": "item", "itemId": "rare_gem", "weight": 15, "count": { "min": 1, "max": 2 } },
+        { "type": "item", "itemId": "ancient_artifact", "weight": 5, "rarity_scaling": true },
+        { "type": "item", "itemId": "skill_tome", "weight": 7, "rarity_scaling": true }
+      ],
+      "modifiers": {
+        "luck_scaling": { "enabled": true, "per_point": 0.04 },
+        "level_scaling": { "enabled": true, "item_level_variance": 2 }
+      },
+      "roll_count": { "min": 1, "max": 3 }
+    },
+    {
+      "id": "dungeon_nsfw",
+      "name": "Dungeon NSFW Loot",
+      "tags": ["dungeon", "nsfw", "corrupted"],
+      "entries": [
+        { "type": "item", "itemId": "corruption_essence", "weight": 25 },
+        { "type": "item", "itemId": "cursed_collar", "weight": 10, "rarity_scaling": true },
+        { "type": "item", "itemId": "aphrodisiac_strong", "weight": 20 },
+        { "type": "item", "itemId": "tentacle_extract", "weight": 15 },
+        { "type": "item", "itemId": "demonic_toy", "weight": 12, "rarity_scaling": true },
+        { "type": "item", "itemId": "purity_crystal", "weight": 8 }
+      ],
+      "roll_count": { "min": 0, "max": 1 }
+    }
+  ]
+}

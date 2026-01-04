@@ -1,0 +1,471 @@
+[
+  {
+    "id": "iron_sword",
+    "name": "Iron Sword",
+    "baseName": "Sword",
+    "type": "weapon",
+    "category": "melee",
+    "slot": "main_hand",
+    "rarity": "common",
+    "tags": ["sword", "melee", "metal", "starter"],
+    "description": "A simple but reliable iron sword.",
+    "icon": { "type": "sprite", "sheetId": "items_weapons", "iconId": "sword_iron" },
+    "baseStats": {
+      "attack": 5,
+      "speed": 10
+    },
+    "requirements": {
+      "strength": 3
+    },
+    "value": 50,
+    "weight": 3
+  },
+  {
+    "id": "steel_sword",
+    "name": "Steel Sword",
+    "baseName": "Sword",
+    "type": "weapon",
+    "category": "melee",
+    "slot": "main_hand",
+    "rarity": "uncommon",
+    "tags": ["sword", "melee", "metal"],
+    "description": "A well-crafted steel blade.",
+    "icon": { "type": "sprite", "sheetId": "items_weapons", "iconId": "sword_steel" },
+    "baseStats": {
+      "attack": 12,
+      "speed": 10
+    },
+    "requirements": {
+      "strength": 5
+    },
+    "value": 150,
+    "weight": 3
+  },
+  {
+    "id": "enchanted_blade",
+    "name": "Enchanted Blade",
+    "baseName": "Sword",
+    "type": "weapon",
+    "category": "melee",
+    "slot": "main_hand",
+    "rarity": "rare",
+    "tags": ["sword", "melee", "magic", "enchanted"],
+    "description": "A blade infused with arcane energy.",
+    "icon": { "type": "sprite", "sheetId": "items_weapons", "iconId": "sword_enchanted" },
+    "baseStats": {
+      "attack": 18,
+      "speed": 12,
+      "magic": 5
+    },
+    "requirements": {
+      "strength": 6,
+      "intelligence": 4
+    },
+    "effects": [
+      {
+        "type": "onHit",
+        "applyEffect": "magic_damage_small",
+        "chance": 0.2
+      }
+    ],
+    "value": 500,
+    "weight": 2.5
+  },
+  {
+    "id": "rusty_dagger",
+    "name": "Rusty Dagger",
+    "baseName": "Dagger",
+    "type": "weapon",
+    "category": "melee",
+    "slot": "main_hand",
+    "rarity": "common",
+    "tags": ["dagger", "melee", "metal", "rusty"],
+    "description": "A corroded dagger. Better than nothing.",
+    "icon": { "type": "sprite", "sheetId": "items_weapons", "iconId": "dagger_rusty" },
+    "baseStats": {
+      "attack": 2,
+      "speed": 15
+    },
+    "value": 5,
+    "weight": 0.5
+  },
+  {
+    "id": "leather_armor",
+    "name": "Leather Armor",
+    "baseName": "Armor",
+    "type": "armor",
+    "category": "light",
+    "slot": "chest",
+    "rarity": "common",
+    "tags": ["armor", "leather", "light", "starter"],
+    "description": "Basic leather protection.",
+    "icon": { "type": "sprite", "sheetId": "items_armor", "iconId": "armor_leather" },
+    "baseStats": {
+      "defense": 3,
+      "evasion": 2
+    },
+    "value": 30,
+    "weight": 5,
+    "clothingState": {
+      "maxIntegrity": 100,
+      "exposureThreshold": 30
+    }
+  },
+  {
+    "id": "chain_mail",
+    "name": "Chain Mail",
+    "baseName": "Mail",
+    "type": "armor",
+    "category": "medium",
+    "slot": "chest",
+    "rarity": "uncommon",
+    "tags": ["armor", "metal", "medium"],
+    "description": "Interlocking metal rings provide solid protection.",
+    "icon": { "type": "sprite", "sheetId": "items_armor", "iconId": "armor_chain" },
+    "baseStats": {
+      "defense": 8,
+      "evasion": -1
+    },
+    "requirements": {
+      "strength": 4
+    },
+    "value": 200,
+    "weight": 15,
+    "clothingState": {
+      "maxIntegrity": 150,
+      "exposureThreshold": 20
+    }
+  },
+  {
+    "id": "health_potion",
+    "name": "Health Potion",
+    "baseName": "Potion",
+    "type": "consumable",
+    "category": "potion",
+    "rarity": "common",
+    "tags": ["potion", "healing", "consumable"],
+    "description": "Restores a moderate amount of health.",
+    "icon": { "type": "sprite", "sheetId": "items_consumables", "iconId": "potion_health" },
+    "stackable": true,
+    "maxStack": 99,
+    "useEffect": {
+      "type": "heal",
+      "amount": { "type": "flat", "value": 50 }
+    },
+    "value": 25,
+    "weight": 0.5
+  },
+  {
+    "id": "stamina_potion",
+    "name": "Stamina Potion",
+    "baseName": "Potion",
+    "type": "consumable",
+    "category": "potion",
+    "rarity": "common",
+    "tags": ["potion", "stamina", "consumable"],
+    "description": "Restores stamina quickly.",
+    "icon": { "type": "sprite", "sheetId": "items_consumables", "iconId": "potion_stamina" },
+    "stackable": true,
+    "maxStack": 99,
+    "useEffect": {
+      "type": "restoreStamina",
+      "amount": { "type": "flat", "value": 30 }
+    },
+    "value": 20,
+    "weight": 0.5
+  },
+  {
+    "id": "antidote",
+    "name": "Antidote",
+    "baseName": "Antidote",
+    "type": "consumable",
+    "category": "medicine",
+    "rarity": "common",
+    "tags": ["medicine", "cure", "consumable"],
+    "description": "Cures poison effects.",
+    "icon": { "type": "sprite", "sheetId": "items_consumables", "iconId": "potion_antidote" },
+    "stackable": true,
+    "maxStack": 20,
+    "useEffect": {
+      "type": "removeEffect",
+      "effectTags": ["poison"]
+    },
+    "value": 30,
+    "weight": 0.3
+  },
+  {
+    "id": "rope",
+    "name": "Rope",
+    "baseName": "Rope",
+    "type": "tool",
+    "category": "utility",
+    "rarity": "common",
+    "tags": ["tool", "rope", "bondage", "utility"],
+    "description": "A sturdy length of rope. Has many uses...",
+    "icon": { "type": "sprite", "sheetId": "items_accessories", "iconId": "rope" },
+    "stackable": true,
+    "maxStack": 10,
+    "value": 15,
+    "weight": 2,
+    "specialUse": {
+      "inCombat": {
+        "action": "restrain",
+        "restraintType": "rope_bind",
+        "hp": 30
+      }
+    }
+  },
+  {
+    "id": "cursed_amulet",
+    "name": "Cursed Amulet",
+    "baseName": "Amulet",
+    "type": "accessory",
+    "category": "jewelry",
+    "slot": "accessory1",
+    "rarity": "rare",
+    "tags": ["jewelry", "cursed", "dark"],
+    "description": "A beautiful amulet with a sinister aura.",
+    "icon": { "type": "sprite", "sheetId": "items_accessories", "iconId": "amulet_cursed" },
+    "baseStats": {
+      "charm": 5,
+      "willpower": -2
+    },
+    "curse": {
+      "level": "moderate",
+      "removable": true,
+      "removalDifficulty": 50
+    },
+    "onEquip": {
+      "applyEffect": "curse_lust"
+    },
+    "value": 300,
+    "weight": 0.2
+  },
+  {
+    "id": "gold",
+    "name": "Gold",
+    "baseName": "Gold",
+    "type": "currency",
+    "category": "currency",
+    "rarity": "common",
+    "tags": ["currency", "gold"],
+    "description": "The universal currency.",
+    "icon": { "type": "sprite", "sheetId": "items_materials", "iconId": "gold_coin" },
+    "stackable": true,
+    "maxStack": 999999,
+    "value": 1,
+    "weight": 0
+  },
+  {
+    "id": "goblin_ear",
+    "name": "Goblin Ear",
+    "baseName": "Trophy",
+    "type": "material",
+    "category": "trophy",
+    "rarity": "common",
+    "tags": ["material", "trophy", "goblin"],
+    "description": "A severed goblin ear. Proof of your kill.",
+    "icon": { "type": "sprite", "sheetId": "items_materials", "iconId": "goblin_ear" },
+    "stackable": true,
+    "maxStack": 99,
+    "value": 5,
+    "weight": 0.1
+  },
+  {
+    "id": "wolf_pelt",
+    "name": "Wolf Pelt",
+    "baseName": "Pelt",
+    "type": "material",
+    "category": "crafting",
+    "rarity": "common",
+    "tags": ["material", "pelt", "wolf", "crafting"],
+    "description": "A thick wolf pelt. Useful for crafting.",
+    "icon": { "type": "sprite", "sheetId": "items_materials", "iconId": "pelt_wolf" },
+    "stackable": true,
+    "maxStack": 50,
+    "value": 15,
+    "weight": 2
+  },
+  {
+    "id": "wolf_fang",
+    "name": "Wolf Fang",
+    "baseName": "Fang",
+    "type": "material",
+    "category": "crafting",
+    "rarity": "common",
+    "tags": ["material", "fang", "wolf", "crafting"],
+    "description": "A sharp wolf fang.",
+    "icon": { "type": "sprite", "sheetId": "items_materials", "iconId": "fang" },
+    "stackable": true,
+    "maxStack": 99,
+    "value": 8,
+    "weight": 0.1
+  },
+  {
+    "id": "slime_core",
+    "name": "Slime Core",
+    "baseName": "Core",
+    "type": "material",
+    "category": "crafting",
+    "rarity": "uncommon",
+    "tags": ["material", "slime", "core", "alchemy"],
+    "description": "The condensed core of a slime. Valuable for alchemy.",
+    "icon": { "type": "sprite", "sheetId": "items_materials", "iconId": "slime_core" },
+    "stackable": true,
+    "maxStack": 50,
+    "value": 25,
+    "weight": 0.5
+  },
+  {
+    "id": "slime_residue",
+    "name": "Slime Residue",
+    "baseName": "Residue",
+    "type": "material",
+    "category": "crafting",
+    "rarity": "common",
+    "tags": ["material", "slime", "alchemy"],
+    "description": "Gooey residue from a slime.",
+    "icon": { "type": "sprite", "sheetId": "items_materials", "iconId": "slime_residue" },
+    "stackable": true,
+    "maxStack": 99,
+    "value": 5,
+    "weight": 0.2
+  },
+  {
+    "id": "succubus_essence",
+    "name": "Succubus Essence",
+    "baseName": "Essence",
+    "type": "material",
+    "category": "rare",
+    "rarity": "rare",
+    "tags": ["material", "essence", "demon", "succubus", "nsfw"],
+    "description": "Pure demonic essence, pulsing with dark desire.",
+    "icon": { "type": "sprite", "sheetId": "items_materials", "iconId": "succubus_essence" },
+    "stackable": true,
+    "maxStack": 20,
+    "value": 200,
+    "weight": 0.1
+  },
+  {
+    "id": "charm_pendant",
+    "name": "Charm Pendant",
+    "baseName": "Pendant",
+    "type": "accessory",
+    "category": "jewelry",
+    "slot": "accessory1",
+    "rarity": "epic",
+    "tags": ["jewelry", "charm", "magic"],
+    "description": "A pendant that enhances your natural allure.",
+    "icon": { "type": "sprite", "sheetId": "items_accessories", "iconId": "pendant" },
+    "baseStats": {
+      "charm": 10,
+      "willpower": 3
+    },
+    "value": 500,
+    "weight": 0.1
+  },
+  {
+    "id": "succubus_wings",
+    "name": "Succubus Wings",
+    "baseName": "Wings",
+    "type": "accessory",
+    "category": "back",
+    "slot": "back",
+    "rarity": "legendary",
+    "tags": ["accessory", "wings", "demon", "legendary"],
+    "description": "Bat-like wings torn from a succubus. Radiates dark power.",
+    "icon": { "type": "sprite", "sheetId": "items_materials", "iconId": "demon_horn" },
+    "baseStats": {
+      "evasion": 15,
+      "charm": 8,
+      "speed": 5
+    },
+    "effects": [
+      {
+        "type": "passive",
+        "description": "Grants limited flight"
+      }
+    ],
+    "value": 2000,
+    "weight": 1
+  },
+  {
+    "id": "mimic_tongue",
+    "name": "Mimic Tongue",
+    "baseName": "Tongue",
+    "type": "material",
+    "category": "crafting",
+    "rarity": "uncommon",
+    "tags": ["material", "mimic", "crafting"],
+    "description": "A long, slimy tongue from a mimic.",
+    "icon": { "type": "sprite", "sheetId": "items_materials", "iconId": "tentacle" },
+    "stackable": true,
+    "maxStack": 20,
+    "value": 50,
+    "weight": 0.5
+  },
+  {
+    "id": "vine_sample",
+    "name": "Vine Sample",
+    "baseName": "Vine",
+    "type": "material",
+    "category": "crafting",
+    "rarity": "common",
+    "tags": ["material", "plant", "vine", "alchemy"],
+    "description": "A still-wriggling vine segment.",
+    "icon": { "type": "sprite", "sheetId": "items_materials", "iconId": "tentacle" },
+    "stackable": true,
+    "maxStack": 50,
+    "value": 15,
+    "weight": 0.3
+  },
+  {
+    "id": "aphrodisiac_pollen",
+    "name": "Aphrodisiac Pollen",
+    "baseName": "Pollen",
+    "type": "material",
+    "category": "alchemy",
+    "rarity": "uncommon",
+    "tags": ["material", "plant", "pollen", "nsfw", "aphrodisiac"],
+    "description": "Potent pollen that heightens arousal. Handle with care.",
+    "icon": { "type": "sprite", "sheetId": "items_materials", "iconId": "aphrodisiac_gland" },
+    "stackable": true,
+    "maxStack": 30,
+    "value": 40,
+    "weight": 0.1
+  },
+  {
+    "id": "plant_core",
+    "name": "Plant Core",
+    "baseName": "Core",
+    "type": "material",
+    "category": "crafting",
+    "rarity": "uncommon",
+    "tags": ["material", "plant", "core"],
+    "description": "The vital core of a carnivorous plant.",
+    "icon": { "type": "sprite", "sheetId": "items_materials", "iconId": "essence" },
+    "stackable": true,
+    "maxStack": 30,
+    "value": 35,
+    "weight": 0.4
+  },
+  {
+    "id": "healing_herb",
+    "name": "Healing Herb",
+    "baseName": "Herb",
+    "type": "consumable",
+    "category": "herb",
+    "rarity": "common",
+    "tags": ["consumable", "herb", "healing"],
+    "description": "A common herb with minor healing properties.",
+    "icon": { "type": "sprite", "sheetId": "items_consumables", "iconId": "herb" },
+    "stackable": true,
+    "maxStack": 99,
+    "useEffect": {
+      "type": "heal",
+      "amount": { "type": "flat", "value": 15 }
+    },
+    "value": 5,
+    "weight": 0.1
+  }
+]

@@ -1,0 +1,153 @@
+{
+  "description": "Maps enemy IDs to their scene configurations for combat outcomes",
+  "version": "1.0.0",
+
+  "enemyScenes": {
+    "forest_goblin": {
+      "defeat": {
+        "pool": ["generic_defeat_1"],
+        "chance": 0.3
+      },
+      "victory": {
+        "pool": ["generic_victory_1"]
+      }
+    },
+
+    "forest_wolf": {
+      "defeat": {
+        "normalPools": ["wolf_defeat_normal_1", "wolf_defeat_normal_2"],
+        "chance": 0.7
+      },
+      "victory": {
+        "pool": ["generic_victory_1"]
+      }
+    },
+
+    "bandit": {
+      "defeat": {
+        "normalPools": ["bandit_defeat_normal_1", "bandit_defeat_normal_2"],
+        "nsfwPools": {
+          "aroused": ["bandit_surrender_nsfw_1"],
+          "requiresTags": ["domination", "humiliation"]
+        },
+        "chance": 0.8
+      },
+      "surrender": {
+        "normalPools": ["bandit_defeat_normal_1", "bandit_defeat_normal_2"],
+        "nsfwPools": {
+          "aroused": ["bandit_surrender_nsfw_1"],
+          "requiresTags": ["domination", "humiliation"]
+        },
+        "chance": 1.0
+      },
+      "victory": {
+        "pool": ["generic_victory_1"]
+      }
+    },
+
+    "slime": {
+      "defeat": {
+        "normalPools": ["slime_defeat_normal_1"],
+        "nsfwPools": {
+          "aroused": ["slime_surrender_nsfw_1"],
+          "requiresTags": ["tentacle", "penetration"]
+        },
+        "chance": 0.8
+      },
+      "surrender": {
+        "normalPools": ["slime_defeat_normal_1"],
+        "nsfwPools": {
+          "aroused": ["slime_surrender_nsfw_1"],
+          "requiresTags": ["tentacle", "penetration"]
+        },
+        "chance": 1.0
+      },
+      "victory": {
+        "pool": ["generic_victory_1"]
+      }
+    },
+
+    "succubus": {
+      "defeat": {
+        "normalPools": ["succubus_defeat_normal_1"],
+        "nsfwPools": {
+          "aroused": ["succubus_surrender_nsfw_1"],
+          "requiresTags": ["domination", "mind_control"]
+        },
+        "chance": 1.0
+      },
+      "surrender": {
+        "normalPools": ["succubus_defeat_normal_1"],
+        "nsfwPools": {
+          "aroused": ["succubus_surrender_nsfw_1"],
+          "requiresTags": ["domination", "mind_control"]
+        },
+        "chance": 1.0
+      },
+      "victory": {
+        "pool": ["generic_victory_1"]
+      }
+    },
+
+    "tentacle_plant": {
+      "defeat": {
+        "normalPools": ["tentacle_plant_defeat_normal_1"],
+        "nsfwPools": {
+          "aroused": ["tentacle_plant_surrender_nsfw_1"],
+          "requiresTags": ["tentacle", "penetration"]
+        },
+        "chance": 0.9
+      },
+      "surrender": {
+        "normalPools": ["tentacle_plant_defeat_normal_1"],
+        "nsfwPools": {
+          "aroused": ["tentacle_plant_surrender_nsfw_1"],
+          "requiresTags": ["tentacle", "penetration"]
+        },
+        "chance": 1.0
+      },
+      "victory": {
+        "pool": ["generic_victory_1"]
+      }
+    },
+
+    "alpha_wolf": {
+      "defeat": {
+        "normalPools": ["wolf_defeat_normal_1", "wolf_defeat_normal_2"],
+        "chance": 1.0
+      },
+      "victory": {
+        "pool": ["generic_victory_1"],
+        "chance": 0.5
+      }
+    },
+
+    "mimic": {
+      "defeat": {
+        "pool": ["generic_defeat_1"],
+        "chance": 0.5
+      },
+      "victory": {
+        "pool": ["generic_victory_1"]
+      }
+    }
+  },
+
+  "defaultScenes": {
+    "defeat": {
+      "pool": ["generic_defeat_1"]
+    },
+    "victory": {
+      "pool": ["generic_victory_1"]
+    },
+    "fled": {
+      "pool": ["fled_narrow_escape_1"]
+    }
+  },
+
+  "sceneSelectionRules": {
+    "arousalThreshold": 50,
+    "priorityOrder": ["nsfwPools", "normalPools", "pool"],
+    "tagMatchingMode": "any"
+  }
+}

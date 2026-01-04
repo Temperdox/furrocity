@@ -1,0 +1,85 @@
+{
+  "loot_modifiers": [
+    {
+      "id": "high_luck_bonus",
+      "name": "Lucky Finds",
+      "triggers": [
+        { "type": "player_stat", "stat": "luck", "operator": ">=", "value": 10 }
+      ],
+      "rarity_weights": {
+        "common": 0.9,
+        "uncommon": 1.1,
+        "rare": 1.2
+      }
+    },
+    {
+      "id": "very_high_luck",
+      "name": "Fortune's Favor",
+      "triggers": [
+        { "type": "player_stat", "stat": "luck", "operator": ">=", "value": 20 }
+      ],
+      "rarity_weights": {
+        "common": 0.7,
+        "uncommon": 1.2,
+        "rare": 1.5,
+        "epic": 1.8,
+        "legendary": 2.0
+      }
+    },
+    {
+      "id": "corrupted_loot",
+      "name": "Corrupted Rewards",
+      "triggers": [
+        { "type": "corruption_level", "operator": ">=", "value": 50 }
+      ],
+      "adds_loot_tags": ["corrupted", "nsfw"],
+      "rarity_weights": {
+        "rare": 1.2
+      }
+    },
+    {
+      "id": "nsfw_loot_pheromones",
+      "name": "Lewd Finds",
+      "triggers": [
+        { "type": "has_debuff", "debuff": "pheromone_emitting" }
+      ],
+      "adds_loot_tags": ["nsfw", "aphrodisiac"]
+    },
+    {
+      "id": "gold_bonus_charisma",
+      "name": "Charismatic Haggler",
+      "triggers": [
+        { "type": "player_stat", "stat": "charisma", "operator": ">=", "value": 15 }
+      ],
+      "gold_multiplier": 1.2
+    },
+    {
+      "id": "quantity_bonus_perception",
+      "name": "Keen Eye",
+      "triggers": [
+        { "type": "player_stat", "stat": "perception", "operator": ">=", "value": 12 }
+      ],
+      "quantity_multiplier": 1.15
+    },
+    {
+      "id": "night_loot_bonus",
+      "name": "Nocturnal Treasures",
+      "triggers": [
+        { "type": "time_of_day", "time": ["night"] }
+      ],
+      "adds_loot_tags": ["night"],
+      "rarity_weights": {
+        "rare": 1.1
+      }
+    },
+    {
+      "id": "intoxicated_gold_loss",
+      "name": "Drunk Fumbling",
+      "triggers": [
+        { "type": "intoxication_level", "operator": ">=", "value": 60 }
+      ],
+      "gold_multiplier": 0.8,
+      "quantity_multiplier": 0.9
+    }
+  ]
+}

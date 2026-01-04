@@ -1,0 +1,671 @@
+/**
+ * CombatScreen.css - Combat UI Styling
+ *
+ * Layout:
+ * - Full screen split horizontally
+ * - Top 60%: Visual scene (enemy | event | player)
+ * - Bottom 40%: Interaction (log + buttons)
+ */
+
+/* ===== Main Container ===== */
+.combat-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
+}
+
+/* ===== Visual Section (Top) ===== */
+.combat-visual-section {
+  flex: 0 0 55%;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  padding: 1rem;
+  gap: 1rem;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, transparent 100%);
+  border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+}
+
+/* Enemy Area (Left) */
+.combat-visual-enemy {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  max-width: 30%;
+}
+
+.combat-enemy-portrait {
+  position: relative;
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  max-width: 180px;
+}
+
+.combat-enemy-portrait:hover {
+  border-color: rgba(239, 68, 68, 0.6);
+  transform: scale(1.02);
+}
+
+.combat-enemy-portrait.selected {
+  border-color: #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.combat-enemy-portrait.defeated {
+  opacity: 0.5;
+  filter: grayscale(0.8);
+  pointer-events: none;
+}
+
+.combat-portrait-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.combat-enemy-info {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.combat-enemy-name {
+  display: block;
+  font-weight: bold;
+  color: #ef4444;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.combat-defeated-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #ef4444;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+/* Event Area (Center) */
+.combat-visual-event {
+  flex: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 40%;
+  padding: 1rem;
+}
+
+.combat-event-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Player Area (Right) */
+.combat-visual-player {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 30%;
+}
+
+.combat-player-portrait {
+  padding: 0.75rem;
+  background: rgba(34, 197, 94, 0.1);
+  border: 2px solid rgba(34, 197, 94, 0.3);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 180px;
+}
+
+.combat-player-stats {
+  margin-top: 1rem;
+  width: 100%;
+  max-width: 200px;
+}
+
+.combat-player-name {
+  display: block;
+  font-weight: bold;
+  color: #22c55e;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  font-size: 1rem;
+}
+
+/* ===== Interaction Section (Bottom) ===== */
+.combat-interaction-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  position: relative;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Back Button */
+.combat-back-button {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(100, 100, 100, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #a1a1aa;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.combat-back-button:hover {
+  background: rgba(100, 100, 100, 0.5);
+  color: #fff;
+}
+
+/* Combat Log */
+.combat-log {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  overflow-y: auto;
+  max-height: 150px;
+  font-size: 0.9rem;
+}
+
+.combat-log-entry {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.combat-log-entry:last-child {
+  border-bottom: none;
+}
+
+.combat-log-text {
+  line-height: 1.4;
+}
+
+.combat-log-default { color: #a1a1aa; }
+.combat-log-damage { color: #ef4444; }
+.combat-log-heal { color: #22c55e; }
+.combat-log-effect { color: #a855f7; }
+.combat-log-system { color: #ffd700; font-style: italic; }
+.combat-log-critical { color: #f59e0b; font-weight: bold; }
+.combat-log-miss { color: #6b7280; font-style: italic; }
+
+/* Action Buttons Area */
+.combat-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+}
+
+.combat-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.combat-buttons-vertical {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.combat-waiting {
+  color: #a1a1aa;
+  font-style: italic;
+  font-size: 1.1rem;
+}
+
+/* ===== Buttons ===== */
+.combat-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.combat-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.combat-button-default {
+  background: linear-gradient(135deg, #4a4a5a 0%, #3a3a4a 100%);
+  color: #e0e0e0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.combat-button-danger {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.3);
+}
+
+.combat-button-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+}
+
+.combat-button-primary {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: white;
+  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.3);
+}
+
+.combat-button-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+}
+
+.combat-button-info {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: white;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.3);
+}
+
+.combat-button-info:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  transform: translateY(-2px);
+}
+
+.combat-button-warning {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  color: white;
+  box-shadow: 0 2px 10px rgba(217, 119, 6, 0.3);
+}
+
+.combat-button-warning:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  transform: translateY(-2px);
+}
+
+.combat-button-secondary {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  color: #e0e0e0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.combat-button-secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  transform: translateY(-2px);
+}
+
+.combat-button-success {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  color: white;
+  box-shadow: 0 2px 10px rgba(22, 163, 74, 0.3);
+}
+
+.combat-button-success:hover:not(:disabled) {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  transform: translateY(-2px);
+}
+
+/* Skill Cost Label */
+.skill-cost {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  font-weight: normal;
+}
+
+/* ===== Tooltips ===== */
+.combat-tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.combat-tooltip {
+  position: absolute;
+  z-index: 100;
+  padding: 0.75rem;
+  background: rgba(15, 15, 26, 0.95);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #e0e0e0;
+  white-space: nowrap;
+  max-width: 300px;
+  white-space: normal;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.combat-tooltip-top {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+}
+
+.combat-tooltip-bottom {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+}
+
+/* Skill Tooltip Styling */
+.skill-tooltip-name {
+  font-weight: bold;
+  color: #a855f7;
+  margin-bottom: 0.25rem;
+}
+
+.skill-tooltip-desc {
+  color: #a1a1aa;
+  margin-bottom: 0.5rem;
+}
+
+.skill-tooltip-cost {
+  color: #3b82f6;
+  font-size: 0.8rem;
+}
+
+.skill-tooltip-effect {
+  color: #ef4444;
+  font-size: 0.8rem;
+}
+
+/* ===== Progress Bars ===== */
+.combat-progress-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.combat-progress-label {
+  min-width: 30px;
+  font-size: 0.75rem;
+  color: #a1a1aa;
+}
+
+.combat-progress-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.combat-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.combat-progress-value {
+  min-width: 50px;
+  font-size: 0.75rem;
+  color: #e0e0e0;
+  text-align: right;
+}
+
+/* ===== Inventory Grid ===== */
+.combat-inventory {
+  padding: 0.5rem;
+}
+
+.combat-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.combat-item-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.combat-item-slot:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.combat-item-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.combat-item-name {
+  font-size: 0.7rem;
+  color: #a1a1aa;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.combat-item-quantity {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 0.65rem;
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.combat-no-items,
+.combat-no-skills {
+  color: #6b7280;
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* ===== Context Menu ===== */
+.combat-context-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 150px;
+  background: rgba(15, 15, 26, 0.98);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.combat-context-header {
+  padding: 0.5rem 0.75rem;
+  background: rgba(139, 92, 246, 0.2);
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: #a855f7;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.combat-context-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.15s ease;
+}
+
+.combat-context-item:hover {
+  background: rgba(139, 92, 246, 0.2);
+}
+
+.combat-context-danger {
+  color: #ef4444;
+}
+
+.combat-context-danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* ===== Confirm Dialogs ===== */
+.combat-confirm {
+  text-align: center;
+}
+
+.combat-confirm-text {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: #e0e0e0;
+}
+
+.combat-warning {
+  color: #f59e0b;
+  font-weight: bold;
+}
+
+.combat-flee-chance {
+  display: block;
+  margin-top: 0.5rem;
+  color: #3b82f6;
+  font-size: 0.9rem;
+}
+
+/* ===== Result Screens ===== */
+.combat-result {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+.combat-victory {
+  background: linear-gradient(135deg, rgba(22, 163, 74, 0.3) 0%, rgba(15, 15, 26, 0.9) 100%);
+}
+
+.combat-victory h2 {
+  color: #22c55e;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+}
+
+.combat-defeat {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(15, 15, 26, 0.9) 100%);
+}
+
+.combat-defeat h2 {
+  color: #ef4444;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+.combat-result p {
+  font-size: 1.2rem;
+  color: #a1a1aa;
+  margin-bottom: 2rem;
+}
+
+/* ===== Skills List ===== */
+.combat-skills-list {
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .combat-visual-section {
+    flex-wrap: wrap;
+    flex: 0 0 45%;
+  }
+
+  .combat-visual-enemy,
+  .combat-visual-player {
+    max-width: 45%;
+  }
+
+  .combat-visual-event {
+    order: -1;
+    max-width: 100%;
+    flex: 1 0 100%;
+    max-height: 150px;
+  }
+
+  .combat-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .combat-button {
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+/* ===== Animations ===== */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.combat-shake {
+  animation: shake 0.3s ease;
+}
+
+.combat-pulse {
+  animation: pulse 1s ease infinite;
+}
