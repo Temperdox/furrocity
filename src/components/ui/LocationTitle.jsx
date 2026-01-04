@@ -9,7 +9,7 @@
  * @module components/ui/LocationTitle
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import './LocationTitle.css';
 
@@ -24,6 +24,10 @@ const LocationTitle = ({
   onComplete
 }) => {
   const [phase, setPhase] = useState('fade-in'); // fade-in, hold, fade-out, complete
+
+  // Use ref for onComplete to avoid re-triggering effect when callback changes
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   // Animation timing
   const FADE_IN_DURATION = 500;
@@ -47,7 +51,7 @@ const LocationTitle = ({
     // After fade-out completes, call onComplete
     const completeTimer = setTimeout(() => {
       setPhase('complete');
-      onComplete?.();
+      onCompleteRef.current?.();
     }, FADE_IN_DURATION + HOLD_DURATION + FADE_OUT_DURATION);
 
     return () => {
@@ -55,7 +59,7 @@ const LocationTitle = ({
       clearTimeout(fadeOutTimer);
       clearTimeout(completeTimer);
     };
-  }, [name, onComplete]);
+  }, [name]); // Only re-run when name changes, not when onComplete reference changes
 
   // Build style object from fontStyle
   const titleStyle = {
