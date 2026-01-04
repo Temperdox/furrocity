@@ -1,0 +1,216 @@
+[
+  {
+    "id": "iron_sword",
+    "name": "Iron Sword",
+    "baseName": "Sword",
+    "type": "weapon",
+    "category": "melee",
+    "slot": "main_hand",
+    "rarity": "common",
+    "tags": ["sword", "melee", "metal", "starter"],
+    "description": "A simple but reliable iron sword.",
+    "baseStats": {
+      "attack": 5,
+      "speed": 10
+    },
+    "requirements": {
+      "strength": 3
+    },
+    "value": 50,
+    "weight": 3
+  },
+  {
+    "id": "steel_sword",
+    "name": "Steel Sword",
+    "baseName": "Sword",
+    "type": "weapon",
+    "category": "melee",
+    "slot": "main_hand",
+    "rarity": "uncommon",
+    "tags": ["sword", "melee", "metal"],
+    "description": "A well-crafted steel blade.",
+    "baseStats": {
+      "attack": 12,
+      "speed": 10
+    },
+    "requirements": {
+      "strength": 5
+    },
+    "value": 150,
+    "weight": 3
+  },
+  {
+    "id": "enchanted_blade",
+    "name": "Enchanted Blade",
+    "baseName": "Sword",
+    "type": "weapon",
+    "category": "melee",
+    "slot": "main_hand",
+    "rarity": "rare",
+    "tags": ["sword", "melee", "magic", "enchanted"],
+    "description": "A blade infused with arcane energy.",
+    "baseStats": {
+      "attack": 18,
+      "speed": 12,
+      "magic": 5
+    },
+    "requirements": {
+      "strength": 6,
+      "intelligence": 4
+    },
+    "effects": [
+      {
+        "type": "onHit",
+        "applyEffect": "magic_damage_small",
+        "chance": 0.2
+      }
+    ],
+    "value": 500,
+    "weight": 2.5
+  },
+  {
+    "id": "leather_armor",
+    "name": "Leather Armor",
+    "baseName": "Armor",
+    "type": "armor",
+    "category": "light",
+    "slot": "chest",
+    "rarity": "common",
+    "tags": ["armor", "leather", "light", "starter"],
+    "description": "Basic leather protection.",
+    "baseStats": {
+      "defense": 3,
+      "evasion": 2
+    },
+    "value": 30,
+    "weight": 5,
+    "clothingState": {
+      "maxIntegrity": 100,
+      "exposureThreshold": 30
+    }
+  },
+  {
+    "id": "chain_mail",
+    "name": "Chain Mail",
+    "baseName": "Mail",
+    "type": "armor",
+    "category": "medium",
+    "slot": "chest",
+    "rarity": "uncommon",
+    "tags": ["armor", "metal", "medium"],
+    "description": "Interlocking metal rings provide solid protection.",
+    "baseStats": {
+      "defense": 8,
+      "evasion": -1
+    },
+    "requirements": {
+      "strength": 4
+    },
+    "value": 200,
+    "weight": 15,
+    "clothingState": {
+      "maxIntegrity": 150,
+      "exposureThreshold": 20
+    }
+  },
+  {
+    "id": "health_potion",
+    "name": "Health Potion",
+    "baseName": "Potion",
+    "type": "consumable",
+    "category": "potion",
+    "rarity": "common",
+    "tags": ["potion", "healing", "consumable"],
+    "description": "Restores a moderate amount of health.",
+    "stackable": true,
+    "maxStack": 99,
+    "useEffect": {
+      "type": "heal",
+      "amount": { "type": "flat", "value": 50 }
+    },
+    "value": 25,
+    "weight": 0.5
+  },
+  {
+    "id": "stamina_potion",
+    "name": "Stamina Potion",
+    "baseName": "Potion",
+    "type": "consumable",
+    "category": "potion",
+    "rarity": "common",
+    "tags": ["potion", "stamina", "consumable"],
+    "description": "Restores stamina quickly.",
+    "stackable": true,
+    "maxStack": 99,
+    "useEffect": {
+      "type": "restoreStamina",
+      "amount": { "type": "flat", "value": 30 }
+    },
+    "value": 20,
+    "weight": 0.5
+  },
+  {
+    "id": "antidote",
+    "name": "Antidote",
+    "baseName": "Antidote",
+    "type": "consumable",
+    "category": "medicine",
+    "rarity": "common",
+    "tags": ["medicine", "cure", "consumable"],
+    "description": "Cures poison effects.",
+    "stackable": true,
+    "maxStack": 20,
+    "useEffect": {
+      "type": "removeEffect",
+      "effectTags": ["poison"]
+    },
+    "value": 30,
+    "weight": 0.3
+  },
+  {
+    "id": "rope",
+    "name": "Rope",
+    "baseName": "Rope",
+    "type": "tool",
+    "category": "utility",
+    "rarity": "common",
+    "tags": ["tool", "rope", "bondage", "utility"],
+    "description": "A sturdy length of rope. Has many uses...",
+    "stackable": true,
+    "maxStack": 10,
+    "value": 15,
+    "weight": 2,
+    "specialUse": {
+      "inCombat": {
+        "action": "restrain",
+        "restraintType": "rope_bind",
+        "hp": 30
+      }
+    }
+  },
+  {
+    "id": "cursed_amulet",
+    "name": "Cursed Amulet",
+    "baseName": "Amulet",
+    "type": "accessory",
+    "category": "jewelry",
+    "slot": "accessory1",
+    "rarity": "rare",
+    "tags": ["jewelry", "cursed", "dark"],
+    "description": "A beautiful amulet with a sinister aura.",
+    "baseStats": {
+      "charm": 5,
+      "willpower": -2
+    },
+    "curse": {
+      "level": "moderate",
+      "removable": true,
+      "removalDifficulty": 50
+    },
+    "onEquip": {
+      "applyEffect": "curse_lust"
+    },
+    "value": 300,
+    "weight": 0.2
+  }
+]

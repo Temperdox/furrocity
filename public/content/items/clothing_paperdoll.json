@@ -1,0 +1,347 @@
+[
+  {
+    "id": "cotton_briefs_white",
+    "name": "White Cotton Briefs",
+    "description": "Simple white cotton briefs. Comfortable and practical.",
+    "type": "clothing",
+    "category": "underwear",
+    "slot": "underwear_lower",
+    "rarity": "common",
+    "tags": ["underwear", "briefs", "cotton", "white", "starter"],
+    "paperdollType": "briefs",
+    "paperdollImages": {
+      "fullBody": {
+        "default": "/images/paperdoll/clothing/briefs/cotton_white_fullbody.png",
+        "damaged": "/images/paperdoll/clothing/briefs/cotton_white_fullbody_damaged.png",
+        "destroyed": "/images/paperdoll/clothing/briefs/cotton_white_fullbody_destroyed.png"
+      },
+      "groin": {
+        "default": "/images/paperdoll/clothing/briefs/cotton_white_groin.png"
+      }
+    },
+    "clothingState": {
+      "maxIntegrity": 50,
+      "exposureThreshold": 20
+    },
+    "value": 5,
+    "weight": 0.1
+  },
+  {
+    "id": "lace_thong_black",
+    "name": "Black Lace Thong",
+    "description": "A delicate black lace thong. Leaves little to the imagination.",
+    "type": "clothing",
+    "category": "underwear",
+    "slot": "underwear_lower",
+    "rarity": "uncommon",
+    "tags": ["underwear", "thong", "lace", "black", "sexy"],
+    "paperdollType": "thong",
+    "paperdollImages": {
+      "fullBody": "/images/paperdoll/clothing/thong/lace_black_fullbody.png",
+      "groin": "/images/paperdoll/clothing/thong/lace_black_groin.png",
+      "ass": "/images/paperdoll/clothing/thong/lace_black_ass.png"
+    },
+    "clothingState": {
+      "maxIntegrity": 30,
+      "exposureThreshold": 10
+    },
+    "stats": {
+      "charm": 2
+    },
+    "value": 25,
+    "weight": 0.05
+  },
+  {
+    "id": "silk_stockings_black",
+    "name": "Black Silk Stockings",
+    "description": "Elegant black silk stockings with lace tops.",
+    "type": "clothing",
+    "category": "legwear",
+    "slot": "legwear",
+    "rarity": "uncommon",
+    "tags": ["legwear", "stockings", "silk", "black", "sexy", "thigh-highs"],
+    "paperdollType": "stockings",
+    "paperdollImages": {
+      "fullBody": "/images/paperdoll/clothing/stockings/silk_black_fullbody.png",
+      "legs": "/images/paperdoll/clothing/stockings/silk_black_legs.png",
+      "feet": "/images/paperdoll/clothing/stockings/silk_black_feet.png"
+    },
+    "clothingState": {
+      "maxIntegrity": 40,
+      "exposureThreshold": 15
+    },
+    "stats": {
+      "charm": 3,
+      "evasion": 1
+    },
+    "value": 40,
+    "weight": 0.1
+  },
+  {
+    "id": "leather_corset_red",
+    "name": "Red Leather Corset",
+    "description": "A striking red leather corset with black lacing.",
+    "type": "clothing",
+    "category": "underwear",
+    "slot": "underwear_upper",
+    "rarity": "rare",
+    "tags": ["underwear", "corset", "leather", "red", "sexy", "restrictive"],
+    "paperdollType": "corset",
+    "paperdollImages": {
+      "fullBody": "/images/paperdoll/clothing/corset/leather_red_fullbody.png",
+      "torso": "/images/paperdoll/clothing/corset/leather_red_torso.png"
+    },
+    "clothingState": {
+      "maxIntegrity": 100,
+      "exposureThreshold": 40
+    },
+    "stats": {
+      "charm": 5,
+      "defense": 2,
+      "evasion": -1
+    },
+    "value": 150,
+    "weight": 0.8
+  },
+  {
+    "id": "steel_chastity_cage",
+    "name": "Steel Chastity Cage",
+    "description": "A secure steel chastity cage. Prevents any... relief.",
+    "type": "clothing",
+    "category": "lewd",
+    "slot": "genitals",
+    "rarity": "rare",
+    "tags": ["lewd", "chastity", "steel", "cage", "restraint", "denial"],
+    "paperdollType": "chastity_cage",
+    "paperdollImages": {
+      "groin": "/images/paperdoll/lewd/chastity/steel_cage_groin.png"
+    },
+    "effects": {
+      "onEquip": "chastity_denial",
+      "onRemove": null
+    },
+    "lockable": true,
+    "requiresKey": "chastity_key_steel",
+    "value": 200,
+    "weight": 0.3
+  },
+  {
+    "id": "silver_cock_ring",
+    "name": "Silver Cock Ring",
+    "description": "A polished silver ring. Enhances... performance.",
+    "type": "clothing",
+    "category": "lewd",
+    "slot": "genitals",
+    "rarity": "uncommon",
+    "tags": ["lewd", "cock_ring", "silver", "jewelry"],
+    "paperdollType": "cock_ring",
+    "paperdollImages": {
+      "groin": "/images/paperdoll/lewd/cockring/silver_groin.png"
+    },
+    "stats": {
+      "stamina": 5
+    },
+    "value": 75,
+    "weight": 0.05
+  },
+  {
+    "id": "jacobs_ladder_steel",
+    "name": "Steel Jacob's Ladder",
+    "description": "A set of frenum piercings running along the underside. Permanent body modification.",
+    "type": "piercing",
+    "category": "piercing",
+    "slot": "genital_piercing",
+    "rarity": "rare",
+    "tags": ["piercing", "genital", "jacobs_ladder", "steel", "permanent"],
+    "paperdollType": "jacobs_ladder",
+    "paperdollImages": {
+      "groin": "/images/paperdoll/piercings/jacobs_ladder_steel.png"
+    },
+    "permanent": true,
+    "stats": {
+      "charm": 2
+    },
+    "value": 300,
+    "weight": 0.02
+  },
+  {
+    "id": "prince_albert_gold",
+    "name": "Gold Prince Albert",
+    "description": "A gold ring through the urethra. Bold statement piece.",
+    "type": "piercing",
+    "category": "piercing",
+    "slot": "genital_piercing",
+    "rarity": "epic",
+    "tags": ["piercing", "genital", "prince_albert", "gold", "permanent"],
+    "paperdollType": "prince_albert",
+    "paperdollImages": {
+      "groin": "/images/paperdoll/piercings/prince_albert_gold.png"
+    },
+    "permanent": true,
+    "stats": {
+      "charm": 4
+    },
+    "value": 500,
+    "weight": 0.01
+  },
+  {
+    "id": "fox_tail_plug",
+    "name": "Fox Tail Butt Plug",
+    "description": "A butt plug with an attached fluffy fox tail.",
+    "type": "clothing",
+    "category": "lewd",
+    "slot": "plug",
+    "rarity": "uncommon",
+    "tags": ["lewd", "plug", "tail", "fox", "petplay"],
+    "paperdollType": "tail_plug",
+    "paperdollImages": {
+      "ass": "/images/paperdoll/lewd/plugs/fox_tail_ass.png",
+      "fullBody": "/images/paperdoll/lewd/plugs/fox_tail_fullbody.png"
+    },
+    "stats": {
+      "charm": 3
+    },
+    "value": 80,
+    "weight": 0.2
+  },
+  {
+    "id": "hemp_rope_restraint",
+    "name": "Hemp Rope Bindings",
+    "description": "Coils of rough hemp rope for binding.",
+    "type": "restraint",
+    "category": "bondage",
+    "slot": "restraint",
+    "rarity": "common",
+    "tags": ["restraint", "rope", "hemp", "bondage"],
+    "paperdollType": "rope_arms",
+    "paperdollImages": {
+      "arms": "/images/paperdoll/restraints/rope_hemp_arms.png",
+      "fullBody": "/images/paperdoll/restraints/rope_hemp_fullbody.png"
+    },
+    "restraintStats": {
+      "hp": 40,
+      "breakDifficulty": 6
+    },
+    "value": 10,
+    "weight": 0.5
+  },
+  {
+    "id": "leather_armbinder",
+    "name": "Leather Armbinder",
+    "description": "A single-sleeve leather restraint that binds arms behind the back.",
+    "type": "restraint",
+    "category": "bondage",
+    "slot": "restraint",
+    "rarity": "rare",
+    "tags": ["restraint", "armbinder", "leather", "bondage", "strict"],
+    "paperdollType": "armbinder",
+    "paperdollImages": {
+      "arms": "/images/paperdoll/restraints/armbinder_leather_arms.png",
+      "fullBody": "/images/paperdoll/restraints/armbinder_leather_fullbody.png",
+      "torso": "/images/paperdoll/restraints/armbinder_leather_torso.png"
+    },
+    "restraintStats": {
+      "hp": 80,
+      "breakDifficulty": 10
+    },
+    "lockable": true,
+    "value": 150,
+    "weight": 1.2
+  },
+  {
+    "id": "iron_plate_armor",
+    "name": "Iron Plate Armor",
+    "description": "Heavy iron plate armor. Provides excellent protection.",
+    "type": "armor",
+    "category": "heavy",
+    "slot": "chest",
+    "rarity": "uncommon",
+    "tags": ["armor", "plate", "iron", "heavy", "chest"],
+    "paperdollType": "chest_armor",
+    "paperdollImages": {
+      "fullBody": {
+        "default": "/images/paperdoll/armor/plate_iron_fullbody.png",
+        "damaged": "/images/paperdoll/armor/plate_iron_fullbody_damaged.png"
+      },
+      "torso": "/images/paperdoll/armor/plate_iron_torso.png"
+    },
+    "clothingState": {
+      "maxIntegrity": 200,
+      "exposureThreshold": 80
+    },
+    "stats": {
+      "defense": 15,
+      "evasion": -5
+    },
+    "requirements": {
+      "strength": 8
+    },
+    "value": 300,
+    "weight": 15
+  },
+  {
+    "id": "silk_robe_purple",
+    "name": "Purple Silk Robe",
+    "description": "A flowing purple silk robe. Elegant and comfortable.",
+    "type": "clothing",
+    "category": "outerwear",
+    "slot": "outerwear",
+    "rarity": "uncommon",
+    "tags": ["clothing", "robe", "silk", "purple", "mage"],
+    "paperdollType": "jacket",
+    "paperdollImages": {
+      "fullBody": "/images/paperdoll/clothing/robes/silk_purple_fullbody.png",
+      "torso": "/images/paperdoll/clothing/robes/silk_purple_torso.png"
+    },
+    "clothingState": {
+      "maxIntegrity": 60,
+      "exposureThreshold": 25
+    },
+    "stats": {
+      "intelligence": 3,
+      "charm": 2
+    },
+    "value": 100,
+    "weight": 0.8
+  },
+  {
+    "id": "dragon_tattoo_back",
+    "name": "Dragon Back Tattoo",
+    "description": "An intricate dragon tattoo spanning the entire back.",
+    "type": "tattoo",
+    "category": "bodymod",
+    "slot": "tattoo_back",
+    "rarity": "rare",
+    "tags": ["tattoo", "dragon", "back", "bodymod", "permanent"],
+    "paperdollType": "body_tattoo",
+    "paperdollImages": {
+      "fullBody": "/images/paperdoll/tattoos/dragon_back_fullbody.png",
+      "torso": "/images/paperdoll/tattoos/dragon_back_torso.png"
+    },
+    "permanent": true,
+    "stats": {
+      "charm": 2,
+      "willpower": 1
+    },
+    "value": 500,
+    "weight": 0
+  },
+  {
+    "id": "leather_collar_black",
+    "name": "Black Leather Collar",
+    "description": "A simple black leather collar with a D-ring.",
+    "type": "clothing",
+    "category": "accessory",
+    "slot": "neck",
+    "rarity": "common",
+    "tags": ["accessory", "collar", "leather", "black", "submissive"],
+    "paperdollType": "collar",
+    "paperdollImages": {
+      "head": "/images/paperdoll/accessories/collar_leather_black.png",
+      "fullBody": "/images/paperdoll/accessories/collar_leather_black_fullbody.png"
+    },
+    "lockable": true,
+    "value": 30,
+    "weight": 0.1
+  }
+]

@@ -1,0 +1,292 @@
+[
+  {
+    "id": "starting_inn",
+    "name": "The Weary Traveler Inn",
+    "description": "A cozy inn at the crossroads, offering rest and respite to travelers.",
+    "type": "building",
+    "region": "crossroads",
+    "tags": ["safe", "inn", "rest", "shop"],
+    
+    "connectedLocations": ["town_square", "north_road", "forest_path"],
+    
+    "features": {
+      "rest": true,
+      "shop": "inn_shop",
+      "save": true
+    },
+    
+    "npcs": ["innkeeper_mary", "bard_tom"],
+    
+    "encounterChance": 0,
+    "encounterTable": null,
+    
+    "ambiance": {
+      "music": "tavern_ambient",
+      "sounds": ["fireplace", "chatter"]
+    },
+    
+    "firstVisitScene": null,
+    "onEnterScene": null
+  },
+  {
+    "id": "town_square",
+    "name": "Crossroads Town Square",
+    "description": "The bustling center of the small town, with a fountain and several merchants.",
+    "type": "outdoor",
+    "region": "crossroads",
+    "tags": ["safe", "town", "shop", "social"],
+    
+    "connectedLocations": ["starting_inn", "blacksmith", "temple", "market", "north_road", "forest_path"],
+    
+    "features": {
+      "shop": "market_shop",
+      "bulletin": true
+    },
+    
+    "npcs": ["merchant_joe", "town_guard"],
+    
+    "encounterChance": 0,
+    
+    "ambiance": {
+      "music": "town_theme",
+      "sounds": ["crowd", "fountain"]
+    }
+  },
+  {
+    "id": "forest_path",
+    "name": "Forest Path",
+    "description": "A winding path leading into the Darkwood Forest. Shadows dance between the trees.",
+    "type": "outdoor",
+    "region": "darkwood",
+    "tags": ["forest", "path", "travel"],
+    
+    "connectedLocations": ["town_square", "darkwood_forest", "forest_clearing"],
+    
+    "encounterChance": 0.3,
+    "encounterTable": "forest_weak",
+    "enemyTables": ["forest_weak"],
+    
+    "travelTime": 1,
+    
+    "ambiance": {
+      "music": "forest_ambient",
+      "sounds": ["birds", "wind_leaves"]
+    },
+    
+    "randomEvents": [
+      { "id": "find_herbs", "chance": 0.15, "reward": { "item": "healing_herb", "count": 2 } },
+      { "id": "lost_traveler", "chance": 0.1, "scene": "lost_traveler_event" }
+    ]
+  },
+  {
+    "id": "darkwood_forest",
+    "name": "Darkwood Forest",
+    "description": "An ancient forest where sunlight barely penetrates the canopy. Strange sounds echo in the darkness.",
+    "type": "outdoor",
+    "region": "darkwood",
+    "tags": ["forest", "dangerous", "exploration"],
+    
+    "connectedLocations": ["forest_path", "darkwood_depths", "wolf_den", "witch_hut"],
+    
+    "encounterChance": 0.5,
+    "encounterTable": "forest_standard",
+    "enemyTables": ["forest_standard", "forest_nsfw"],
+    
+    "features": {
+      "forage": true
+    },
+    
+    "ambiance": {
+      "music": "dark_forest",
+      "sounds": ["rustling", "distant_howl"]
+    },
+    
+    "dangerLevel": 2,
+    
+    "firstVisitScene": "darkwood_first_visit",
+    "firstVisitAchievement": "deep_delver"
+  },
+  {
+    "id": "darkwood_depths",
+    "name": "Darkwood Depths",
+    "description": "The heart of the corrupted forest. The air feels thick with malevolent energy.",
+    "type": "outdoor",
+    "region": "darkwood",
+    "tags": ["forest", "dangerous", "corrupted", "nsfw_zone"],
+    
+    "connectedLocations": ["darkwood_forest", "corrupted_grove"],
+    
+    "encounterChance": 0.7,
+    "encounterTable": "forest_dangerous",
+    "enemyTables": ["forest_dangerous", "forest_nsfw_heavy"],
+    
+    "requirements": {
+      "level": 5,
+      "or": { "item": "forest_compass" }
+    },
+    
+    "effects": {
+      "onEnter": { "applyEffect": "corruption_aura" }
+    },
+    
+    "ambiance": {
+      "music": "corrupted_forest",
+      "sounds": ["whispers", "strange_calls"]
+    },
+    
+    "dangerLevel": 4
+  },
+  {
+    "id": "wolf_den",
+    "name": "Wolf Den",
+    "description": "A cave system that serves as home to a pack of wolves.",
+    "type": "dungeon",
+    "region": "darkwood",
+    "tags": ["cave", "dangerous", "beast_lair"],
+    
+    "connectedLocations": ["darkwood_forest"],
+    
+    "encounterChance": 0.8,
+    "encounterTable": "wolf_pack",
+    "enemyTables": ["wolf_pack"],
+    
+    "rooms": [
+      { "id": "entrance", "name": "Cave Entrance", "encounters": 1 },
+      { "id": "tunnels", "name": "Winding Tunnels", "encounters": 2 },
+      { "id": "den", "name": "Wolf Den", "boss": "alpha_wolf" }
+    ],
+    
+    "ambiance": {
+      "music": "cave_ambient",
+      "sounds": ["dripping", "growling"]
+    },
+    
+    "dangerLevel": 3
+  },
+  {
+    "id": "witch_hut",
+    "name": "Witch's Hut",
+    "description": "A crooked cottage shrouded in mist. Strange lights flicker in the windows.",
+    "type": "building",
+    "region": "darkwood",
+    "tags": ["building", "magic", "shop", "quest"],
+    
+    "connectedLocations": ["darkwood_forest"],
+    
+    "encounterChance": 0,
+    
+    "features": {
+      "shop": "witch_shop",
+      "curseRemoval": true,
+      "alchemy": true
+    },
+    
+    "npcs": ["witch_morrigan"],
+    
+    "requirements": {
+      "flag": "knows_about_witch"
+    },
+    
+    "ambiance": {
+      "music": "mysterious",
+      "sounds": ["bubbling", "cat_meow"]
+    }
+  },
+  {
+    "id": "north_road",
+    "name": "North Road",
+    "description": "The main road heading north. Rumored to be plagued by bandits.",
+    "type": "outdoor",
+    "region": "crossroads",
+    "tags": ["road", "travel", "dangerous"],
+    
+    "connectedLocations": ["town_square", "starting_inn", "bandit_camp", "mountain_pass"],
+    
+    "encounterChance": 0.4,
+    "encounterTable": "road_bandits",
+    "enemyTables": ["road_bandits"],
+    
+    "travelTime": 2,
+    
+    "ambiance": {
+      "music": "road_theme",
+      "sounds": ["wind", "distant_horse"]
+    },
+    
+    "dangerLevel": 2,
+    
+    "travelEncounters": [
+      { "type": "ambush", "chance": 0.2, "enemy": "bandit_group" },
+      { "type": "merchant", "chance": 0.15, "npc": "traveling_merchant" }
+    ]
+  },
+  {
+    "id": "temple",
+    "name": "Temple of Light",
+    "description": "A sacred temple dedicated to the gods of purity and healing.",
+    "type": "building",
+    "region": "crossroads",
+    "tags": ["safe", "temple", "healing", "quest"],
+    
+    "connectedLocations": ["town_square"],
+    
+    "features": {
+      "heal": true,
+      "curseRemoval": true,
+      "corruptionPurge": true,
+      "save": true
+    },
+    
+    "npcs": ["priestess_elena", "acolyte"],
+    
+    "encounterChance": 0,
+    
+    "ambiance": {
+      "music": "sacred_theme",
+      "sounds": ["choir", "bells"]
+    },
+    
+    "services": {
+      "heal": { "cost": 0 },
+      "removeCurse": { "cost": 100, "requirement": { "corruption": { "lt": 50 } } },
+      "purgeCorruption": { "cost": 50, "amount": 10 }
+    }
+  },
+  {
+    "id": "corrupted_temple",
+    "name": "Corrupted Temple",
+    "description": "Once a holy place, now twisted by dark energies. Demons have made it their lair.",
+    "type": "dungeon",
+    "region": "demon_realm",
+    "tags": ["dungeon", "dangerous", "corrupted", "demon", "nsfw_zone", "endgame"],
+    
+    "connectedLocations": ["demon_gateway"],
+    
+    "encounterChance": 0.9,
+    "encounterTable": "demon_temple",
+    "enemyTables": ["demon_standard", "demon_nsfw"],
+    
+    "requirements": {
+      "level": 15,
+      "flag": "demon_realm_unlocked"
+    },
+    
+    "rooms": [
+      { "id": "entrance_hall", "name": "Defiled Entrance", "encounters": 2 },
+      { "id": "ritual_chamber", "name": "Ritual Chamber", "encounters": 3, "puzzle": true },
+      { "id": "inner_sanctum", "name": "Inner Sanctum", "boss": "succubus" }
+    ],
+    
+    "effects": {
+      "onEnter": { "applyEffect": "corruption_aura" },
+      "perTurn": { "corruption": 1 }
+    },
+    
+    "ambiance": {
+      "music": "demon_temple",
+      "sounds": ["chanting", "screams"]
+    },
+    
+    "dangerLevel": 5
+  }
+]

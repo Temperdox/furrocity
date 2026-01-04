@@ -1,0 +1,380 @@
+[
+  {
+    "id": "forest_goblin",
+    "name": "Forest Goblin",
+    "description": "A small, green-skinned creature lurking in the woods.",
+    "type": "humanoid",
+    "tier": 1,
+    "level": 2,
+    "tags": ["goblin", "forest", "humanoid", "weak"],
+    "locations": ["darkwood_forest", "forest_path"],
+    
+    "hp": 30,
+    "maxHp": 30,
+    "maxStamina": 50,
+    
+    "stats": {
+      "strength": 5,
+      "vitality": 4,
+      "evasion": 8,
+      "speed": 12
+    },
+    
+    "damageType": "physical",
+    "resistances": {},
+    "weaknesses": { "fire": 25 },
+    
+    "loot": [
+      { "itemId": "gold", "chance": 0.8, "min": 5, "max": 15 },
+      { "itemId": "goblin_ear", "chance": 0.5 },
+      { "itemId": "rusty_dagger", "chance": 0.1 }
+    ],
+    
+    "experience": 15,
+    
+    "skills": [],
+    "canRestrain": false,
+    "nsfwActions": [],
+    
+    "ai": {
+      "aggression": 0.7,
+      "fleeThreshold": 0.2
+    }
+  },
+  {
+    "id": "forest_wolf",
+    "name": "Forest Wolf",
+    "description": "A fierce wolf with glowing yellow eyes.",
+    "type": "beast",
+    "tier": 1,
+    "level": 3,
+    "tags": ["wolf", "beast", "forest", "pack"],
+    "locations": ["darkwood_forest", "wolf_den"],
+    
+    "hp": 45,
+    "maxHp": 45,
+    "maxStamina": 80,
+    
+    "stats": {
+      "strength": 8,
+      "vitality": 6,
+      "evasion": 10,
+      "speed": 15
+    },
+    
+    "damageType": "physical",
+    "resistances": { "ice": 15 },
+    "weaknesses": { "fire": 20 },
+    
+    "loot": [
+      { "itemId": "gold", "chance": 0.3, "min": 2, "max": 8 },
+      { "itemId": "wolf_pelt", "chance": 0.4 },
+      { "itemId": "wolf_fang", "chance": 0.3 }
+    ],
+    
+    "experience": 25,
+    
+    "skills": ["bite"],
+    "canRestrain": false
+  },
+  {
+    "id": "bandit",
+    "name": "Bandit",
+    "description": "A rough-looking criminal armed with a short sword.",
+    "type": "humanoid",
+    "tier": 2,
+    "level": 4,
+    "tags": ["human", "bandit", "humanoid", "intelligent"],
+    "locations": ["north_road", "bandit_camp"],
+    
+    "hp": 60,
+    "maxHp": 60,
+    "maxStamina": 70,
+    
+    "stats": {
+      "strength": 10,
+      "vitality": 8,
+      "evasion": 7,
+      "speed": 9
+    },
+    
+    "damageType": "physical",
+    
+    "loot": [
+      { "itemId": "gold", "chance": 0.9, "min": 15, "max": 40 },
+      { "itemId": "iron_sword", "chance": 0.2 },
+      { "itemId": "leather_armor", "chance": 0.15 },
+      { "itemId": "health_potion", "chance": 0.3 }
+    ],
+    
+    "experience": 40,
+    
+    "skills": ["power_strike"],
+    "canRestrain": true,
+    "restraintType": "rope_bind",
+    "restraintHp": 40,
+    
+    "nsfwActions": ["grope", "strip"],
+    "nsfwActionData": {
+      "grope": {
+        "name": "Grope",
+        "description": "The bandit roughly gropes you...",
+        "corruptionGain": 3,
+        "arousalEffect": 2
+      },
+      "strip": {
+        "name": "Strip",
+        "description": "The bandit tears at your clothing...",
+        "corruptionGain": 5,
+        "damageClothing": { "slot": "chest", "amount": 30 }
+      }
+    }
+  },
+  {
+    "id": "slime",
+    "name": "Slime",
+    "description": "A gelatinous blob that hungers for organic matter.",
+    "type": "ooze",
+    "tier": 1,
+    "level": 2,
+    "tags": ["slime", "ooze", "dissolving", "nsfw"],
+    "locations": ["darkwood_forest", "cave_entrance", "swamp"],
+    
+    "hp": 40,
+    "maxHp": 40,
+    "maxStamina": 100,
+    
+    "stats": {
+      "strength": 4,
+      "vitality": 10,
+      "evasion": 2,
+      "speed": 4
+    },
+    
+    "damageType": "poison",
+    "resistances": { "physical": 25, "poison": 100 },
+    "weaknesses": { "fire": 50, "ice": 30 },
+    
+    "loot": [
+      { "itemId": "slime_core", "chance": 0.4 },
+      { "itemId": "slime_residue", "chance": 0.6 }
+    ],
+    
+    "experience": 20,
+    
+    "canRestrain": true,
+    "restraintType": "engulf",
+    "restraintHp": 25,
+    
+    "nsfwActions": ["dissolve_clothing", "probe", "fill"],
+    "nsfwActionData": {
+      "dissolve_clothing": {
+        "name": "Dissolve",
+        "description": "The slime's acidic body dissolves your clothing...",
+        "corruptionGain": 2,
+        "damageClothing": { "slot": "all", "amount": 15 }
+      },
+      "probe": {
+        "name": "Probe",
+        "description": "Tendrils of slime probe your body...",
+        "corruptionGain": 5,
+        "arousalEffect": 3,
+        "applyEffect": "aroused"
+      },
+      "fill": {
+        "name": "Fill",
+        "description": "The slime forces itself into your orifices...",
+        "corruptionGain": 10,
+        "arousalEffect": 5,
+        "requiresTags": ["tentacle", "orifice_play"],
+        "triggerScene": "slime_fill_scene"
+      }
+    }
+  },
+  {
+    "id": "succubus",
+    "name": "Succubus",
+    "description": "A seductive demon with bat-like wings and an alluring form.",
+    "type": "demon",
+    "tier": 3,
+    "level": 8,
+    "tags": ["demon", "succubus", "flying", "seduction", "nsfw", "boss_eligible"],
+    "locations": ["demon_realm", "corrupted_temple"],
+    
+    "hp": 120,
+    "maxHp": 120,
+    "maxStamina": 150,
+    
+    "stats": {
+      "strength": 8,
+      "vitality": 10,
+      "evasion": 14,
+      "speed": 12,
+      "charm": 25,
+      "intelligence": 15,
+      "willpower": 18
+    },
+    
+    "damageType": "psychic",
+    "resistances": { "fire": 30, "psychic": 50, "dark": 75 },
+    "weaknesses": { "holy": 50 },
+    
+    "loot": [
+      { "itemId": "gold", "chance": 1.0, "min": 100, "max": 250 },
+      { "itemId": "succubus_essence", "chance": 0.3 },
+      { "itemId": "charm_pendant", "chance": 0.15, "rarity": "epic" },
+      { "itemId": "succubus_wings", "chance": 0.05, "rarity": "legendary" }
+    ],
+    
+    "experience": 150,
+    
+    "skills": ["hypnotic_gaze", "drain_kiss", "seductive_aura"],
+    
+    "canRestrain": true,
+    "restraintType": "charm",
+    "restraintHp": 60,
+    
+    "nsfwActions": ["seduce", "drain_essence", "corrupt", "dominate"],
+    "nsfwActionData": {
+      "seduce": {
+        "name": "Seduce",
+        "description": "The succubus whispers sweet temptations...",
+        "corruptionGain": 8,
+        "arousalEffect": 5,
+        "applyEffect": "hypnotized"
+      },
+      "drain_essence": {
+        "name": "Drain Essence",
+        "description": "She presses her lips to yours, draining your vitality...",
+        "corruptionGain": 10,
+        "damage": 15,
+        "healSelf": 15
+      },
+      "corrupt": {
+        "name": "Corrupt",
+        "description": "Dark energy flows into your body...",
+        "corruptionGain": 20,
+        "applyEffect": "corruption_aura"
+      },
+      "dominate": {
+        "name": "Dominate",
+        "description": "She asserts her dominance over you completely...",
+        "corruptionGain": 15,
+        "arousalEffect": 8,
+        "requiresTags": ["domination"],
+        "triggerScene": "succubus_domination"
+      }
+    },
+    
+    "dialogue": {
+      "encounter": "Well, well... what a delicious morsel has wandered into my domain...",
+      "victory": "Don't worry, darling. You'll learn to enjoy serving me.",
+      "defeat": "Impressive... perhaps you're more than just a plaything after all."
+    }
+  },
+  {
+    "id": "mimic",
+    "name": "Mimic",
+    "description": "A treasure chest with far too many teeth.",
+    "type": "aberration",
+    "tier": 2,
+    "level": 5,
+    "tags": ["mimic", "trap", "surprise", "teeth"],
+    "locations": ["dungeon", "treasure_room", "abandoned_castle"],
+    
+    "hp": 80,
+    "maxHp": 80,
+    "maxStamina": 60,
+    
+    "stats": {
+      "strength": 14,
+      "vitality": 12,
+      "evasion": 4,
+      "speed": 6
+    },
+    
+    "damageType": "physical",
+    "resistances": { "physical": 15 },
+    "weaknesses": { "fire": 25 },
+    
+    "loot": [
+      { "itemId": "gold", "chance": 1.0, "min": 50, "max": 150 },
+      { "itemId": "random_rare", "chance": 0.3 },
+      { "itemId": "mimic_tongue", "chance": 0.4 }
+    ],
+    
+    "experience": 60,
+    
+    "skills": ["surprise_attack", "adhesive"],
+    "canRestrain": true,
+    "restraintType": "adhesive",
+    "restraintHp": 50,
+    
+    "special": {
+      "surpriseAttack": true,
+      "firstStrikeDamage": 1.5
+    }
+  },
+  {
+    "id": "tentacle_plant",
+    "name": "Tentacle Plant",
+    "description": "A carnivorous plant with writhing vine-like appendages.",
+    "type": "plant",
+    "tier": 2,
+    "level": 6,
+    "tags": ["plant", "tentacle", "restraint", "nsfw"],
+    "locations": ["darkwood_depths", "corrupted_grove", "swamp"],
+    
+    "hp": 70,
+    "maxHp": 70,
+    "maxStamina": 120,
+    
+    "stats": {
+      "strength": 12,
+      "vitality": 15,
+      "evasion": 2,
+      "speed": 3
+    },
+    
+    "damageType": "physical",
+    "resistances": { "poison": 50 },
+    "weaknesses": { "fire": 75, "ice": 25 },
+    
+    "loot": [
+      { "itemId": "vine_sample", "chance": 0.5 },
+      { "itemId": "aphrodisiac_pollen", "chance": 0.3 },
+      { "itemId": "plant_core", "chance": 0.2 }
+    ],
+    
+    "experience": 55,
+    
+    "canRestrain": true,
+    "restraintType": "vine_bind",
+    "restraintHp": 35,
+    
+    "nsfwActions": ["tentacle_probe", "pollen_spray", "deep_penetration"],
+    "nsfwActionData": {
+      "tentacle_probe": {
+        "name": "Probe",
+        "description": "Slimy tendrils explore your body...",
+        "corruptionGain": 6,
+        "arousalEffect": 4
+      },
+      "pollen_spray": {
+        "name": "Pollen Spray",
+        "description": "The plant releases a cloud of intoxicating pollen...",
+        "corruptionGain": 3,
+        "applyEffect": "aroused",
+        "stacks": 3
+      },
+      "deep_penetration": {
+        "name": "Deep Penetration",
+        "description": "A thick tendril forces its way inside...",
+        "corruptionGain": 15,
+        "arousalEffect": 8,
+        "requiresTags": ["tentacle", "penetration"],
+        "triggerScene": "plant_penetration"
+      }
+    }
+  }
+]

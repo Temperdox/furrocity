@@ -1,0 +1,606 @@
+[
+  {
+    "id": "bliss_inhaler",
+    "name": "Bliss Inhaler",
+    "description": "A popular street drug that induces euphoria and lowers inhibitions. Highly addictive.",
+    "deliveryMethod": "inhalant",
+    "category": "aphrodisiac",
+    "tags": ["street_drug", "common", "euphoric", "lowered_inhibitions", "illegal"],
+    "rarity": "uncommon",
+    "streetValue": 50,
+    "legalStatus": "illegal",
+    "intoxicationValue": 25,
+    
+    "dosing": {
+      "standardDose": 1,
+      "maxDosesBeforeOD": 4,
+      "maxDosesBeforeDeath": 8,
+      "doseDecayTime": 28800000,
+      "stackable": true,
+      "maxStacks": 3
+    },
+    
+    "timing": {
+      "onsetDuration": 30000,
+      "peakDuration": 300000,
+      "plateauDuration": 600000,
+      "comedownDuration": 300000,
+      "aftermathDuration": 600000,
+      "totalDuration": 1800000
+    },
+    
+    "effects": {
+      "onset": {
+        "statModifiers": {
+          "willpower": { "type": "flat", "value": -2 }
+        },
+        "statusEffects": ["tingling", "anticipation"],
+        "messages": ["You feel a warmth spreading through your lungs..."]
+      },
+      "peak": {
+        "statModifiers": {
+          "charisma": { "type": "percent", "value": 25 },
+          "willpower": { "type": "flat", "value": -5 },
+          "arousal": { "type": "flat", "value": 30 }
+        },
+        "statusEffects": ["euphoric", "lowered_inhibitions", "pheromone_emitting"],
+        "encounterModifiers": {
+          "passedOutChance": 15,
+          "attractionModifier": 1.5
+        },
+        "messages": ["Waves of pleasure wash over you. Everything feels amazing."]
+      },
+      "plateau": {
+        "statModifiers": {
+          "charisma": { "type": "percent", "value": 15 },
+          "willpower": { "type": "flat", "value": -3 },
+          "arousal": { "type": "flat", "value": 20 }
+        },
+        "statusEffects": ["euphoric", "compliant"]
+      },
+      "comedown": {
+        "statModifiers": {
+          "charisma": { "type": "flat", "value": -5 },
+          "endurance": { "type": "flat", "value": -10 },
+          "willpower": { "type": "flat", "value": -2 }
+        },
+        "statusEffects": ["fatigued", "craving"],
+        "messages": ["The high is fading. You feel drained."]
+      },
+      "aftermath": {
+        "statModifiers": {
+          "endurance": { "type": "flat", "value": -15 },
+          "strength": { "type": "flat", "value": -3 },
+          "intelligence": { "type": "flat", "value": -2 }
+        },
+        "statusEffects": ["exhausted", "foggy"],
+        "messages": ["Your body aches. You could really use another hit..."]
+      }
+    },
+    
+    "toleranceScaling": {
+      "minEffectiveness": 0.2,
+      "toleranceGainPerUse": 8,
+      "maxToleranceGainPerDay": 20,
+      "toleranceDecayPerHour": 2,
+      "buildsCategoryTolerance": true,
+      "categoryToleranceGain": 3
+    },
+    
+    "addiction": {
+      "addictiveness": 65,
+      "addictionGainPerUse": 5,
+      "maxAddictionGainPerDay": 15,
+      "addictionDecayPerDay": 2,
+      "withdrawalEffects": {
+        "mild": {
+          "statModifiers": { "willpower": -2, "endurance": -5 },
+          "statusEffects": ["craving", "irritable"],
+          "duration": 86400000
+        },
+        "moderate": {
+          "statModifiers": { "willpower": -5, "endurance": -10, "strength": -3 },
+          "statusEffects": ["craving", "shaking", "anxious"],
+          "duration": 172800000
+        },
+        "severe": {
+          "statModifiers": { "willpower": -10, "endurance": -20, "strength": -5, "intelligence": -3 },
+          "statusEffects": ["desperate_craving", "tremors", "nausea"],
+          "duration": 259200000
+        },
+        "extreme": {
+          "statModifiers": { "willpower": -15, "endurance": -30, "strength": -8, "intelligence": -5 },
+          "statusEffects": ["agonizing_withdrawal", "hallucinating", "vulnerable"],
+          "duration": 432000000
+        }
+      }
+    },
+    
+    "overdose": {
+      "effects": {
+        "statModifiers": { "all": { "type": "percent", "value": -50 } },
+        "statusEffects": ["overdosing", "unconscious", "vulnerable", "pheromone_emitting"],
+        "duration": 3600000
+      },
+      "encounterModifiers": {
+        "passedOutChance": 100,
+        "encounterTypeWeights": { "opportunistic": 60, "predatory": 30, "helpful": 10 }
+      }
+    },
+    
+    "resistance": {
+      "baseResistDifficulty": 40,
+      "partialResistThreshold": 20,
+      "fullResistThreshold": 80,
+      "canBeResisted": true,
+      "resistanceStat": "willpower"
+    }
+  },
+  
+  {
+    "id": "mind_fog_pill",
+    "name": "Mind Fog",
+    "description": "A sedative pill that clouds the mind and makes the user highly suggestible.",
+    "deliveryMethod": "consumable",
+    "category": "sedative",
+    "tags": ["pill", "sedative", "suggestibility", "illegal", "date_drug"],
+    "rarity": "rare",
+    "streetValue": 150,
+    "legalStatus": "illegal",
+    "intoxicationValue": 40,
+    
+    "dosing": {
+      "standardDose": 1,
+      "maxDosesBeforeOD": 2,
+      "maxDosesBeforeDeath": 4,
+      "doseDecayTime": 43200000,
+      "stackable": false,
+      "maxStacks": 1
+    },
+    
+    "timing": {
+      "onsetDuration": 120000,
+      "peakDuration": 600000,
+      "plateauDuration": 1800000,
+      "comedownDuration": 600000,
+      "aftermathDuration": 1200000,
+      "totalDuration": 4200000
+    },
+    
+    "effects": {
+      "onset": {
+        "statModifiers": {
+          "perception": { "type": "flat", "value": -3 },
+          "willpower": { "type": "flat", "value": -2 }
+        },
+        "statusEffects": ["drowsy", "foggy"],
+        "messages": ["Everything starts to feel... distant."]
+      },
+      "peak": {
+        "statModifiers": {
+          "willpower": { "type": "flat", "value": -15 },
+          "intelligence": { "type": "flat", "value": -10 },
+          "perception": { "type": "flat", "value": -10 }
+        },
+        "statusEffects": ["suggestible", "compliant", "memory_impaired", "vulnerability_aura"],
+        "encounterModifiers": {
+          "passedOutChance": 40,
+          "attractionModifier": 0.8
+        },
+        "messages": ["Your thoughts are like clouds... so hard to hold onto..."]
+      },
+      "plateau": {
+        "statModifiers": {
+          "willpower": { "type": "flat", "value": -10 },
+          "intelligence": { "type": "flat", "value": -5 }
+        },
+        "statusEffects": ["suggestible", "compliant"]
+      },
+      "comedown": {
+        "statModifiers": {
+          "willpower": { "type": "flat", "value": -3 },
+          "endurance": { "type": "flat", "value": -15 }
+        },
+        "statusEffects": ["confused", "exhausted"]
+      },
+      "aftermath": {
+        "statModifiers": {
+          "intelligence": { "type": "flat", "value": -5 },
+          "endurance": { "type": "flat", "value": -20 }
+        },
+        "statusEffects": ["amnesia", "exhausted"],
+        "messages": ["You can barely remember what happened..."]
+      }
+    },
+    
+    "toleranceScaling": {
+      "minEffectiveness": 0.3,
+      "toleranceGainPerUse": 5,
+      "maxToleranceGainPerDay": 10,
+      "toleranceDecayPerHour": 1,
+      "buildsCategoryTolerance": true,
+      "categoryToleranceGain": 2
+    },
+    
+    "addiction": {
+      "addictiveness": 25,
+      "addictionGainPerUse": 2,
+      "maxAddictionGainPerDay": 5,
+      "addictionDecayPerDay": 3,
+      "withdrawalEffects": {
+        "mild": {
+          "statModifiers": { "endurance": -3 },
+          "statusEffects": ["restless"],
+          "duration": 43200000
+        },
+        "moderate": {
+          "statModifiers": { "endurance": -8, "willpower": -3 },
+          "statusEffects": ["insomnia", "anxious"],
+          "duration": 86400000
+        }
+      }
+    },
+    
+    "overdose": {
+      "effects": {
+        "statusEffects": ["unconscious", "vulnerable", "memory_wiped"],
+        "duration": 14400000
+      },
+      "encounterModifiers": {
+        "passedOutChance": 100,
+        "encounterTypeWeights": { "predatory": 70, "opportunistic": 25, "helpful": 5 }
+      }
+    },
+    
+    "resistance": {
+      "baseResistDifficulty": 50,
+      "partialResistThreshold": 30,
+      "fullResistThreshold": 75,
+      "canBeResisted": true,
+      "resistanceStat": "willpower"
+    }
+  },
+  
+  {
+    "id": "berserker_injection",
+    "name": "Berserker Serum",
+    "description": "A combat stimulant that dramatically boosts physical stats at the cost of control.",
+    "deliveryMethod": "injectable",
+    "category": "stimulant",
+    "tags": ["combat_drug", "military", "strength_boost", "rage", "controlled"],
+    "rarity": "rare",
+    "streetValue": 200,
+    "legalStatus": "controlled",
+    "intoxicationValue": 15,
+    
+    "dosing": {
+      "standardDose": 1,
+      "maxDosesBeforeOD": 2,
+      "maxDosesBeforeDeath": 3,
+      "doseDecayTime": 7200000,
+      "stackable": false,
+      "maxStacks": 1
+    },
+    
+    "timing": {
+      "onsetDuration": 10000,
+      "peakDuration": 180000,
+      "plateauDuration": 300000,
+      "comedownDuration": 600000,
+      "aftermathDuration": 1800000,
+      "totalDuration": 2890000
+    },
+    
+    "effects": {
+      "onset": {
+        "statModifiers": {
+          "strength": { "type": "flat", "value": 3 },
+          "agility": { "type": "flat", "value": 2 }
+        },
+        "statusEffects": ["adrenaline_surge"],
+        "messages": ["Fire courses through your veins!"]
+      },
+      "peak": {
+        "statModifiers": {
+          "strength": { "type": "percent", "value": 50 },
+          "vitality": { "type": "percent", "value": 25 },
+          "agility": { "type": "flat", "value": 5 },
+          "intelligence": { "type": "flat", "value": -8 },
+          "willpower": { "type": "flat", "value": -5 }
+        },
+        "statusEffects": ["berserk", "pain_immunity", "tunnel_vision"],
+        "messages": ["UNLIMITED POWER! Your muscles surge with inhuman strength!"]
+      },
+      "plateau": {
+        "statModifiers": {
+          "strength": { "type": "percent", "value": 30 },
+          "vitality": { "type": "percent", "value": 15 },
+          "intelligence": { "type": "flat", "value": -5 }
+        },
+        "statusEffects": ["aggressive", "focused"]
+      },
+      "comedown": {
+        "statModifiers": {
+          "strength": { "type": "flat", "value": -10 },
+          "vitality": { "type": "flat", "value": -15 },
+          "agility": { "type": "flat", "value": -5 }
+        },
+        "statusEffects": ["exhausted", "shaking", "vulnerable"],
+        "messages": ["The power fades... your body feels like lead."]
+      },
+      "aftermath": {
+        "statModifiers": {
+          "strength": { "type": "flat", "value": -15 },
+          "vitality": { "type": "flat", "value": -20 },
+          "endurance": { "type": "flat", "value": -25 }
+        },
+        "statusEffects": ["depleted", "muscle_cramps", "vulnerable"],
+        "damagePerMinute": 1,
+        "messages": ["Every muscle screams in agony. You pushed too hard."]
+      }
+    },
+    
+    "toleranceScaling": {
+      "minEffectiveness": 0.4,
+      "toleranceGainPerUse": 10,
+      "maxToleranceGainPerDay": 15,
+      "toleranceDecayPerHour": 0.5,
+      "buildsCategoryTolerance": true,
+      "categoryToleranceGain": 5
+    },
+    
+    "addiction": {
+      "addictiveness": 35,
+      "addictionGainPerUse": 3,
+      "maxAddictionGainPerDay": 8,
+      "addictionDecayPerDay": 1,
+      "withdrawalEffects": {
+        "mild": {
+          "statModifiers": { "strength": -5, "endurance": -5 },
+          "statusEffects": ["weak", "irritable"],
+          "duration": 86400000
+        },
+        "severe": {
+          "statModifiers": { "strength": -15, "endurance": -15, "vitality": -10 },
+          "statusEffects": ["muscle_atrophy", "depression", "rage_episodes"],
+          "duration": 259200000
+        }
+      }
+    },
+    
+    "overdose": {
+      "effects": {
+        "statusEffects": ["cardiac_arrest", "unconscious"],
+        "duration": 600000,
+        "damagePerSecond": 5
+      },
+      "encounterModifiers": {
+        "passedOutChance": 30
+      }
+    },
+    
+    "resistance": {
+      "baseResistDifficulty": 60,
+      "canBeResisted": false
+    },
+    
+    "interactions": [
+      {
+        "withCategory": "depressant",
+        "effect": "dangerous_combination",
+        "odThresholdModifier": -1,
+        "newEffects": ["heart_strain"]
+      }
+    ]
+  },
+  
+  {
+    "id": "pheromone_spray",
+    "name": "Pheromone Cloud",
+    "description": "An aerosol that releases powerful synthetic pheromones, affecting everyone nearby.",
+    "deliveryMethod": "ambient",
+    "category": "pheromone",
+    "tags": ["pheromone", "aoe", "attraction", "illegal"],
+    "rarity": "uncommon",
+    "streetValue": 75,
+    "legalStatus": "illegal",
+    "intoxicationValue": 10,
+    
+    "dosing": {
+      "standardDose": 1,
+      "maxDosesBeforeOD": 6,
+      "doseDecayTime": 3600000,
+      "stackable": true,
+      "maxStacks": 4
+    },
+    
+    "timing": {
+      "onsetDuration": 5000,
+      "peakDuration": 120000,
+      "plateauDuration": 300000,
+      "comedownDuration": 180000,
+      "aftermathDuration": 300000,
+      "totalDuration": 905000
+    },
+    
+    "effects": {
+      "onset": {
+        "statusEffects": ["pheromone_cloud"],
+        "messages": ["A sweet, musky scent fills the air..."]
+      },
+      "peak": {
+        "statModifiers": {
+          "arousal": { "type": "flat", "value": 25 },
+          "willpower": { "type": "flat", "value": -3 }
+        },
+        "statusEffects": ["pheromone_emitting", "heightened_attraction", "lustful"],
+        "encounterModifiers": {
+          "passedOutChance": 20,
+          "attractionModifier": 2.0
+        }
+      },
+      "plateau": {
+        "statModifiers": {
+          "arousal": { "type": "flat", "value": 15 }
+        },
+        "statusEffects": ["pheromone_emitting", "aroused"]
+      },
+      "comedown": {
+        "statModifiers": {
+          "arousal": { "type": "flat", "value": -5 }
+        }
+      }
+    },
+    
+    "toleranceScaling": {
+      "minEffectiveness": 0.5,
+      "toleranceGainPerUse": 3,
+      "toleranceDecayPerHour": 5,
+      "buildsCategoryTolerance": true
+    },
+    
+    "addiction": {
+      "addictiveness": 15,
+      "addictionGainPerUse": 1,
+      "addictionDecayPerDay": 5
+    },
+    
+    "resistance": {
+      "baseResistDifficulty": 30,
+      "partialResistThreshold": 20,
+      "fullResistThreshold": 60,
+      "canBeResisted": true,
+      "resistanceStat": "willpower"
+    }
+  },
+  
+  {
+    "id": "corruption_serum",
+    "name": "Dark Essence",
+    "description": "A forbidden alchemical mixture that accelerates corruption. Effects are permanent.",
+    "deliveryMethod": "consumable",
+    "category": "corruption",
+    "tags": ["corruption", "transformation", "permanent", "forbidden", "rare"],
+    "rarity": "epic",
+    "streetValue": 500,
+    "legalStatus": "forbidden",
+    "intoxicationValue": 50,
+    
+    "dosing": {
+      "standardDose": 1,
+      "maxDosesBeforeOD": 1,
+      "stackable": false,
+      "maxStacks": 1
+    },
+    
+    "timing": {
+      "onsetDuration": 60000,
+      "peakDuration": 300000,
+      "comedownDuration": 600000,
+      "totalDuration": 960000
+    },
+    
+    "effects": {
+      "onset": {
+        "statModifiers": {
+          "corruption": { "type": "flat", "value": 5, "permanent": true }
+        },
+        "statusEffects": ["dark_transformation"],
+        "messages": ["Dark energy seeps into your very soul..."]
+      },
+      "peak": {
+        "statModifiers": {
+          "corruption": { "type": "flat", "value": 15, "permanent": true },
+          "willpower": { "type": "flat", "value": -10 },
+          "charisma": { "type": "flat", "value": 5, "permanent": true }
+        },
+        "statusEffects": ["corrupting", "dark_power", "vulnerability_aura"],
+        "permanentEffects": ["corruption_scar"],
+        "messages": ["You feel your innocence burning away, replaced by something darker..."]
+      },
+      "comedown": {
+        "statModifiers": {
+          "corruption": { "type": "flat", "value": 5, "permanent": true }
+        },
+        "statusEffects": ["dark_afterglow"],
+        "messages": ["The transformation is complete. You are forever changed."]
+      }
+    },
+    
+    "toleranceScaling": {
+      "minEffectiveness": 0.8,
+      "toleranceGainPerUse": 20,
+      "toleranceDecayPerHour": 0
+    },
+    
+    "addiction": {
+      "addictiveness": 80,
+      "addictionGainPerUse": 15,
+      "addictionDecayPerDay": 0.5,
+      "withdrawalEffects": {
+        "severe": {
+          "statModifiers": { "willpower": -20 },
+          "statusEffects": ["dark_hunger", "compulsion"],
+          "duration": 604800000
+        }
+      }
+    },
+    
+    "resistance": {
+      "canBeResisted": false
+    }
+  },
+  
+  {
+    "id": "antidote_broad",
+    "name": "Universal Antidote",
+    "description": "A powerful antidote that provides temporary resistance to all substances.",
+    "deliveryMethod": "consumable",
+    "category": "antidote",
+    "tags": ["antidote", "resistance", "medical", "legal"],
+    "rarity": "rare",
+    "streetValue": 100,
+    "legalStatus": "legal",
+    "intoxicationValue": 0,
+    
+    "dosing": {
+      "standardDose": 1,
+      "maxDosesBeforeOD": 3,
+      "stackable": false
+    },
+    
+    "timing": {
+      "onsetDuration": 10000,
+      "plateauDuration": 7200000,
+      "totalDuration": 7210000
+    },
+    
+    "effects": {
+      "onset": {
+        "messages": ["You feel a protective warmth spread through your body."]
+      },
+      "plateau": {
+        "statusEffects": ["substance_resistant"]
+      }
+    },
+    
+    "providesResistance": {
+      "deliveryMethods": ["all"],
+      "categories": ["all"],
+      "value": 75,
+      "quality": "high",
+      "duration": 7200000,
+      "decayRate": 10
+    },
+    
+    "clearsSubstances": {
+      "categories": ["all"],
+      "clearActive": true,
+      "clearPercentage": 50
+    },
+    
+    "addiction": {
+      "addictiveness": 0
+    }
+  }
+]

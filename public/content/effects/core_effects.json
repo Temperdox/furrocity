@@ -1,0 +1,430 @@
+[
+  {
+    "id": "poison",
+    "name": "Poison",
+    "description": "Taking damage over time from poison.",
+    "type": "debuff",
+    "tags": ["poison", "dot", "nature"],
+    "icon": "☠️",
+    "stackBehavior": "stack",
+    "maxStacks": 5,
+    "duration": {
+      "type": "turns",
+      "value": 5
+    },
+    "modifiers": [],
+    "triggers": {
+      "onTurnStart": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "damage",
+            "amount": { "type": "perStack", "perStack": 3 },
+            "damageType": "poison"
+          }
+        }
+      ],
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "showToast",
+            "toastType": "debuff",
+            "title": "Poisoned!",
+            "message": "You feel the venom coursing through your veins..."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "bleeding",
+    "name": "Bleeding",
+    "description": "Losing health from open wounds.",
+    "type": "debuff",
+    "tags": ["bleed", "dot", "physical"],
+    "icon": "🩸",
+    "stackBehavior": "stack",
+    "maxStacks": 3,
+    "duration": {
+      "type": "turns",
+      "value": 3
+    },
+    "modifiers": [],
+    "triggers": {
+      "onTurnEnd": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "damage",
+            "amount": { "type": "perStack", "perStack": 5 },
+            "damageType": "physical"
+          }
+        }
+      ],
+      "onHeal": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "removeEffect",
+            "effectId": "bleeding"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "strength_up",
+    "name": "Strength Up",
+    "description": "Increased physical power.",
+    "type": "buff",
+    "tags": ["buff", "strength", "physical"],
+    "icon": "💪",
+    "stackBehavior": "refresh",
+    "duration": {
+      "type": "turns",
+      "value": 5
+    },
+    "modifiers": [
+      {
+        "stat": "strength",
+        "operation": "percent",
+        "value": 25
+      },
+      {
+        "stat": "attack",
+        "operation": "percent",
+        "value": 15
+      }
+    ],
+    "triggers": {
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "showToast",
+            "toastType": "buff",
+            "title": "Strength Up!",
+            "message": "+25% Strength"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "evasion_up",
+    "name": "Evasion Up",
+    "description": "Increased dodge chance.",
+    "type": "buff",
+    "tags": ["buff", "evasion", "speed"],
+    "icon": "💨",
+    "stackBehavior": "refresh",
+    "duration": {
+      "type": "turns",
+      "value": 3
+    },
+    "modifiers": [
+      {
+        "stat": "evasion",
+        "operation": "percent",
+        "value": 30
+      }
+    ]
+  },
+  {
+    "id": "restrained_rope",
+    "name": "Rope Bound",
+    "description": "Bound by ropes, movement restricted.",
+    "type": "restraint",
+    "tags": ["restraint", "rope", "bondage"],
+    "icon": "⛓️",
+    "stackBehavior": "replace",
+    "duration": {
+      "type": "untilCondition",
+      "condition": { "type": "isRestrained", "not": true }
+    },
+    "modifiers": [
+      {
+        "stat": "evasion",
+        "operation": "percent",
+        "value": -50
+      },
+      {
+        "stat": "attack",
+        "operation": "percent",
+        "value": -30
+      }
+    ],
+    "applyConditions": {
+      "not": { "type": "hasTag", "tag": "immune_restraint" }
+    },
+    "triggers": {
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "addRestraint",
+            "restraintType": "rope_bind",
+            "hp": 30
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "curse_lust",
+    "name": "Curse of Lust",
+    "description": "An insidious curse that increases vulnerability.",
+    "type": "curse",
+    "tags": ["curse", "lust", "nsfw"],
+    "icon": "💜",
+    "stackBehavior": "intensify",
+    "duration": {
+      "type": "permanent"
+    },
+    "modifiers": [
+      {
+        "stat": "willpower",
+        "operation": "percent",
+        "value": -20
+      },
+      {
+        "stat": "corruptionResistance",
+        "operation": "percent",
+        "value": -30
+      }
+    ],
+    "triggers": {
+      "onTurnEnd": [
+        {
+          "condition": { 
+            "type": "random", 
+            "chance": 0.1 
+          },
+          "action": {
+            "type": "modifyCorruption",
+            "amount": 1
+          }
+        }
+      ],
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "showToast",
+            "toastType": "curse",
+            "title": "Cursed!",
+            "message": "A dark desire takes hold..."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "hypnotized",
+    "name": "Hypnotized",
+    "description": "Mind clouded by hypnotic influence.",
+    "type": "debuff",
+    "tags": ["hypnosis", "mind", "control", "nsfw"],
+    "icon": "🌀",
+    "stackBehavior": "intensify",
+    "duration": {
+      "type": "turns",
+      "value": 3
+    },
+    "modifiers": [
+      {
+        "stat": "willpower",
+        "operation": "percent",
+        "value": -50
+      },
+      {
+        "stat": "evasion",
+        "operation": "percent",
+        "value": -25
+      }
+    ],
+    "applyConditions": {
+      "not": { "type": "hasTag", "tag": "immune_hypnosis" }
+    },
+    "triggers": {
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "showToast",
+            "toastType": "debuff",
+            "title": "Hypnotized...",
+            "message": "Your mind grows hazy..."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "aroused",
+    "name": "Aroused",
+    "description": "Distracted by physical sensations.",
+    "type": "status",
+    "tags": ["arousal", "nsfw", "distraction"],
+    "icon": "💕",
+    "stackBehavior": "stack",
+    "maxStacks": 10,
+    "duration": {
+      "type": "turns",
+      "value": 10
+    },
+    "modifiers": [
+      {
+        "stat": "willpower",
+        "operation": "flat",
+        "value": -1,
+        "condition": { "type": "stackCount", "operator": "gte", "value": 1 }
+      },
+      {
+        "stat": "intelligence",
+        "operation": "flat",
+        "value": -1,
+        "condition": { "type": "stackCount", "operator": "gte", "value": 5 }
+      }
+    ],
+    "triggers": {
+      "onStack": [
+        {
+          "condition": { "type": "stackCount", "operator": "gte", "value": 10 },
+          "action": {
+            "type": "triggerScene",
+            "sceneId": "climax_scene"
+          }
+        }
+      ],
+      "onTurnEnd": [
+        {
+          "condition": { 
+            "type": "stackCount", 
+            "operator": "gte", 
+            "value": 5 
+          },
+          "action": {
+            "type": "modifyCorruption",
+            "amount": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "corruption_aura",
+    "name": "Corruption Aura",
+    "description": "Surrounded by corrupting influence.",
+    "type": "environment",
+    "tags": ["corruption", "aura", "environment"],
+    "icon": "🔮",
+    "stackBehavior": "replace",
+    "duration": {
+      "type": "untilCombatEnd"
+    },
+    "modifiers": [
+      {
+        "stat": "corruptionResistance",
+        "operation": "percent",
+        "value": -25
+      }
+    ],
+    "triggers": {
+      "onTurnStart": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "modifyCorruption",
+            "amount": 2
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "addiction_cum",
+    "name": "Cum Addiction",
+    "description": "An insatiable craving that grows stronger.",
+    "type": "addiction",
+    "tags": ["addiction", "nsfw", "permanent"],
+    "icon": "🍼",
+    "stackBehavior": "intensify",
+    "duration": {
+      "type": "permanent"
+    },
+    "modifiers": [
+      {
+        "stat": "willpower",
+        "operation": "percent",
+        "value": -10,
+        "condition": { "type": "always" }
+      }
+    ],
+    "triggers": {
+      "onTurnStart": [
+        {
+          "condition": { 
+            "or": [
+              { "type": "random", "chance": 0.05 }
+            ]
+          },
+          "action": {
+            "type": "applyEffect",
+            "effectId": "aroused",
+            "stacks": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "magic_damage_small",
+    "name": "Magic Damage",
+    "description": "Arcane energy burns the target.",
+    "type": "instant",
+    "tags": ["magic", "damage", "instant"],
+    "icon": "✨",
+    "duration": {
+      "type": "instant"
+    },
+    "triggers": {
+      "onApply": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "damage",
+            "amount": { "type": "random", "min": 5, "max": 10 },
+            "damageType": "magic"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "regen",
+    "name": "Regeneration",
+    "description": "Health slowly recovers.",
+    "type": "buff",
+    "tags": ["buff", "heal", "regen"],
+    "icon": "💚",
+    "stackBehavior": "stack",
+    "maxStacks": 3,
+    "duration": {
+      "type": "turns",
+      "value": 5
+    },
+    "triggers": {
+      "onTurnStart": [
+        {
+          "condition": { "type": "always" },
+          "action": {
+            "type": "heal",
+            "amount": { "type": "perStack", "perStack": 5 }
+          }
+        }
+      ]
+    }
+  }
+]
