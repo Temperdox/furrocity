@@ -1,0 +1,279 @@
+{
+  "rumorTemplates": {
+    "slut": [
+      {
+        "id": "slut_basic_1",
+        "text": "sleeps with anyone for a few coins",
+        "severity": 40,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 30
+      },
+      {
+        "id": "slut_basic_2",
+        "text": "was caught in a compromising position",
+        "severity": 50,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 40
+      },
+      {
+        "id": "slut_moderate_1",
+        "text": "has been seen leaving many different beds",
+        "severity": 55,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 45
+      },
+      {
+        "id": "slut_moderate_2",
+        "text": "is known to offer... personal services",
+        "severity": 60,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 50
+      },
+      {
+        "id": "slut_severe_1",
+        "text": "will do anything with anyone",
+        "severity": 75,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 60
+      },
+      {
+        "id": "slut_severe_2",
+        "text": "has become infamous for their debauchery",
+        "severity": 85,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 70
+      }
+    ],
+    "criminal": [
+      {
+        "id": "criminal_basic_1",
+        "text": "was seen stealing from a merchant",
+        "severity": 45,
+        "canBeClearedWith": "bribe",
+        "clearDifficulty": 35
+      },
+      {
+        "id": "criminal_basic_2",
+        "text": "is suspected of pickpocketing",
+        "severity": 40,
+        "canBeClearedWith": "bribe",
+        "clearDifficulty": 30
+      },
+      {
+        "id": "criminal_moderate_1",
+        "text": "has ties to the underworld",
+        "severity": 55,
+        "canBeClearedWith": "intimidation",
+        "clearDifficulty": 45
+      },
+      {
+        "id": "criminal_moderate_2",
+        "text": "has a bounty in another region",
+        "severity": 60,
+        "canBeClearedWith": "bribe",
+        "clearDifficulty": 50
+      },
+      {
+        "id": "criminal_severe_1",
+        "text": "is wanted for serious crimes",
+        "severity": 75,
+        "canBeClearedWith": "intimidation",
+        "clearDifficulty": 65
+      },
+      {
+        "id": "criminal_severe_2",
+        "text": "has blood on their hands",
+        "severity": 90,
+        "canBeClearedWith": "intimidation",
+        "clearDifficulty": 80
+      }
+    ],
+    "corrupted": [
+      {
+        "id": "corrupted_basic_1",
+        "text": "consorts with dark forces",
+        "severity": 55,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 45
+      },
+      {
+        "id": "corrupted_basic_2",
+        "text": "has an unnatural aura about them",
+        "severity": 45,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 35
+      },
+      {
+        "id": "corrupted_moderate_1",
+        "text": "was seen at a demon summoning ritual",
+        "severity": 65,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 55
+      },
+      {
+        "id": "corrupted_moderate_2",
+        "text": "has been touched by the void",
+        "severity": 70,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 60
+      },
+      {
+        "id": "corrupted_severe_1",
+        "text": "has made a pact with demons",
+        "severity": 85,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 75
+      },
+      {
+        "id": "corrupted_severe_2",
+        "text": "is said to have sold their soul",
+        "severity": 95,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 85
+      }
+    ],
+    "heroic": [
+      {
+        "id": "heroic_basic_1",
+        "text": "helped defend the village from bandits",
+        "severity": 40,
+        "canBeClearedWith": null,
+        "clearDifficulty": 0
+      },
+      {
+        "id": "heroic_basic_2",
+        "text": "saved a child from danger",
+        "severity": 45,
+        "canBeClearedWith": null,
+        "clearDifficulty": 0
+      },
+      {
+        "id": "heroic_moderate_1",
+        "text": "has slain dangerous monsters",
+        "severity": 60,
+        "canBeClearedWith": null,
+        "clearDifficulty": 0
+      },
+      {
+        "id": "heroic_severe_1",
+        "text": "is a legendary hero",
+        "severity": 90,
+        "canBeClearedWith": null,
+        "clearDifficulty": 0
+      }
+    ],
+    "mysterious": [
+      {
+        "id": "mysterious_basic_1",
+        "text": "appeared from nowhere with no past",
+        "severity": 30,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 20
+      },
+      {
+        "id": "mysterious_basic_2",
+        "text": "never talks about their origins",
+        "severity": 25,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 15
+      },
+      {
+        "id": "mysterious_moderate_1",
+        "text": "may be hiding a dark secret",
+        "severity": 50,
+        "canBeClearedWith": "fame",
+        "clearDifficulty": 40
+      }
+    ]
+  },
+
+  "npcDialogue": {
+    "slut": {
+      "hostile": "Oh, you're that easy slut wandering around, aren't you?",
+      "mocking": "Well, well... if it isn't the town bicycle.",
+      "curious": "I've heard... interesting things about your nighttime activities.",
+      "neutral": "Word travels fast about your... reputation.",
+      "interested": "So the rumors are true? You sound... fascinating."
+    },
+    "criminal": {
+      "hostile": "I know what you've done. Watch yourself around here.",
+      "suspicious": "You match the description of someone the guards are looking for.",
+      "curious": "I've heard you have... useful skills.",
+      "neutral": "Word is you're not exactly law-abiding.",
+      "impressed": "I hear you've been causing trouble. Impressive."
+    },
+    "corrupted": {
+      "hostile": "Stay away from me, you tainted creature!",
+      "fearful": "There's something wrong with you... I can feel it.",
+      "curious": "I've heard you've dabbled in dark arts...",
+      "neutral": "There are whispers about you and dark forces.",
+      "interested": "They say you've touched powers beyond mortal understanding."
+    },
+    "heroic": {
+      "admiring": "You're the hero everyone's been talking about!",
+      "grateful": "Thank the gods you're here! I've heard of your deeds!",
+      "neutral": "So you're the famous adventurer.",
+      "curious": "Is it true you defeated the beast of the woods?"
+    },
+    "mysterious": {
+      "suspicious": "Nobody knows where you came from. That's suspicious.",
+      "curious": "You're quite the enigma. Everyone's trying to figure you out.",
+      "neutral": "I've heard strange things about you."
+    }
+  },
+
+  "responseTemplates": {
+    "deny": {
+      "success": [
+        "Your reputation speaks for itself. They seem convinced.",
+        "They nod apologetically. 'I suppose rumors can be wrong.'",
+        "Your confident denial puts the matter to rest."
+      ],
+      "failure": [
+        "They don't look convinced by your denial.",
+        "'If you say so...' they mutter, clearly unconvinced.",
+        "Your denial falls on deaf ears."
+      ]
+    },
+    "intimidate": {
+      "success": [
+        "They pale and quickly change the subject.",
+        "'I-I didn't see anything!' they stammer, backing away.",
+        "Your threatening glare silences them immediately."
+      ]
+    },
+    "embrace": {
+      "basic": [
+        "You own your reputation with a confident smirk.",
+        "'Maybe I am,' you say with a knowing look.",
+        "You neither confirm nor deny, but your smile says it all."
+      ],
+      "seduce": [
+        "You lean in close with a seductive smile...",
+        "'Why don't I show you personally?' you whisper.",
+        "Your eyes promise things words cannot express..."
+      ]
+    },
+    "stutter": {
+      "failure": [
+        "Your nervous stammering only confirms their suspicions.",
+        "'I-I... that's not...' you trail off unconvincingly.",
+        "Your flustered response speaks louder than words."
+      ]
+    },
+    "bribe": {
+      "success": [
+        "Gold changes hands and memories conveniently fade.",
+        "They pocket the coins and suddenly remember nothing.",
+        "'What rumor?' they ask, pocketing your payment."
+      ]
+    },
+    "ignore": {
+      "neutral": [
+        "You walk away without responding.",
+        "You pretend not to hear and continue on your way.",
+        "Silence is your only response."
+      ]
+    }
+  }
+}

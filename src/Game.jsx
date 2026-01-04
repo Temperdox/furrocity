@@ -9,6 +9,9 @@ import { InventorySystem } from '../engine/InventorySystem.js';
 import { FameSystem } from '../engine/FameSystem.js';
 import { UnlockSystem } from '../engine/UnlockSystem.js';
 import { LocationSystem } from '../engine/LocationSystem.js';
+import ReputationSystem from '../engine/ReputationSystem.js';
+import RumorSystem from '../engine/RumorSystem.js';
+import RumorConfrontation, { RumorConfrontationResult } from './components/ui/RumorConfrontation.jsx';
 
 // ============================================================================
 // GAME DATA STRUCTURES (JSON-DRIVEN CONTENT)
@@ -5725,6 +5728,7 @@ const Game = () => {
   const [showTravelModal, setShowTravelModal] = useState(false);
   const [travelDestination, setTravelDestination] = useState(null);
   const [currentScene, setCurrentScene] = useState(null);
+  const [sceneContext, setSceneContext] = useState(null); // Extra context for scenes (e.g., requirement info)
 
   // Travel system state
   const [mapView, setMapView] = useState('local');
@@ -5739,12 +5743,20 @@ const Game = () => {
   const [activeMerchant, setActiveMerchant] = useState(null);
   const [merchantStock, setMerchantStock] = useState([]);
 
+  // Rumor confrontation state
+  const [showRumorConfrontation, setShowRumorConfrontation] = useState(false);
+  const [rumorConfrontationData, setRumorConfrontationData] = useState(null);
+  const [showRumorResult, setShowRumorResult] = useState(false);
+  const [rumorResult, setRumorResult] = useState(null);
+
   // Engine system refs
   const inventorySystemRef = useRef(null);
   const fameSystemRef = useRef(null);
   const merchantSystemRef = useRef(null);
   const unlockSystemRef = useRef(null);
   const locationSystemRef = useRef(null);
+  const reputationSystemRef = useRef(null);
+  const rumorSystemRef = useRef(null);
   const systemsInitializedRef = useRef(false);
 
   // Initialize engine systems
@@ -5794,6 +5806,11 @@ const Game = () => {
       ];
 
       locationSystemRef.current.initialize(GameData.locations, regionsData, locationFontData);
+
+      // Initialize reputation and rumor systems
+      reputationSystemRef.current = new ReputationSystem(fameSystemRef.current);
+      reputationSystemRef.current.initialize(GameData.locations);
+      rumorSystemRef.current = new RumorSystem(reputationSystemRef.current);
 
       // Initialize merchant data from GameData merchants
       // Since we don't have full DataRegistry integration, we'll manually populate merchants
@@ -6102,6 +6119,38 @@ const Game = () => {
         break;
         
       case 'interact':
+        // Check for rumor confrontation with NPCs at location
+        if (rumorSystemRef.current && player.rumors && player.rumors.length > 0) {
+          // Get NPCs at current location
+          const currentLoc = GameData.locations.find(l => l.id === player.currentLocation);
+          const npcsAtLocation = currentLoc?.npcs || [];
+
+          // Find first NPC that might mention a rumor
+          for (const npcId of npcsAtLocation) {
+            // Get NPC data (try merchant cache first, then generic NPC)
+            const npc = merchantSystemRef.current?.merchantCache.get(npcId) || { id: npcId, name: npcId, rumorAwareness: 0.5 };
+
+            // Check if this NPC should mention a rumor
+            const rumor = rumorSystemRef.current.shouldMentionRumor(player, npc, player.currentLocation);
+            if (rumor) {
+              // Show rumor confrontation
+              const dialogue = rumorSystemRef.current.getRumorDialogue(rumor, npc);
+              const options = rumorSystemRef.current.getRumorResponseOptions(player, rumor, npc);
+              const canSkip = rumor.acknowledged && rumor.mentionCount >= 2;
+
+              setRumorConfrontationData({
+                npc,
+                rumor,
+                dialogue,
+                options,
+                canSkip
+              });
+              setShowRumorConfrontation(true);
+              return; // Stop here - rumor confrontation takes priority
+            }
+          }
+        }
+
         toast.info('NPCs', 'NPC interaction coming soon...');
         break;
         
@@ -6217,7 +6266,31 @@ const Game = () => {
     // Check if location is unlocked
     const unlockStatus = unlockSystemRef.current.checkLocationUnlock(location, player, gameState);
     if (!unlockStatus.unlocked) {
-      toast.warning('Location is locked', unlockStatus.unmetRequirements[0] || 'Requirements not met');
+      // Close the travel modal first
+      setShowTravelModal(false);
+
+      // Check if location has a custom "requirements not met" scene
+      if (location.requirementNotMetScene) {
+        // Find and run the custom scene
+        const scene = GameData.scenes?.find(s => s.id === location.requirementNotMetScene);
+        if (scene) {
+          // Set context for the scene with requirement info
+          setSceneContext({
+            locationId: destinationId,
+            locationName: location.name,
+            unmetRequirements: unlockStatus.unmetRequirements,
+            requirementsDescription: unlockSystemRef.current.getRequirementsDescription(location, player)
+          });
+          setCurrentScene(scene);
+          setScreen('scene');
+          return;
+        }
+      }
+
+      // Default behavior: show a generic "requirements not met" message
+      // Build a helpful message about what's needed
+      const requirementText = unlockStatus.unmetRequirements[0] || 'Requirements not met';
+      toast.warning('Cannot enter ' + location.name, requirementText);
       return;
     }
 
@@ -6265,12 +6338,16 @@ const Game = () => {
         : [...prev.unlockedLocations, destinationId]
     }));
 
-    // Show location title on first visit
-    if (isFirstVisit && location) {
+    // Show location title when traveling
+    if (location) {
       const titleData = locationSystemRef.current.getTitleDisplayData(location);
       setLocationTitleData(titleData);
       setShowLocationTitle(true);
-      toast.quest(`Discovered: ${location.name}`, 'New area unlocked!');
+
+      // Show discovery toast only on first visit
+      if (isFirstVisit) {
+        toast.quest(`Discovered: ${location.name}`, 'New area unlocked!');
+      }
     }
 
     // Check for cartographer achievement (all locations visited)
@@ -6279,6 +6356,11 @@ const Game = () => {
       : [...player.visitedLocations, destinationId];
     if (newVisited.length >= GameData.locations.length) {
       unlockAchievement('cartographer');
+    }
+
+    // Record visit for local reputation system
+    if (reputationSystemRef.current) {
+      reputationSystemRef.current.recordVisit(player, destinationId);
     }
 
     setShowTravelModal(false);
@@ -6291,7 +6373,53 @@ const Game = () => {
       setTravelDestination(null);
     }
   };
-  
+
+  // Rumor confrontation handlers
+  const handleRumorResponse = useCallback((responseId) => {
+    if (!rumorConfrontationData || !rumorSystemRef.current) return;
+
+    const { npc, rumor } = rumorConfrontationData;
+    const result = rumorSystemRef.current.processRumorResponse(player, rumor, responseId, npc);
+
+    // Update player state with any changes
+    setPlayer(prev => ({
+      ...prev,
+      rumors: [...(prev.rumors || [])],
+      rumorCooldowns: { ...prev.rumorCooldowns, [npc.id]: Date.now() },
+      gold: result.effects?.find(e => e.type === 'gold_spent')
+        ? prev.gold + result.effects.find(e => e.type === 'gold_spent').value
+        : prev.gold
+    }));
+
+    // Show result
+    setRumorResult(result);
+    setShowRumorConfrontation(false);
+    setShowRumorResult(true);
+
+    // Check if seduction was triggered
+    if (result.triggerScene) {
+      const seduceScene = GameData.scenes?.find(s => s.id === result.triggerScene);
+      if (seduceScene) {
+        setShowRumorResult(false);
+        setCurrentScene(seduceScene);
+        setScreen('scene');
+      }
+    }
+  }, [player, rumorConfrontationData]);
+
+  const handleRumorSkip = useCallback(() => {
+    setShowRumorConfrontation(false);
+    setRumorConfrontationData(null);
+    // Continue with normal NPC interaction
+    toast.info('NPCs', 'NPC interaction coming soon...');
+  }, [toast]);
+
+  const handleRumorResultClose = useCallback(() => {
+    setShowRumorResult(false);
+    setRumorResult(null);
+    setRumorConfrontationData(null);
+  }, []);
+
   // Combat action handler
   const handleCombatAction = (action, param) => {
     switch (action) {
@@ -6729,6 +6857,27 @@ const Game = () => {
             onClose={handleCloseMerchant}
           />
         </div>
+      )}
+
+      {/* Rumor Confrontation Modal */}
+      {showRumorConfrontation && rumorConfrontationData && (
+        <RumorConfrontation
+          npc={rumorConfrontationData.npc}
+          rumor={rumorConfrontationData.rumor}
+          dialogue={rumorConfrontationData.dialogue}
+          options={rumorConfrontationData.options}
+          canSkip={rumorConfrontationData.canSkip}
+          onResponse={handleRumorResponse}
+          onSkip={handleRumorSkip}
+        />
+      )}
+
+      {/* Rumor Result Modal */}
+      {showRumorResult && rumorResult && (
+        <RumorConfrontationResult
+          result={rumorResult}
+          onClose={handleRumorResultClose}
+        />
       )}
 
       {renderScreen()}

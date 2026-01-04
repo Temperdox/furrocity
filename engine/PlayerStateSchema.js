@@ -597,6 +597,45 @@ export const comprehensivePlayerState = {
   },
 
   // ============================================================================
+  // LOCAL REPUTATION - Per-location tracking
+  // ============================================================================
+  localReputation: {
+    // [locationId]: {
+    //   fame: 0,                    // -100 to 100
+    //   infamy: { slut: 0, criminal: 0, corrupted: 0 },
+    //   visitCount: 0,
+    //   lastVisit: null,            // Timestamp of last visit
+    //   knownBy: []                 // NPC IDs who know the player
+    // }
+  },
+
+  // ============================================================================
+  // RUMORS - Player's rumor list
+  // ============================================================================
+  rumors: [
+    // {
+    //   id: "rumor_001",
+    //   type: "slut"|"criminal"|"corrupted"|"heroic"|"mysterious",
+    //   text: "Human-readable rumor text",
+    //   severity: 0-100,            // How extreme/spread the rumor is
+    //   originLocation: "location_id",
+    //   originEvent: "scene_id",
+    //   spreadLocations: [],        // Locations that have heard this rumor
+    //   dateCreated: timestamp,
+    //   canBeClearedWith: "fame"|"intimidation"|"bribe",
+    //   clearDifficulty: 0-100,
+    //   lastMentioned: null,        // Timestamp of last NPC confrontation
+    //   mentionCount: 0,            // Times this rumor has been mentioned
+    //   acknowledged: false         // Player has seen this rumor before
+    // }
+  ],
+
+  // Rumor confrontation cooldown per NPC
+  rumorCooldowns: {
+    // [npcId]: timestamp
+  },
+
+  // ============================================================================
   // QUESTS & PROGRESS
   // ============================================================================
   activeQuests: [],

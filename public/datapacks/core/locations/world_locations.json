@@ -6,7 +6,11 @@
     "type": "building",
     "locationType": "local",
     "parentRegion": "crossroads",
-    "tags": ["safe", "inn", "rest", "shop"],
+    "tags": ["safe", "inn", "rest", "shop", "inhabited"],
+
+    "inhabited": true,
+    "buildings": 1,
+    "markets": 0,
 
     "locked": false,
     "initiallyUnlocked": true,
@@ -51,7 +55,12 @@
     "type": "outdoor",
     "locationType": "local",
     "parentRegion": "crossroads",
-    "tags": ["safe", "town", "shop", "social"],
+    "tags": ["safe", "town", "shop", "social", "inhabited"],
+
+    "inhabited": true,
+    "largeLocation": true,
+    "buildings": 8,
+    "markets": 2,
 
     "locked": false,
     "initiallyUnlocked": true,
@@ -91,7 +100,11 @@
     "type": "building",
     "locationType": "local",
     "parentRegion": "crossroads",
-    "tags": ["safe", "shop", "crafting"],
+    "tags": ["safe", "shop", "crafting", "inhabited"],
+
+    "inhabited": true,
+    "buildings": 1,
+    "markets": 1,
 
     "locked": false,
     "initiallyUnlocked": true,
@@ -378,7 +391,11 @@
     "type": "building",
     "locationType": "local",
     "parentRegion": "darkwood",
-    "tags": ["building", "magic", "shop", "quest"],
+    "tags": ["building", "magic", "shop", "quest", "inhabited"],
+
+    "inhabited": true,
+    "buildings": 1,
+    "markets": 1,
 
     "locked": true,
     "initiallyUnlocked": false,
@@ -484,7 +501,11 @@
     "type": "building",
     "locationType": "local",
     "parentRegion": "crossroads",
-    "tags": ["safe", "temple", "healing", "quest"],
+    "tags": ["safe", "temple", "healing", "quest", "inhabited"],
+
+    "inhabited": true,
+    "buildings": 1,
+    "markets": 0,
 
     "locked": false,
     "initiallyUnlocked": true,

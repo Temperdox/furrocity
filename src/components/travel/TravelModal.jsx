@@ -52,20 +52,25 @@ const TravelModal = ({
   }, [locationSystem, mapView, currentRegion, playerState, gameState]);
 
   // Handle location/region click
+  // Allow selecting both locked and unlocked locations
+  // Locked locations will show requirements in the panel
   const handleLocationClick = useCallback((item) => {
-    if (item.unlockStatus?.unlocked) {
+    // Only allow clicking on discovered/visible locations
+    if (item.visible !== false) {
       setSelectedLocation(item);
     }
   }, []);
 
   // Handle travel confirmation
+  // Allow attempting travel to locked locations - the parent will handle showing the requirement scene
   const handleTravel = useCallback(() => {
-    if (selectedLocation && selectedLocation.unlockStatus?.unlocked) {
+    if (selectedLocation) {
       if (mapView === 'world') {
         // If selecting a region, switch to local view for that region
         onMapViewChange?.('local');
         // Could also set currentRegion if implementing region travel
       } else {
+        // Let the parent handle locked locations (will show requirement scene)
         onTravel(selectedLocation.id);
       }
       setSelectedLocation(null);
@@ -167,17 +172,36 @@ const TravelModal = ({
 
         {/* Selected Location Panel */}
         {selectedLocation && (
-          <div className="selected-location-panel">
+          <div className={`selected-location-panel ${selectedLocation.unlockStatus?.unlocked ? '' : 'locked'}`}>
             <div className="selected-location-header">
-              <h3 className="selected-location-name">{selectedLocation.name}</h3>
-              {selectedLocation.dangerLevel && (
+              <h3 className="selected-location-name">
+                {!selectedLocation.unlockStatus?.unlocked && <span className="lock-icon">🔒 </span>}
+                {selectedLocation.name}
+              </h3>
+              {selectedLocation.dangerLevel && selectedLocation.unlockStatus?.unlocked && (
                 <span className={`danger-level danger-level-${selectedLocation.dangerLevel}`}>
                   {'⚠️'.repeat(Math.min(selectedLocation.dangerLevel, 5))}
                 </span>
               )}
             </div>
             <p className="selected-location-description">{selectedLocation.description}</p>
-            {selectedLocation.tags && (
+
+            {/* Show requirements for locked locations */}
+            {!selectedLocation.unlockStatus?.unlocked && (
+              <div className="selected-location-requirements">
+                <p className="requirements-header">Requirements to enter:</p>
+                <ul className="requirements-list">
+                  {(selectedLocation.unlockStatus?.unmetRequirements || ['Location is locked']).map((req, idx) => (
+                    <li key={idx} className="requirement-item unmet">
+                      <span className="requirement-icon">✗</span>
+                      <span className="requirement-text">{req}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {selectedLocation.unlockStatus?.unlocked && selectedLocation.tags && (
               <div className="selected-location-tags">
                 {selectedLocation.tags.slice(0, 5).map(tag => (
                   <span key={tag} className="location-tag">{tag}</span>
@@ -202,11 +226,15 @@ const TravelModal = ({
               Cancel
             </button>
             <button
-              className="travel-btn travel-btn--confirm"
-              disabled={!selectedLocation || !selectedLocation.unlockStatus?.unlocked || selectedLocation.id === currentLocation}
+              className={`travel-btn ${selectedLocation?.unlockStatus?.unlocked ? 'travel-btn--confirm' : 'travel-btn--locked'}`}
+              disabled={!selectedLocation || selectedLocation.id === currentLocation}
               onClick={handleTravel}
             >
-              {mapView === 'world' ? 'View Region' : 'Travel'}
+              {mapView === 'world'
+                ? 'View Region'
+                : selectedLocation?.unlockStatus?.unlocked
+                  ? 'Travel'
+                  : 'Investigate'}
             </button>
           </div>
         </div>

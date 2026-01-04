@@ -19,18 +19,19 @@
 9. [Creating NPCs & Merchants](#9-creating-npcs--merchants)
 10. [Merchant System](#10-merchant-system)
 11. [Fame, Titles & Infamy](#11-fame-titles--infamy)
-12. [Creating Items](#12-creating-items)
-13. [Inventory System](#13-inventory-system)
-14. [Loot Tables](#14-loot-tables)
-15. [Effects & Status System](#15-effects--status-system)
-16. [Substance System](#16-substance-system)
-17. [Encounter System](#17-encounter-system)
-18. [Paperdoll System](#18-paperdoll-system)
-19. [Player State Schema](#19-player-state-schema)
-20. [Condition Reference](#20-condition-reference)
-21. [Effect Actions Reference](#21-effect-actions-reference)
-22. [Adding New Content](#22-adding-new-content)
-23. [Performance & Optimization](#23-performance--optimization)
+12. [Local/Global Reputation & Rumor System](#12-localglobal-reputation--rumor-system)
+13. [Creating Items](#13-creating-items)
+14. [Inventory System](#14-inventory-system)
+15. [Loot Tables](#15-loot-tables)
+16. [Effects & Status System](#16-effects--status-system)
+17. [Substance System](#17-substance-system)
+18. [Encounter System](#18-encounter-system)
+19. [Paperdoll System](#19-paperdoll-system)
+20. [Player State Schema](#20-player-state-schema)
+21. [Condition Reference](#21-condition-reference)
+22. [Effect Actions Reference](#22-effect-actions-reference)
+23. [Adding New Content](#23-adding-new-content)
+24. [Performance & Optimization](#24-performance--optimization)
 
 ---
 
@@ -468,7 +469,7 @@ Scenes are the core narrative building blocks.
 
 ### Locked Location
 
-Locations can be locked until the player meets certain requirements.
+Locations can be locked until the player meets certain requirements. Locked locations can still be discovered and shown on the map (grayed out with a lock icon). When the player tries to enter a locked location, a custom scene can play explaining why they can't enter.
 
 ```json
 {
@@ -490,6 +491,8 @@ Locations can be locked until the player meets certain requirements.
     ]
   },
 
+  "requirementNotMetScene": "witch_hut_locked",
+
   "discoverableWhileExploring": true,
   "discoveryChance": 0.15,
 
@@ -507,6 +510,44 @@ Locations can be locked until the player meets certain requirements.
 }
 ```
 
+### Requirement Not Met Scene
+
+When a player tries to enter a locked location, you can define a custom scene to explain why:
+
+```json
+{
+  "id": "witch_hut_locked",
+  "name": "The Hut is Sealed",
+  "type": "dialogue",
+  "startNode": "start",
+
+  "nodes": {
+    "start": {
+      "type": "dialogue",
+      "speaker": "narrator",
+      "text": "The door to the witch's hut is sealed with strange runes. You sense powerful magic protecting this place.",
+      "next": "requirements"
+    },
+    "requirements": {
+      "type": "dialogue",
+      "speaker": "player_thought",
+      "text": "I should complete the forest secrets quest or earn the trust of the forest hermit before attempting to enter.",
+      "next": "end"
+    },
+    "end": {
+      "type": "end",
+      "returnToLocation": true
+    }
+  }
+}
+```
+
+The scene receives context data including:
+- `locationId` - The ID of the locked location
+- `locationName` - The display name
+- `unmetRequirements` - Array of unmet requirement descriptions
+- `requirementsDescription` - Human-readable summary of all requirements
+
 ### Location Lock Fields
 
 | Field | Type | Description |
@@ -514,8 +555,27 @@ Locations can be locked until the player meets certain requirements.
 | `locked` | boolean | Whether location is currently locked |
 | `initiallyUnlocked` | boolean | Whether unlocked at game start |
 | `unlockRequirements` | object | Conditions to unlock |
-| `discoverableWhileExploring` | boolean | Can be found while exploring |
+| `requirementNotMetScene` | string | Scene ID to play when player tries to enter locked location |
+| `discoverableWhileExploring` | boolean | Can be found while exploring (shows grayed on map) |
 | `discoveryChance` | number | Chance to discover (0.0-1.0) |
+
+### Discovery System
+
+Locations can be discovered through exploration even if they're locked:
+
+1. **Discovered locations** appear on the map grayed out with a lock icon
+2. **Hovering** over locked locations shows the requirements tooltip
+3. **Clicking** a locked location and pressing "Investigate" triggers the `requirementNotMetScene`
+4. Once requirements are met, the location becomes accessible
+
+Player state tracks discoveries:
+```javascript
+{
+  discoveredLocations: ["witch_hut", "hidden_cave"],  // Found but not necessarily unlocked
+  unlockedLocations: ["starting_inn", "town_square"], // Can be entered
+  visitedLocations: ["starting_inn"]                   // Have actually been there
+}
+```
 
 ---
 
@@ -1001,7 +1061,293 @@ class FameSystem {
 
 ---
 
-## 12. Creating Items
+## 12. Local/Global Reputation & Rumor System
+
+The reputation system tracks fame and infamy both locally (per-location) and globally. Rumors about the player can spread between locations, and NPCs may confront the player about them.
+
+### Core Concepts
+
+**Local Reputation**: Each inhabited location tracks its own fame/infamy for the player. This affects how NPCs at that location treat them.
+
+**Global Reputation**: Calculated as a weighted average of all local reputations. Weight factors include location size, markets, and buildings.
+
+**Rumors**: Events can create rumors that spread between locations. NPCs may mention these rumors when the player interacts with them.
+
+### Location Reputation Properties
+
+Add these properties to locations for reputation tracking:
+
+```json
+{
+  "id": "crossroads_town",
+  "name": "Crossroads Town Square",
+  "tags": ["town", "safe", "shop", "inhabited"],
+
+  "inhabited": true,
+  "largeLocation": true,
+  "markets": 2,
+  "buildings": 8
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `inhabited` | boolean | Has residents who spread rumors |
+| `largeLocation` | boolean | Major hub (2x reputation weight) |
+| `markets` | number | Market count (+5% weight each) |
+| `buildings` | number | Building count (+1% weight each) |
+
+### Player State Extensions
+
+```javascript
+// Per-location reputation
+localReputation: {
+  "crossroads_town": {
+    fame: 0,                    // -100 to 100
+    infamy: { slut: 0, criminal: 0, corrupted: 0 },
+    visitCount: 0,
+    lastVisit: null,
+    knownBy: []                 // NPC IDs who know the player
+  }
+},
+
+// Active rumors
+rumors: [
+  {
+    id: "rumor_001",
+    type: "slut",               // slut, criminal, corrupted, heroic, mysterious
+    text: "sleeps with anyone for coin",
+    severity: 50,               // 0-100
+    originLocation: "starting_inn",
+    originEvent: "caught_scene",
+    spreadLocations: ["crossroads_town"],
+    dateCreated: 1234567890,
+    canBeClearedWith: "fame",
+    clearDifficulty: 30,
+    lastMentioned: null,
+    mentionCount: 0,
+    acknowledged: false
+  }
+],
+
+// Per-NPC cooldown for rumor mentions
+rumorCooldowns: {
+  "innkeeper_mary": 1234567890
+}
+```
+
+### NPC NSFW Properties
+
+Add these to merchant/NPC definitions for rumor confrontation handling:
+
+```json
+{
+  "id": "witch_morrigan",
+  "name": "Morrigan the Witch",
+  "nsfwEnabled": true,
+  "canBeSeduced": true,
+  "seductionDifficulty": 60,
+  "rumorAwareness": 0.9
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `nsfwEnabled` | boolean | Can engage in NSFW content |
+| `canBeSeduced` | boolean | Player can attempt seduction |
+| `seductionDifficulty` | number | Difficulty to seduce (0-100) |
+| `rumorAwareness` | number | Chance NPC mentions rumors (0-1) |
+
+### Rumor Types
+
+| Type | Description | Clear Method |
+|------|-------------|--------------|
+| `slut` | Sexual reputation | High fame denial |
+| `criminal` | Crime reputation | Intimidation or bribe |
+| `corrupted` | Dark dealings | High fame denial |
+| `heroic` | Positive deeds | Cannot be cleared |
+| `mysterious` | Unknown origins | High fame denial |
+
+### Rumor Confrontation Responses
+
+When an NPC mentions a rumor, the player has several response options:
+
+| Response | Requirement | Effect |
+|----------|-------------|--------|
+| **Ignore** | Always | No effect |
+| **Deny** | 30+ Fame | May clear rumor if successful |
+| **Stutter** | Always | Rumor severity increases |
+| **Intimidate** | 20+ Criminal Infamy | Clears locally, increases criminal infamy |
+| **Embrace** | 25+ Lewdness/Slut Infamy | Increases slut infamy |
+| **Embrace + Seduce** | 40+ Lewdness + NPC seducible | Triggers seduction scene |
+| **Bribe** | Gold (5x severity) | Clears at location (criminal rumors) |
+
+### Rumor Templates
+
+**File: `datapacks/core/rumors/rumor_templates.json`**
+
+```json
+{
+  "rumorTemplates": {
+    "slut": [
+      { "text": "sleeps with anyone for a few coins", "severity": 40 },
+      { "text": "was caught in a compromising position", "severity": 50 }
+    ],
+    "criminal": [
+      { "text": "was seen stealing from a merchant", "severity": 45 }
+    ]
+  },
+  "npcDialogue": {
+    "slut": {
+      "hostile": "Oh, you're that easy slut wandering around, aren't you?",
+      "curious": "I've heard... interesting things about you.",
+      "neutral": "Word travels fast. People talk, you know."
+    }
+  }
+}
+```
+
+### Scene Effect Actions
+
+Add rumors and modify local reputation from scene effects:
+
+```json
+{
+  "type": "effect",
+  "effects": [
+    {
+      "type": "add_rumor",
+      "rumorType": "slut",
+      "rumorText": "was caught with the merchant",
+      "severity": 40
+    },
+    {
+      "type": "modify_local_reputation",
+      "reputationType": "slut",
+      "value": 15,
+      "reason": "Caught in compromising position"
+    }
+  ]
+}
+```
+
+### ReputationSystem API
+
+```javascript
+class ReputationSystem {
+  // Initialize with location data
+  initialize(locations)
+
+  // Record player visit
+  recordVisit(playerState, locationId)
+
+  // Modify local reputation
+  modifyLocalReputation(playerState, locationId, type, amount, reason)
+  // type: 'fame', 'slut', 'criminal', 'corrupted'
+
+  // Get local reputation for a location
+  getLocalReputation(playerState, locationId)
+
+  // Get effective reputation (local if visited, global otherwise)
+  getEffectiveReputation(playerState, locationId)
+
+  // Update global from weighted local average
+  updateGlobalReputation(playerState)
+
+  // Spread reputation to neighbors over time
+  spreadReputation(playerState, sourceLocationId, locations)
+
+  // Decay old reputation
+  decayReputation(playerState, daysPassed)
+
+  // Get reputation summary for pause menu
+  getReputationSummary(playerState)
+}
+```
+
+### RumorSystem API
+
+```javascript
+class RumorSystem {
+  // Add a rumor from an event
+  addRumor(playerState, rumorData)
+
+  // Get rumors known at a location
+  getRumorsAtLocation(playerState, locationId)
+
+  // Check if NPC should mention a rumor
+  shouldMentionRumor(playerState, npc, locationId)
+
+  // Get response options based on player stats
+  getRumorResponseOptions(playerState, rumor, npc)
+
+  // Process player's response to a rumor
+  processRumorResponse(playerState, rumor, responseId, npc)
+
+  // Get NPC dialogue for mentioning a rumor
+  getRumorDialogue(rumor, npc)
+
+  // Spread rumors to neighboring locations
+  spreadRumors(playerState, locations)
+
+  // Decay rumors over time
+  decayRumors(playerState, daysPassed)
+
+  // Get rumors summary for pause menu
+  getRumorsSummary(playerState)
+}
+```
+
+### Reputation Weight Calculation
+
+```
+Base weight = 1.0
+Large location = 2.0x multiplier
+Each market = +5% weight
+Each building = +1% weight
+
+Example: Town Square (large, 2 markets, 8 buildings)
+Weight = 1.0 × 2.0 + (2 × 0.05) + (8 × 0.01) = 2.18
+```
+
+### Rumor Spread Mechanics
+
+1. Rumors start at their origin location
+2. Each time tick, rumors may spread to neighboring inhabited locations
+3. Spread chance based on severity (50% at max severity)
+4. Large locations spread rumors faster (10% vs 5% per tick)
+5. Rumors decay 1 severity per day
+6. Rumors with 0 severity and no spread locations are removed
+
+### Configuration
+
+```javascript
+// ReputationSystem config
+config: {
+  baseWeight: 1.0,
+  largeLocationMultiplier: 2.0,
+  marketWeightBonus: 0.05,
+  buildingWeightBonus: 0.01,
+  spreadRateLarge: 0.10,
+  spreadRateSmall: 0.05,
+  decayRate: 0.01
+}
+
+// RumorSystem config
+config: {
+  baseConfrontationChance: 0.3,
+  cooldownDuration: 300000,      // 5 minutes
+  severityDecayPerDay: 1,
+  minSeverityToMention: 10,
+  spreadChancePerTick: 0.2,
+  maxRumorAge: 2592000000,       // 30 days
+  skipAfterAcknowledgements: 3
+}
+```
+
+---
+
+## 13. Creating Items
 
 ### Item Types
 
@@ -1110,7 +1456,7 @@ class FameSystem {
 
 ---
 
-## 13. Inventory System
+## 14. Inventory System
 
 ### Item User Flags
 
@@ -1161,7 +1507,7 @@ class InventorySystem {
 
 ---
 
-## 14. Loot Tables
+## 15. Loot Tables
 
 ### Basic Loot Table
 
@@ -1221,7 +1567,7 @@ class InventorySystem {
 
 ---
 
-## 15. Effects & Status System
+## 16. Effects & Status System
 
 ### Buff Effect
 
@@ -1293,7 +1639,7 @@ class InventorySystem {
 
 ---
 
-## 16. Substance System
+## 17. Substance System
 
 ### Delivery Methods
 
@@ -1353,7 +1699,7 @@ class InventorySystem {
 
 ---
 
-## 17. Encounter System
+## 18. Encounter System
 
 ### Encounter Types
 
@@ -1399,7 +1745,7 @@ class InventorySystem {
 
 ---
 
-## 18. Paperdoll System
+## 19. Paperdoll System
 
 ### Body Regions
 
@@ -1443,7 +1789,7 @@ class InventorySystem {
 
 ---
 
-## 19. Player State Schema
+## 20. Player State Schema
 
 ```javascript
 const playerState = {
@@ -1496,7 +1842,7 @@ const playerState = {
 
 ---
 
-## 20. Condition Reference
+## 21. Condition Reference
 
 ### Stat Conditions
 ```json
@@ -1546,7 +1892,7 @@ const playerState = {
 
 ---
 
-## 21. Effect Actions Reference
+## 22. Effect Actions Reference
 
 ### Stat Modifications
 ```json
@@ -1587,7 +1933,7 @@ const playerState = {
 
 ---
 
-## 22. Adding New Content
+## 23. Adding New Content
 
 ### Step-by-Step: Adding a New Merchant
 
@@ -1663,7 +2009,7 @@ const playerState = {
 
 ---
 
-## 23. Performance & Optimization
+## 24. Performance & Optimization
 
 ### Best Practices
 

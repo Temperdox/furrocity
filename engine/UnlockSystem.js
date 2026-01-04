@@ -516,6 +516,7 @@ export class UnlockSystem {
 
   /**
    * Check if a location can be discovered while exploring
+   * Discovered locations appear on the map (grayed out if locked)
    * @param {Object} location - Location to potentially discover
    * @param {Object} playerState - Player state
    * @param {Object} currentLocation - Current location the player is in
@@ -541,18 +542,13 @@ export class UnlockSystem {
     }
 
     // Check if current location is a neighbor
-    const neighbors = currentLocation.neighbors || [];
+    const neighbors = currentLocation.neighbors || currentLocation.connectedLocations || [];
     if (!neighbors.includes(location.id)) {
       return { canDiscover: false, reason: 'Not a neighbor of current location' };
     }
 
-    // Check unlock requirements
-    const unlockResult = this.checkLocationUnlock(location, playerState);
-    if (!unlockResult.unlocked && location.unlockRequirements) {
-      // Location has unmet requirements
-      return { canDiscover: false, reason: 'Requirements not met' };
-    }
-
+    // Note: We allow discovering locked locations - they just appear grayed out on the map
+    // The player can see them but can't enter until requirements are met
     return { canDiscover: true };
   }
 

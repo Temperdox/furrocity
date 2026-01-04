@@ -5,6 +5,9 @@
     "description": "A kind-faced woman who runs the Weary Traveler Inn.",
     "locationId": "starting_inn",
     "factionId": "crossroads_guild",
+    "nsfwEnabled": false,
+    "canBeSeduced": false,
+    "rumorAwareness": 0.6,
     "buyConfig": {
       "acceptedTags": ["food", "drink", "ingredient", "material"],
       "rejectedTags": ["cursed", "contraband", "nsfw"],
@@ -28,6 +31,9 @@
     "description": "A portly man with a bushy mustache who sells a bit of everything.",
     "locationId": "town_square",
     "factionId": "crossroads_guild",
+    "nsfwEnabled": false,
+    "canBeSeduced": false,
+    "rumorAwareness": 0.7,
     "buyConfig": {
       "acceptedTags": ["material", "ingredient", "misc", "tool", "consumable"],
       "rejectedTags": ["cursed", "weapon", "armor"],
@@ -51,6 +57,9 @@
     "description": "A muscular man covered in soot, with arms like tree trunks.",
     "locationId": "blacksmith",
     "factionId": "crossroads_guild",
+    "nsfwEnabled": false,
+    "canBeSeduced": false,
+    "rumorAwareness": 0.5,
     "buyConfig": {
       "acceptedTags": ["weapon", "armor", "metal", "ore"],
       "rejectedTags": ["cursed", "organic", "food"],
@@ -74,6 +83,9 @@
     "description": "A serene woman in white robes who tends the Temple of Light.",
     "locationId": "temple",
     "factionId": "temple_of_light",
+    "nsfwEnabled": false,
+    "canBeSeduced": false,
+    "rumorAwareness": 0.8,
     "buyConfig": {
       "acceptedTags": ["holy", "blessed", "religious", "offering"],
       "rejectedTags": ["cursed", "dark", "demonic", "nsfw", "contraband"],
@@ -97,6 +109,10 @@
     "description": "A mysterious woman with dark hair and knowing eyes.",
     "locationId": "witch_hut",
     "factionId": null,
+    "nsfwEnabled": true,
+    "canBeSeduced": true,
+    "seductionDifficulty": 60,
+    "rumorAwareness": 0.9,
     "buyConfig": {
       "acceptedTags": ["ingredient", "monster_part", "cursed", "magical", "alchemical", "rare"],
       "rejectedTags": ["holy", "blessed"],
@@ -121,6 +137,9 @@
     "locationId": null,
     "factionId": null,
     "tags": ["traveling", "random_encounter"],
+    "nsfwEnabled": false,
+    "canBeSeduced": false,
+    "rumorAwareness": 0.4,
     "buyConfig": {
       "acceptedTags": ["rare", "epic", "legendary", "exotic", "unique"],
       "rejectedTags": [],
@@ -146,6 +165,10 @@
     "description": "A hooded figure who deals in... questionable goods.",
     "locationId": "bandit_camp",
     "factionId": "underworld",
+    "nsfwEnabled": true,
+    "canBeSeduced": true,
+    "seductionDifficulty": 50,
+    "rumorAwareness": 0.95,
     "requirements": {
       "or": [
         { "type": "infamy", "infamyType": "criminal", "operator": ">=", "value": 20 },

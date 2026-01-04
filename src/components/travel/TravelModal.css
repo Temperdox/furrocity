@@ -471,3 +471,75 @@
 .requirement-text {
   line-height: 1.4;
 }
+
+/* Locked Location Marker - Allow clicking for "Investigate" */
+.location-marker.locked {
+  cursor: pointer;
+}
+
+/* Locked Selected Location Panel */
+.selected-location-panel.locked {
+  border-color: #6b7280;
+}
+
+.selected-location-panel.locked .selected-location-name {
+  color: #9ca3af;
+}
+
+.selected-location-requirements {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+}
+
+.selected-location-requirements .requirements-header {
+  margin: 0 0 8px;
+  color: #f87171;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.selected-location-requirements .requirements-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.selected-location-requirements .requirement-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #fca5a5;
+  font-size: 0.85rem;
+}
+
+.selected-location-requirements .requirement-icon {
+  flex-shrink: 0;
+}
+
+/* Investigate Button (for locked locations) */
+.travel-btn--locked {
+  background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%);
+  color: #e0e0e0;
+  border: 1px solid #9ca3af;
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+}
+
+.travel-btn--locked:hover:not(:disabled) {
+  background: linear-gradient(180deg, #9ca3af 0%, #6b7280 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(107, 114, 128, 0.4);
+}
+
+.travel-btn--locked:disabled {
+  background: #374151;
+  color: #6b7280;
+  cursor: not-allowed;
+  box-shadow: none;
+  border-color: #4b5563;
+}
