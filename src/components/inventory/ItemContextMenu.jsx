@@ -11,6 +11,7 @@
  */
 
 import React, { useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
  * ItemContextMenu - Right-click context menu for inventory items
@@ -205,14 +206,15 @@ const ItemContextMenu = ({
 
   const menuItems = buildMenuItems();
 
-  return (
+  // Use portal to render at document.body level to avoid transform issues
+  return createPortal(
     <div
       ref={menuRef}
       className="context-menu"
       style={{
         position: 'fixed',
-        left: position.x,
-        top: position.y,
+        left: `${position.x}px`,
+        top: `${position.y}px`,
         zIndex: 10000
       }}
     >
@@ -248,7 +250,8 @@ const ItemContextMenu = ({
           );
         })}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -4,27 +4,43 @@
     "name": "The Weary Traveler Inn",
     "description": "A cozy inn at the crossroads, offering rest and respite to travelers.",
     "type": "building",
-    "region": "crossroads",
+    "locationType": "local",
+    "parentRegion": "crossroads",
     "tags": ["safe", "inn", "rest", "shop"],
-    
+
+    "locked": false,
+    "initiallyUnlocked": true,
+
+    "neighbors": ["town_square", "forest_edge"],
     "connectedLocations": ["town_square", "north_road", "forest_path"],
-    
+
+    "mapData": {
+      "localMapPosition": { "x": 200, "y": 180 },
+      "icon": "inn",
+      "iconSize": "large"
+    },
+
+    "titleDisplay": {
+      "fontTag": "friendly_town",
+      "subtitle": "A Cozy Haven for Travelers"
+    },
+
     "features": {
       "rest": true,
       "shop": "inn_shop",
       "save": true
     },
-    
+
     "npcs": ["innkeeper_mary", "bard_tom"],
-    
+
     "encounterChance": 0,
     "encounterTable": null,
-    
+
     "ambiance": {
       "music": "tavern_ambient",
       "sounds": ["fireplace", "chatter"]
     },
-    
+
     "firstVisitScene": null,
     "onEnterScene": null
   },
@@ -33,46 +49,165 @@
     "name": "Crossroads Town Square",
     "description": "The bustling center of the small town, with a fountain and several merchants.",
     "type": "outdoor",
-    "region": "crossroads",
+    "locationType": "local",
+    "parentRegion": "crossroads",
     "tags": ["safe", "town", "shop", "social"],
-    
+
+    "locked": false,
+    "initiallyUnlocked": true,
+
+    "neighbors": ["starting_inn", "blacksmith", "temple", "market_district"],
     "connectedLocations": ["starting_inn", "blacksmith", "temple", "market", "north_road", "forest_path"],
-    
+
+    "mapData": {
+      "localMapPosition": { "x": 250, "y": 250 },
+      "icon": "town_center",
+      "iconSize": "large"
+    },
+
+    "titleDisplay": {
+      "fontTag": "friendly_town",
+      "subtitle": "Heart of the Crossroads"
+    },
+
     "features": {
       "shop": "market_shop",
       "bulletin": true
     },
-    
+
     "npcs": ["merchant_joe", "town_guard"],
-    
+
     "encounterChance": 0,
-    
+
     "ambiance": {
       "music": "town_theme",
       "sounds": ["crowd", "fountain"]
     }
   },
   {
+    "id": "blacksmith",
+    "name": "Iron Forge Smithy",
+    "description": "The town blacksmith. The sound of hammer on anvil rings throughout the day.",
+    "type": "building",
+    "locationType": "local",
+    "parentRegion": "crossroads",
+    "tags": ["safe", "shop", "crafting"],
+
+    "locked": false,
+    "initiallyUnlocked": true,
+
+    "neighbors": ["town_square"],
+    "connectedLocations": ["town_square"],
+
+    "mapData": {
+      "localMapPosition": { "x": 320, "y": 200 },
+      "icon": "blacksmith",
+      "iconSize": "medium"
+    },
+
+    "titleDisplay": {
+      "fontTag": "friendly_town",
+      "subtitle": "Master Craftsman's Workshop"
+    },
+
+    "features": {
+      "shop": "blacksmith_shop",
+      "repair": true,
+      "craft": true
+    },
+
+    "npcs": ["blacksmith_gorn"],
+
+    "encounterChance": 0,
+
+    "ambiance": {
+      "music": "forge_ambient",
+      "sounds": ["hammering", "fire_roar"]
+    }
+  },
+  {
+    "id": "forest_edge",
+    "name": "Forest Edge",
+    "description": "The boundary where civilization meets the wild. The trees grow thick ahead.",
+    "type": "outdoor",
+    "locationType": "local",
+    "parentRegion": "crossroads",
+    "tags": ["outdoor", "forest", "travel"],
+
+    "locked": false,
+    "initiallyUnlocked": true,
+
+    "neighbors": ["starting_inn", "forest_path"],
+    "connectedLocations": ["starting_inn", "town_square", "forest_path"],
+
+    "mapData": {
+      "localMapPosition": { "x": 400, "y": 280 },
+      "icon": "forest_edge",
+      "iconSize": "medium"
+    },
+
+    "titleDisplay": {
+      "fontTag": "neutral",
+      "subtitle": "Where Civilization Ends"
+    },
+
+    "encounterChance": 0.1,
+    "encounterTable": "forest_weak",
+
+    "ambiance": {
+      "music": "forest_edge",
+      "sounds": ["birds", "wind_leaves"]
+    },
+
+    "discoverableWhileExploring": false,
+    "discoveryChance": 0
+  },
+  {
     "id": "forest_path",
     "name": "Forest Path",
     "description": "A winding path leading into the Darkwood Forest. Shadows dance between the trees.",
     "type": "outdoor",
-    "region": "darkwood",
+    "locationType": "local",
+    "parentRegion": "darkwood",
     "tags": ["forest", "path", "travel"],
-    
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "or",
+      "conditions": [
+        { "type": "visited_location", "location": "forest_edge" }
+      ]
+    },
+
+    "neighbors": ["forest_edge", "darkwood_forest", "forest_clearing"],
     "connectedLocations": ["town_square", "darkwood_forest", "forest_clearing"],
-    
+
+    "mapData": {
+      "localMapPosition": { "x": 120, "y": 150 },
+      "icon": "path",
+      "iconSize": "small"
+    },
+
+    "titleDisplay": {
+      "fontTag": "hostile_forest",
+      "subtitle": "Into the Unknown"
+    },
+
+    "discoverableWhileExploring": true,
+    "discoveryChance": 0.3,
+
     "encounterChance": 0.3,
     "encounterTable": "forest_weak",
     "enemyTables": ["forest_weak"],
-    
+
     "travelTime": 1,
-    
+
     "ambiance": {
       "music": "forest_ambient",
       "sounds": ["birds", "wind_leaves"]
     },
-    
+
     "randomEvents": [
       { "id": "find_herbs", "chance": 0.15, "reward": { "item": "healing_herb", "count": 2 } },
       { "id": "lost_traveler", "chance": 0.1, "scene": "lost_traveler_event" }
@@ -83,26 +218,52 @@
     "name": "Darkwood Forest",
     "description": "An ancient forest where sunlight barely penetrates the canopy. Strange sounds echo in the darkness.",
     "type": "outdoor",
-    "region": "darkwood",
+    "locationType": "local",
+    "parentRegion": "darkwood",
     "tags": ["forest", "dangerous", "exploration"],
-    
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "or",
+      "conditions": [
+        { "type": "visited_location", "location": "forest_path" },
+        { "type": "level", "operator": ">=", "value": 2 }
+      ]
+    },
+
+    "neighbors": ["forest_path", "darkwood_depths", "wolf_den", "witch_hut"],
     "connectedLocations": ["forest_path", "darkwood_depths", "wolf_den", "witch_hut"],
-    
+
+    "mapData": {
+      "localMapPosition": { "x": 200, "y": 200 },
+      "icon": "forest_dark",
+      "iconSize": "large"
+    },
+
+    "titleDisplay": {
+      "fontTag": "hostile_forest",
+      "subtitle": "Where Shadows Dwell"
+    },
+
+    "discoverableWhileExploring": true,
+    "discoveryChance": 0.2,
+
     "encounterChance": 0.5,
     "encounterTable": "forest_standard",
     "enemyTables": ["forest_standard", "forest_nsfw"],
-    
+
     "features": {
       "forage": true
     },
-    
+
     "ambiance": {
       "music": "dark_forest",
       "sounds": ["rustling", "distant_howl"]
     },
-    
+
     "dangerLevel": 2,
-    
+
     "firstVisitScene": "darkwood_first_visit",
     "firstVisitAchievement": "deep_delver"
   },
@@ -111,29 +272,50 @@
     "name": "Darkwood Depths",
     "description": "The heart of the corrupted forest. The air feels thick with malevolent energy.",
     "type": "outdoor",
-    "region": "darkwood",
+    "locationType": "local",
+    "parentRegion": "darkwood",
     "tags": ["forest", "dangerous", "corrupted", "nsfw_zone"],
-    
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "and",
+      "conditions": [
+        { "type": "level", "operator": ">=", "value": 5 },
+        { "type": "visited_location", "location": "darkwood_forest" }
+      ]
+    },
+
+    "neighbors": ["darkwood_forest", "corrupted_grove"],
     "connectedLocations": ["darkwood_forest", "corrupted_grove"],
-    
+
+    "mapData": {
+      "localMapPosition": { "x": 280, "y": 320 },
+      "icon": "corrupted_forest",
+      "iconSize": "large"
+    },
+
+    "titleDisplay": {
+      "fontTag": "corrupted",
+      "subtitle": "Heart of Corruption"
+    },
+
+    "discoverableWhileExploring": true,
+    "discoveryChance": 0.1,
+
     "encounterChance": 0.7,
     "encounterTable": "forest_dangerous",
     "enemyTables": ["forest_dangerous", "forest_nsfw_heavy"],
-    
-    "requirements": {
-      "level": 5,
-      "or": { "item": "forest_compass" }
-    },
-    
+
     "effects": {
       "onEnter": { "applyEffect": "corruption_aura" }
     },
-    
+
     "ambiance": {
       "music": "corrupted_forest",
       "sounds": ["whispers", "strange_calls"]
     },
-    
+
     "dangerLevel": 4
   },
   {
@@ -141,26 +323,52 @@
     "name": "Wolf Den",
     "description": "A cave system that serves as home to a pack of wolves.",
     "type": "dungeon",
-    "region": "darkwood",
+    "locationType": "local",
+    "parentRegion": "darkwood",
     "tags": ["cave", "dangerous", "beast_lair"],
-    
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "or",
+      "conditions": [
+        { "type": "visited_location", "location": "darkwood_forest" },
+        { "type": "quest_complete", "quest": "missing_livestock" }
+      ]
+    },
+
+    "neighbors": ["darkwood_forest"],
     "connectedLocations": ["darkwood_forest"],
-    
+
+    "mapData": {
+      "localMapPosition": { "x": 350, "y": 180 },
+      "icon": "cave",
+      "iconSize": "medium"
+    },
+
+    "titleDisplay": {
+      "fontTag": "dungeon",
+      "subtitle": "Lair of the Pack"
+    },
+
+    "discoverableWhileExploring": true,
+    "discoveryChance": 0.15,
+
     "encounterChance": 0.8,
     "encounterTable": "wolf_pack",
     "enemyTables": ["wolf_pack"],
-    
+
     "rooms": [
       { "id": "entrance", "name": "Cave Entrance", "encounters": 1 },
       { "id": "tunnels", "name": "Winding Tunnels", "encounters": 2 },
       { "id": "den", "name": "Wolf Den", "boss": "alpha_wolf" }
     ],
-    
+
     "ambiance": {
       "music": "cave_ambient",
       "sounds": ["dripping", "growling"]
     },
-    
+
     "dangerLevel": 3
   },
   {
@@ -168,25 +376,48 @@
     "name": "Witch's Hut",
     "description": "A crooked cottage shrouded in mist. Strange lights flicker in the windows.",
     "type": "building",
-    "region": "darkwood",
+    "locationType": "local",
+    "parentRegion": "darkwood",
     "tags": ["building", "magic", "shop", "quest"],
-    
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "or",
+      "conditions": [
+        { "type": "flag", "flag": "knows_about_witch" },
+        { "type": "npc_relationship", "npc": "forest_hermit", "stat": "trust", "operator": ">=", "value": 50 },
+        { "type": "quest_complete", "quest": "forest_secrets" }
+      ]
+    },
+
+    "neighbors": ["darkwood_forest"],
     "connectedLocations": ["darkwood_forest"],
-    
+
+    "mapData": {
+      "localMapPosition": { "x": 100, "y": 280 },
+      "icon": "hut_mystical",
+      "iconSize": "medium"
+    },
+
+    "titleDisplay": {
+      "fontTag": "mystical",
+      "subtitle": "Home of Morrigan the Witch"
+    },
+
+    "discoverableWhileExploring": true,
+    "discoveryChance": 0.08,
+
     "encounterChance": 0,
-    
+
     "features": {
       "shop": "witch_shop",
       "curseRemoval": true,
       "alchemy": true
     },
-    
+
     "npcs": ["witch_morrigan"],
-    
-    "requirements": {
-      "flag": "knows_about_witch"
-    },
-    
+
     "ambiance": {
       "music": "mysterious",
       "sounds": ["bubbling", "cat_meow"]
@@ -197,24 +428,50 @@
     "name": "North Road",
     "description": "The main road heading north. Rumored to be plagued by bandits.",
     "type": "outdoor",
-    "region": "crossroads",
+    "locationType": "local",
+    "parentRegion": "crossroads",
     "tags": ["road", "travel", "dangerous"],
-    
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "or",
+      "conditions": [
+        { "type": "level", "operator": ">=", "value": 3 },
+        { "type": "quest_complete", "quest": "road_patrol" }
+      ]
+    },
+
+    "neighbors": ["town_square", "bandit_camp", "mountain_entrance"],
     "connectedLocations": ["town_square", "starting_inn", "bandit_camp", "mountain_pass"],
-    
+
+    "mapData": {
+      "localMapPosition": { "x": 150, "y": 80 },
+      "icon": "road",
+      "iconSize": "small"
+    },
+
+    "titleDisplay": {
+      "fontTag": "hostile_area",
+      "subtitle": "The Dangerous Route North"
+    },
+
+    "discoverableWhileExploring": true,
+    "discoveryChance": 0.25,
+
     "encounterChance": 0.4,
     "encounterTable": "road_bandits",
     "enemyTables": ["road_bandits"],
-    
+
     "travelTime": 2,
-    
+
     "ambiance": {
       "music": "road_theme",
       "sounds": ["wind", "distant_horse"]
     },
-    
+
     "dangerLevel": 2,
-    
+
     "travelEncounters": [
       { "type": "ambush", "chance": 0.2, "enemy": "bandit_group" },
       { "type": "merchant", "chance": 0.15, "npc": "traveling_merchant" }
@@ -225,27 +482,43 @@
     "name": "Temple of Light",
     "description": "A sacred temple dedicated to the gods of purity and healing.",
     "type": "building",
-    "region": "crossroads",
+    "locationType": "local",
+    "parentRegion": "crossroads",
     "tags": ["safe", "temple", "healing", "quest"],
-    
+
+    "locked": false,
+    "initiallyUnlocked": true,
+
+    "neighbors": ["town_square"],
     "connectedLocations": ["town_square"],
-    
+
+    "mapData": {
+      "localMapPosition": { "x": 180, "y": 320 },
+      "icon": "temple",
+      "iconSize": "large"
+    },
+
+    "titleDisplay": {
+      "fontTag": "holy",
+      "subtitle": "Sanctuary of the Divine"
+    },
+
     "features": {
       "heal": true,
       "curseRemoval": true,
       "corruptionPurge": true,
       "save": true
     },
-    
+
     "npcs": ["priestess_elena", "acolyte"],
-    
+
     "encounterChance": 0,
-    
+
     "ambiance": {
       "music": "sacred_theme",
       "sounds": ["choir", "bells"]
     },
-    
+
     "services": {
       "heal": { "cost": 0 },
       "removeCurse": { "cost": 100, "requirement": { "corruption": { "lt": 50 } } },
@@ -253,40 +526,224 @@
     }
   },
   {
+    "id": "slave_pens",
+    "name": "The Slave Pens",
+    "description": "A dark underground market where flesh is bought and sold. Only those invited or marked may enter.",
+    "type": "building",
+    "locationType": "local",
+    "parentRegion": "demon_realm",
+    "tags": ["dangerous", "nsfw_zone", "slave", "auction", "shop"],
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "or",
+      "conditions": [
+        { "type": "flag", "flag": "invited_to_auction" },
+        { "type": "has_mark", "mark": "slave_mark" },
+        { "type": "has_title", "title": "slaver" },
+        { "type": "npc_relationship", "npc": "slave_master", "stat": "trust", "operator": ">=", "value": 60 }
+      ]
+    },
+
+    "neighbors": ["demon_marketplace"],
+    "connectedLocations": ["demon_marketplace"],
+
+    "mapData": {
+      "localMapPosition": { "x": 300, "y": 350 },
+      "icon": "dungeon_chains",
+      "iconSize": "medium"
+    },
+
+    "titleDisplay": {
+      "fontTag": "slave_district",
+      "subtitle": "Where Freedom Dies"
+    },
+
+    "discoverableWhileExploring": false,
+    "discoveryChance": 0,
+
+    "encounterChance": 0,
+
+    "features": {
+      "shop": "slave_market",
+      "auction": true
+    },
+
+    "npcs": ["slave_master_kral", "auction_crier"],
+
+    "ambiance": {
+      "music": "dark_market",
+      "sounds": ["chains", "whimpers", "bidding"]
+    },
+
+    "dangerLevel": 3
+  },
+  {
+    "id": "drug_den",
+    "name": "The Dreaming Depths",
+    "description": "A hidden den where exotic substances flow freely. The air is thick with strange smoke.",
+    "type": "building",
+    "locationType": "local",
+    "parentRegion": "crossroads",
+    "tags": ["dangerous", "nsfw_zone", "drugs", "addiction", "hidden"],
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "or",
+      "conditions": [
+        { "type": "addiction", "addiction": "any", "operator": ">=", "value": 20 },
+        { "type": "flag", "flag": "knows_drug_den" },
+        { "type": "npc_relationship", "npc": "shady_dealer", "stat": "trust", "operator": ">=", "value": 40 }
+      ]
+    },
+
+    "neighbors": ["market_district"],
+    "connectedLocations": ["market_district"],
+
+    "mapData": {
+      "localMapPosition": { "x": 380, "y": 320 },
+      "icon": "den_hidden",
+      "iconSize": "small"
+    },
+
+    "titleDisplay": {
+      "fontTag": "drug_den",
+      "subtitle": "Surrender to Bliss"
+    },
+
+    "discoverableWhileExploring": true,
+    "discoveryChance": 0.05,
+
+    "encounterChance": 0.1,
+
+    "features": {
+      "shop": "drug_dealer",
+      "rest": true
+    },
+
+    "npcs": ["den_keeper", "addicts"],
+
+    "effects": {
+      "onEnter": { "applyEffect": "intoxication_aura" }
+    },
+
+    "ambiance": {
+      "music": "hazy_ambient",
+      "sounds": ["bubbling", "moans", "giggling"]
+    },
+
+    "dangerLevel": 2
+  },
+  {
+    "id": "corrupted_grove",
+    "name": "Corrupted Grove",
+    "description": "A once-sacred grove now twisted by demonic influence. Dark rituals take place here under the blood moon.",
+    "type": "outdoor",
+    "locationType": "local",
+    "parentRegion": "darkwood",
+    "tags": ["dangerous", "corrupted", "nsfw_zone", "ritual"],
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "and",
+      "conditions": [
+        { "type": "visited_location", "location": "darkwood_depths" },
+        { "type": "stat", "stat": "corruption", "operator": ">=", "value": 30 }
+      ]
+    },
+
+    "neighbors": ["darkwood_depths"],
+    "connectedLocations": ["darkwood_depths"],
+
+    "mapData": {
+      "localMapPosition": { "x": 350, "y": 380 },
+      "icon": "grove_corrupted",
+      "iconSize": "large"
+    },
+
+    "titleDisplay": {
+      "fontTag": "corrupted",
+      "subtitle": "Where Innocence is Lost"
+    },
+
+    "discoverableWhileExploring": true,
+    "discoveryChance": 0.05,
+
+    "encounterChance": 0.6,
+    "encounterTable": "corrupted_creatures",
+    "enemyTables": ["corrupted_creatures", "demon_nsfw"],
+
+    "effects": {
+      "onEnter": { "applyEffect": "strong_corruption_aura" },
+      "perTurn": { "corruption": 2 }
+    },
+
+    "ambiance": {
+      "music": "ritual_ambient",
+      "sounds": ["chanting", "whispers", "moans"]
+    },
+
+    "dangerLevel": 5
+  },
+  {
     "id": "corrupted_temple",
     "name": "Corrupted Temple",
     "description": "Once a holy place, now twisted by dark energies. Demons have made it their lair.",
     "type": "dungeon",
-    "region": "demon_realm",
+    "locationType": "local",
+    "parentRegion": "demon_realm",
     "tags": ["dungeon", "dangerous", "corrupted", "demon", "nsfw_zone", "endgame"],
-    
+
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "and",
+      "conditions": [
+        { "type": "level", "operator": ">=", "value": 15 },
+        { "type": "flag", "flag": "demon_realm_unlocked" }
+      ]
+    },
+
+    "neighbors": ["demon_gateway"],
     "connectedLocations": ["demon_gateway"],
-    
+
+    "mapData": {
+      "localMapPosition": { "x": 250, "y": 150 },
+      "icon": "temple_corrupted",
+      "iconSize": "large"
+    },
+
+    "titleDisplay": {
+      "fontTag": "corrupted",
+      "subtitle": "Sanctum of the Fallen"
+    },
+
+    "discoverableWhileExploring": false,
+    "discoveryChance": 0,
+
     "encounterChance": 0.9,
     "encounterTable": "demon_temple",
     "enemyTables": ["demon_standard", "demon_nsfw"],
-    
-    "requirements": {
-      "level": 15,
-      "flag": "demon_realm_unlocked"
-    },
-    
+
     "rooms": [
       { "id": "entrance_hall", "name": "Defiled Entrance", "encounters": 2 },
       { "id": "ritual_chamber", "name": "Ritual Chamber", "encounters": 3, "puzzle": true },
       { "id": "inner_sanctum", "name": "Inner Sanctum", "boss": "succubus" }
     ],
-    
+
     "effects": {
       "onEnter": { "applyEffect": "corruption_aura" },
       "perTurn": { "corruption": 1 }
     },
-    
+
     "ambiance": {
       "music": "demon_temple",
       "sounds": ["chanting", "screams"]
     },
-    
+
     "dangerLevel": 5
   }
 ]

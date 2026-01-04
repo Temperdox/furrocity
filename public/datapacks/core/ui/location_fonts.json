@@ -1,0 +1,143 @@
+{
+  "fontTags": {
+    "friendly_town": {
+      "fontFamily": "'Cinzel', serif",
+      "color": "#ffd700",
+      "textShadow": "0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(255,215,0,0.3)",
+      "fontSize": "2.5rem",
+      "fontWeight": "600"
+    },
+    "hostile_area": {
+      "fontFamily": "'Creepster', cursive",
+      "color": "#dc2626",
+      "textShadow": "0 0 10px rgba(220,38,38,0.7), 0 0 30px rgba(220,38,38,0.4)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400"
+    },
+    "hostile_forest": {
+      "fontFamily": "'MedievalSharp', cursive",
+      "color": "#22c55e",
+      "textShadow": "0 0 8px rgba(34,197,94,0.5), 0 0 25px rgba(34,197,94,0.3)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400"
+    },
+    "dungeon": {
+      "fontFamily": "'Pirata One', cursive",
+      "color": "#a855f7",
+      "textShadow": "0 0 12px rgba(168,85,247,0.6), 0 0 30px rgba(168,85,247,0.3)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400"
+    },
+    "mystical": {
+      "fontFamily": "'Uncial Antiqua', cursive",
+      "color": "#06b6d4",
+      "textShadow": "0 0 15px rgba(6,182,212,0.7), 0 0 35px rgba(6,182,212,0.4)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400"
+    },
+    "corrupted": {
+      "fontFamily": "'Nosifer', cursive",
+      "color": "#7c3aed",
+      "textShadow": "0 0 20px rgba(124,58,237,0.8), 0 0 40px rgba(124,58,237,0.4)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400",
+      "animation": "corruptedPulse 2s ease-in-out infinite"
+    },
+    "neutral": {
+      "fontFamily": "'Crimson Text', Georgia, serif",
+      "color": "#e0e0e0",
+      "textShadow": "0 2px 4px rgba(0,0,0,0.6)",
+      "fontSize": "2.5rem",
+      "fontWeight": "600"
+    },
+    "desert": {
+      "fontFamily": "'Amatic SC', cursive",
+      "color": "#f59e0b",
+      "textShadow": "0 0 10px rgba(245,158,11,0.5), 0 0 25px rgba(245,158,11,0.3)",
+      "fontSize": "3rem",
+      "fontWeight": "700"
+    },
+    "ice": {
+      "fontFamily": "'Cinzel', serif",
+      "color": "#7dd3fc",
+      "textShadow": "0 0 15px rgba(125,211,252,0.7), 0 0 30px rgba(125,211,252,0.4)",
+      "fontSize": "2.5rem",
+      "fontWeight": "600"
+    },
+    "cave": {
+      "fontFamily": "'Pirata One', cursive",
+      "color": "#78716c",
+      "textShadow": "0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(120,113,108,0.3)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400"
+    },
+    "swamp": {
+      "fontFamily": "'MedievalSharp', cursive",
+      "color": "#84cc16",
+      "textShadow": "0 0 12px rgba(132,204,22,0.6), 0 0 25px rgba(132,204,22,0.3)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400"
+    },
+    "ruins": {
+      "fontFamily": "'Uncial Antiqua', cursive",
+      "color": "#a1a1aa",
+      "textShadow": "0 2px 6px rgba(0,0,0,0.7), 0 0 15px rgba(161,161,170,0.3)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400"
+    },
+    "holy": {
+      "fontFamily": "'Cinzel', serif",
+      "color": "#fef3c7",
+      "textShadow": "0 0 20px rgba(254,243,199,0.8), 0 0 40px rgba(254,243,199,0.5)",
+      "fontSize": "2.5rem",
+      "fontWeight": "700"
+    },
+    "slave_district": {
+      "fontFamily": "'Creepster', cursive",
+      "color": "#f43f5e",
+      "textShadow": "0 0 10px rgba(244,63,94,0.6), 0 0 25px rgba(244,63,94,0.3)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400"
+    },
+    "drug_den": {
+      "fontFamily": "'Nosifer', cursive",
+      "color": "#ec4899",
+      "textShadow": "0 0 15px rgba(236,72,153,0.7), 0 0 30px rgba(236,72,153,0.4)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400",
+      "animation": "drugPulse 3s ease-in-out infinite"
+    }
+  },
+  "defaultFont": "neutral",
+  "tagMappings": {
+    "safe": "friendly_town",
+    "town": "friendly_town",
+    "village": "friendly_town",
+    "inn": "friendly_town",
+    "dangerous": "hostile_area",
+    "hostile": "hostile_area",
+    "forest": "hostile_forest",
+    "woods": "hostile_forest",
+    "dungeon": "dungeon",
+    "cave": "cave",
+    "mine": "cave",
+    "magic": "mystical",
+    "arcane": "mystical",
+    "corrupted": "corrupted",
+    "demon": "corrupted",
+    "desert": "desert",
+    "ice": "ice",
+    "frozen": "ice",
+    "swamp": "swamp",
+    "marsh": "swamp",
+    "ruins": "ruins",
+    "ancient": "ruins",
+    "temple": "holy",
+    "shrine": "holy",
+    "church": "holy",
+    "slave": "slave_district",
+    "auction": "slave_district",
+    "drugs": "drug_den",
+    "addiction": "drug_den"
+  }
+}

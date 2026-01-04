@@ -63,7 +63,9 @@ const InventoryItem = ({
   isBuying = false,
   onClick,
   onDoubleClick,
-  onContextMenu
+  onContextMenu,
+  onMouseEnter,
+  onMouseLeave
 }) => {
   const handleClick = useCallback((e) => {
     if (onClick) onClick(item, e);
@@ -76,6 +78,14 @@ const InventoryItem = ({
   const handleContextMenu = useCallback((e) => {
     if (onContextMenu) onContextMenu(item, e);
   }, [item, onContextMenu]);
+
+  const handleMouseEnter = useCallback((e) => {
+    if (onMouseEnter) onMouseEnter(item, e);
+  }, [item, onMouseEnter]);
+
+  const handleMouseLeave = useCallback((e) => {
+    if (onMouseLeave) onMouseLeave(item, e);
+  }, [item, onMouseLeave]);
 
   // Get rarity color and glow
   const rarityColor = RARITY_COLORS[item.rarity] || RARITY_COLORS.common;
@@ -123,7 +133,8 @@ const InventoryItem = ({
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
       onContextMenu={handleContextMenu}
-      title={disabled ? disabledReason : item.description}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Icon */}
       <div className="item-icon">
@@ -139,28 +150,28 @@ const InventoryItem = ({
 
       {/* Favorite star */}
       {item.userFlags?.favorite && (
-        <div className="item-badge item-badge--favorite" title="Favorite">
+        <div className="item-badge item-badge--favorite">
           *
         </div>
       )}
 
       {/* Junk marker */}
       {item.userFlags?.junk && (
-        <div className="item-badge item-badge--junk" title="Junk">
+        <div className="item-badge item-badge--junk">
           J
         </div>
       )}
 
       {/* Cursed indicator */}
       {item.isCursed && (
-        <div className="item-badge item-badge--cursed" title="Cursed">
+        <div className="item-badge item-badge--cursed">
           C
         </div>
       )}
 
       {/* Quest item indicator */}
       {item.questItem && (
-        <div className="item-badge item-badge--quest" title="Quest Item">
+        <div className="item-badge item-badge--quest">
           !
         </div>
       )}

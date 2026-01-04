@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useContext, createContext, useCallback, useMemo, useRef } from 'react';
 import GameConfig from './GameConfig.js';
 import MerchantView from './components/inventory/MerchantView.jsx';
+import UniversalInventory from './components/inventory/UniversalInventory.jsx';
+import TravelModal from './components/travel/TravelModal.jsx';
+import LocationTitle from './components/ui/LocationTitle.jsx';
 import { MerchantSystem } from '../engine/MerchantSystem.js';
 import { InventorySystem } from '../engine/InventorySystem.js';
 import { FameSystem } from '../engine/FameSystem.js';
+import { UnlockSystem } from '../engine/UnlockSystem.js';
+import { LocationSystem } from '../engine/LocationSystem.js';
 
 // ============================================================================
 // GAME DATA STRUCTURES (JSON-DRIVEN CONTENT)
@@ -97,7 +102,12 @@ const GameData = {
       actions: ["rest", "interact", "shop", "move"],
       connectedLocations: ["town_square", "forest_edge", "road_north"],
       npcs: ["innkeeper_mary", "bard_tom"],
-      ambiance: "warm"
+      ambiance: "warm",
+      parentRegion: "crossroads",
+      locked: false,
+      initiallyUnlocked: true,
+      mapData: { localMapPosition: { x: 150, y: 180 } },
+      titleDisplay: { fontTag: "friendly_town", subtitle: "A Cozy Rest Stop" }
     },
     {
       id: "town_square",
@@ -109,7 +119,12 @@ const GameData = {
       actions: ["interact", "shop", "move", "search"],
       connectedLocations: ["starting_inn", "blacksmith", "temple", "market"],
       npcs: ["guard_captain", "merchant_ben"],
-      ambiance: "busy"
+      ambiance: "busy",
+      parentRegion: "crossroads",
+      locked: false,
+      initiallyUnlocked: true,
+      mapData: { localMapPosition: { x: 250, y: 200 } },
+      titleDisplay: { fontTag: "friendly_town" }
     },
     {
       id: "forest_edge",
@@ -123,7 +138,13 @@ const GameData = {
       lootTables: ["forest_loot", "bandit_loot"],
       actions: ["explore", "search", "move", "rest"],
       connectedLocations: ["starting_inn", "deep_forest", "forest_clearing"],
-      ambiance: "eerie"
+      ambiance: "eerie",
+      parentRegion: "crossroads",
+      locked: false,
+      initiallyUnlocked: true,
+      neighbors: ["deep_forest", "bandit_hideout"],
+      mapData: { localMapPosition: { x: 380, y: 150 } },
+      titleDisplay: { fontTag: "hostile_forest", subtitle: "Where the Wild Things Are" }
     },
     {
       id: "deep_forest",
@@ -137,21 +158,36 @@ const GameData = {
       lootTables: ["forest_loot", "rare_herbs"],
       actions: ["explore", "search", "move"],
       connectedLocations: ["forest_edge", "ancient_ruins", "witch_hut"],
-      ambiance: "dark"
+      ambiance: "dark",
+      parentRegion: "darkwood",
+      locked: true,
+      unlockRequirements: { type: "visited_location", location: "forest_edge" },
+      discoverableWhileExploring: true,
+      discoveryChance: 0.2,
+      mapData: { localMapPosition: { x: 200, y: 200 } },
+      titleDisplay: { fontTag: "hostile_forest", subtitle: "Into the Darkness" }
     },
     {
       id: "bandit_hideout",
       name: "Bandit Hideout",
       description: "A cave system converted into a criminal stronghold.",
       image: "/locations/bandit_cave.png",
-      tags: ["dungeon", "dangerous", "hostile"],
+      tags: ["dungeon", "dangerous", "hostile", "cave"],
       encounterChance: 75,
       maxEnemyCount: 4,
       enemyTables: ["bandits", "bandit_dogs"],
       lootTables: ["bandit_loot", "stolen_goods"],
       actions: ["explore", "search", "move", "stealth"],
       connectedLocations: ["forest_edge", "hidden_tunnel"],
-      ambiance: "hostile"
+      ambiance: "hostile",
+      parentRegion: "crossroads",
+      locked: true,
+      unlockRequirements: { type: "level", value: 3, operator: ">=" },
+      discoverableWhileExploring: true,
+      discoveryChance: 0.15,
+      dangerLevel: 3,
+      mapData: { localMapPosition: { x: 420, y: 280 } },
+      titleDisplay: { fontTag: "cave", subtitle: "Den of Thieves" }
     }
   ],
 
@@ -1601,7 +1637,12 @@ const defaultPlayerState = {
   
   // Location
   currentLocation: "starting_inn",
+  currentRegion: "crossroads",
   visitedLocations: ["starting_inn"],
+  visitedRegions: ["crossroads"],
+  unlockedLocations: ["starting_inn", "town_square", "forest_edge"],
+  unlockedRegions: ["crossroads"],
+  discoveredLocations: [],
   
   // Combat state
   inCombat: false,
@@ -4317,28 +4358,6 @@ const LocationScreen = ({ player, gameState, onAction, onPause }) => {
           ))}
         </div>
         
-        {/* Connected Locations */}
-        {location.connectedLocations && (
-          <>
-            <h3 style={{ ...styles.subtitle, fontSize: '1rem', marginTop: '1.5rem', marginBottom: '1rem' }}>
-              Travel Destinations
-            </h3>
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              {location.connectedLocations.map(locId => {
-                const dest = GameData.locations.find(l => l.id === locId);
-                return dest ? (
-                  <Button 
-                    key={locId}
-                    onClick={() => onAction('travel', locId)}
-                    variant="secondary"
-                  >
-                    → {dest.name}
-                  </Button>
-                ) : null;
-              })}
-            </div>
-          </>
-        )}
       </div>
     </div>
   );
@@ -4506,12 +4525,55 @@ const CombatScreen = ({ player, enemies, onAction, onFlee }) => {
 };
 
 // Pause Menu (Skyrim-style)
-const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, onExit }) => {
+const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, onExit, inventorySystem, onUpdatePlayer }) => {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState('menu');
   const [statsSubTab, setStatsSubTab] = useState('overview');
   const [achievementFilter, setAchievementFilter] = useState('all');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  // Handle inventory context menu actions
+  const handleInventoryAction = useCallback((action, item) => {
+    switch (action) {
+      case 'use':
+        // Handle consumable use
+        if (item.useEffect) {
+          toast.info('Item Used', `Used ${item.name}`);
+          // Remove item from inventory (or reduce count)
+          onUpdatePlayer(prev => ({
+            ...prev,
+            inventory: prev.inventory.filter(i => i.uniqueId !== item.uniqueId)
+          }));
+        }
+        break;
+      case 'equip':
+        toast.info('Equipped', `Equipped ${item.name}`);
+        // TODO: Implement equipment system
+        break;
+      case 'drop':
+        onUpdatePlayer(prev => ({
+          ...prev,
+          inventory: prev.inventory.filter(i => i.uniqueId !== item.uniqueId)
+        }));
+        toast.info('Dropped', `Dropped ${item.name}`);
+        break;
+      case 'toggleFavorite':
+        if (inventorySystem) {
+          inventorySystem.toggleFavorite(player.inventory, item.uniqueId);
+          onUpdatePlayer(prev => ({ ...prev, inventory: [...prev.inventory] }));
+        }
+        break;
+      case 'toggleJunk':
+        if (inventorySystem) {
+          inventorySystem.toggleJunk(player.inventory, item.uniqueId);
+          onUpdatePlayer(prev => ({ ...prev, inventory: [...prev.inventory] }));
+        }
+        break;
+      case 'examine':
+        toast.info(item.name, item.description || 'No description available.');
+        break;
+    }
+  }, [inventorySystem, player.inventory, onUpdatePlayer, toast]);
   
   const canSave = gameState.difficulty !== 'hard' && gameState.difficulty !== 'nightmare' || 
     GameData.locations.find(l => l.id === player.currentLocation)?.tags.includes('safe');
@@ -4833,7 +4895,6 @@ const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, on
       case 'menu':
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '300px', margin: '0 auto' }}>
-            <Button onClick={onResume} variant="gold">Resume Game</Button>
             <Button onClick={onSave} disabled={!canSave} variant="primary">
               {canSave ? 'Save Game' : '🔒 Cannot Save Here'}
             </Button>
@@ -5126,35 +5187,24 @@ const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, on
         
       case 'inventory':
         return (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ ...styles.subtitle, fontSize: '1rem' }}>Inventory</h3>
-              <span style={{ color: '#ffd700' }}>💰 {player.gold} Gold</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem' }}>
-              {player.inventory.length === 0 ? (
-                <p style={{ color: '#71717a', fontStyle: 'italic' }}>Inventory is empty</p>
-              ) : (
-                player.inventory.map((item, i) => (
-                  <div 
-                    key={item.uniqueId || i}
-                    style={{
-                      ...styles.card,
-                      padding: '0.75rem',
-                      borderLeft: `3px solid ${item.rarityColor || '#9ca3af'}`
-                    }}
-                  >
-                    <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{item.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: item.rarityColor || '#a1a1aa' }}>
-                      {item.rarity?.toUpperCase()}
-                    </div>
-                    {item.count > 1 && (
-                      <div style={{ fontSize: '0.8rem', color: '#71717a' }}>x{item.count}</div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
+          <div style={{ height: '500px' }}>
+            <UniversalInventory
+              mode="player"
+              items={player.inventory || []}
+              title="Inventory"
+              gold={player.gold}
+              onContextAction={handleInventoryAction}
+              onItemDoubleClick={(item) => {
+                // Double-click to use consumables or equip items
+                if (item.category === 'consumable' || item.useEffect) {
+                  handleInventoryAction('use', item);
+                } else if (item.slot) {
+                  handleInventoryAction('equip', item);
+                }
+              }}
+              showFilters={true}
+              emptyMessage="Your inventory is empty"
+            />
           </div>
         );
         
@@ -5401,7 +5451,31 @@ const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, on
   };
   
   return (
-    <div style={{ ...styles.container, padding: '1.5rem' }}>
+    <div style={{ ...styles.container, padding: '1.5rem', position: 'relative' }}>
+      {/* Resume button - always visible in top right */}
+      <button
+        onClick={onResume}
+        style={{
+          position: 'absolute',
+          top: '1.5rem',
+          right: '1.5rem',
+          background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 140, 0, 0.2) 100%)',
+          border: '1px solid rgba(255, 215, 0, 0.4)',
+          borderRadius: '4px',
+          padding: '1rem 2rem',
+          color: '#ffd700',
+          fontFamily: '"Cinzel", serif',
+          fontSize: '1.1rem',
+          letterSpacing: '0.1em',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+          textTransform: 'uppercase',
+          zIndex: 10
+        }}
+      >
+        Resume Game
+      </button>
+
       {/* Tabs */}
       <div style={{ ...styles.tabContainer, justifyContent: 'center' }}>
         {tabs.map(tab => (
@@ -5417,7 +5491,7 @@ const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, on
           </button>
         ))}
       </div>
-      
+
       {/* Content */}
       <div style={{ ...styles.panel, minHeight: '500px' }}>
         {renderContent()}
@@ -5627,30 +5701,6 @@ const SettingsScreen = ({ gameState, onUpdateSettings, onBack }) => {
   );
 };
 
-// Travel/Movement Modal
-const TravelModal = ({ isOpen, onClose, destination, onConfirm }) => {
-  const location = GameData.locations.find(l => l.id === destination);
-  
-  if (!location) return null;
-  
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Travel">
-      <div style={{ textAlign: 'center' }}>
-        <p style={{ marginBottom: '1rem' }}>Travel to <strong style={{ color: '#ffd700' }}>{location.name}</strong>?</p>
-        {location.encounterChance > 0 && (
-          <p style={{ color: '#ef4444', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            ⚠️ Warning: {location.encounterChance}% chance of hostile encounters
-          </p>
-        )}
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-          <Button onClick={onClose} variant="secondary">Cancel</Button>
-          <Button onClick={onConfirm} variant="gold">Travel</Button>
-        </div>
-      </div>
-    </Modal>
-  );
-};
-
 // ============================================================================
 // MAIN GAME COMPONENT
 // ============================================================================
@@ -5675,6 +5725,11 @@ const Game = () => {
   const [showTravelModal, setShowTravelModal] = useState(false);
   const [travelDestination, setTravelDestination] = useState(null);
   const [currentScene, setCurrentScene] = useState(null);
+
+  // Travel system state
+  const [mapView, setMapView] = useState('local');
+  const [showLocationTitle, setShowLocationTitle] = useState(false);
+  const [locationTitleData, setLocationTitleData] = useState(null);
   
   // Combat state
   const [combatEnemies, setCombatEnemies] = useState([]);
@@ -5688,6 +5743,8 @@ const Game = () => {
   const inventorySystemRef = useRef(null);
   const fameSystemRef = useRef(null);
   const merchantSystemRef = useRef(null);
+  const unlockSystemRef = useRef(null);
+  const locationSystemRef = useRef(null);
   const systemsInitializedRef = useRef(false);
 
   // Initialize engine systems
@@ -5697,6 +5754,46 @@ const Game = () => {
       inventorySystemRef.current = new InventorySystem();
       fameSystemRef.current = new FameSystem();
       merchantSystemRef.current = new MerchantSystem(null, fameSystemRef.current, inventorySystemRef.current);
+      unlockSystemRef.current = new UnlockSystem();
+      locationSystemRef.current = new LocationSystem(unlockSystemRef.current);
+
+      // Initialize location system with data
+      // Note: In production, this would load from datapacks
+      const locationFontData = {
+        fontTags: {
+          friendly_town: { fontFamily: "'Cinzel', serif", color: "#ffd700", textShadow: "0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(255,215,0,0.3)", fontSize: "2.5rem", fontWeight: "600" },
+          hostile_area: { fontFamily: "'Creepster', cursive", color: "#dc2626", textShadow: "0 0 10px rgba(220,38,38,0.7), 0 0 30px rgba(220,38,38,0.4)", fontSize: "2.5rem", fontWeight: "400" },
+          hostile_forest: { fontFamily: "'MedievalSharp', cursive", color: "#22c55e", textShadow: "0 0 8px rgba(34,197,94,0.5), 0 0 25px rgba(34,197,94,0.3)", fontSize: "2.5rem", fontWeight: "400" },
+          dungeon: { fontFamily: "'Pirata One', cursive", color: "#a855f7", textShadow: "0 0 12px rgba(168,85,247,0.6), 0 0 30px rgba(168,85,247,0.3)", fontSize: "2.5rem", fontWeight: "400" },
+          mystical: { fontFamily: "'Uncial Antiqua', cursive", color: "#06b6d4", textShadow: "0 0 15px rgba(6,182,212,0.7), 0 0 35px rgba(6,182,212,0.4)", fontSize: "2.5rem", fontWeight: "400" },
+          corrupted: { fontFamily: "'Nosifer', cursive", color: "#7c3aed", textShadow: "0 0 20px rgba(124,58,237,0.8), 0 0 40px rgba(124,58,237,0.4)", fontSize: "2.5rem", fontWeight: "400", animation: "corruptedPulse 2s ease-in-out infinite" },
+          neutral: { fontFamily: "'Crimson Text', Georgia, serif", color: "#e0e0e0", textShadow: "0 2px 4px rgba(0,0,0,0.6)", fontSize: "2.5rem", fontWeight: "600" },
+          cave: { fontFamily: "'Pirata One', cursive", color: "#78716c", textShadow: "0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(120,113,108,0.3)", fontSize: "2.5rem", fontWeight: "400" },
+          holy: { fontFamily: "'Cinzel', serif", color: "#fef3c7", textShadow: "0 0 20px rgba(254,243,199,0.8), 0 0 40px rgba(254,243,199,0.5)", fontSize: "2.5rem", fontWeight: "700" },
+          slave_district: { fontFamily: "'Creepster', cursive", color: "#f43f5e", textShadow: "0 0 10px rgba(244,63,94,0.6), 0 0 25px rgba(244,63,94,0.3)", fontSize: "2.5rem", fontWeight: "400" },
+          drug_den: { fontFamily: "'Nosifer', cursive", color: "#ec4899", textShadow: "0 0 15px rgba(236,72,153,0.7), 0 0 30px rgba(236,72,153,0.4)", fontSize: "2.5rem", fontWeight: "400", animation: "drugPulse 3s ease-in-out infinite" }
+        },
+        defaultFont: "neutral",
+        tagMappings: {
+          safe: "friendly_town", town: "friendly_town", village: "friendly_town", inn: "friendly_town",
+          dangerous: "hostile_area", hostile: "hostile_area",
+          forest: "hostile_forest", woods: "hostile_forest",
+          dungeon: "dungeon", cave: "cave", mine: "cave",
+          magic: "mystical", arcane: "mystical",
+          corrupted: "corrupted", demon: "corrupted",
+          temple: "holy", shrine: "holy", church: "holy",
+          slave: "slave_district", auction: "slave_district",
+          drugs: "drug_den", addiction: "drug_den"
+        }
+      };
+
+      // Initialize with GameData locations and regions
+      const regionsData = [
+        { id: "crossroads", name: "Crossroads Region", type: "region", locked: false, initiallyUnlocked: true, mapData: { worldMapPosition: { x: 250, y: 300 } }, neighborRegions: ["darkwood"] },
+        { id: "darkwood", name: "Darkwood Forest", type: "region", locked: true, unlockRequirements: { type: "or", conditions: [{ type: "visited_location", location: "forest_edge" }] }, mapData: { worldMapPosition: { x: 400, y: 250 } }, neighborRegions: ["crossroads"] }
+      ];
+
+      locationSystemRef.current.initialize(GameData.locations, regionsData, locationFontData);
 
       // Initialize merchant data from GameData merchants
       // Since we don't have full DataRegistry integration, we'll manually populate merchants
@@ -5705,6 +5802,7 @@ const Game = () => {
           id: 'innkeeper_mary',
           name: 'Mary the Innkeeper',
           locationId: 'starting_inn',
+          gold: 500, // How much gold merchant has to buy items from player
           dialogue: {
             greeting: "Welcome to the Weary Traveler! What can I get for you?",
             cannotBuy: "I don't have much use for that, I'm afraid.",
@@ -5724,6 +5822,7 @@ const Game = () => {
           id: 'merchant_joe',
           name: 'Merchant Joe',
           locationId: 'town_square',
+          gold: 2000, // General merchant has more gold
           dialogue: {
             greeting: "Looking to buy or sell? You've come to the right place!",
             cannotBuy: "Sorry, I only deal in general goods.",
@@ -5962,7 +6061,13 @@ const Game = () => {
         setTravelDestination(param);
         setShowTravelModal(true);
         break;
-        
+
+      case 'move':
+        // Open travel modal without a preset destination
+        setTravelDestination(null);
+        setShowTravelModal(true);
+        break;
+
       case 'explore':
       case 'search':
         // Check for random encounter
@@ -6102,12 +6207,22 @@ const Game = () => {
     setMerchantStock([]);
   }, []);
 
-  // Travel confirmation
-  const handleTravelConfirm = () => {
-    const location = GameData.locations.find(l => l.id === travelDestination);
-    
+  // Handle travel from the new TravelModal
+  const handleTravel = useCallback((destinationId) => {
+    if (!locationSystemRef.current) return;
+
+    const location = locationSystemRef.current.getLocation(destinationId);
+    if (!location) return;
+
+    // Check if location is unlocked
+    const unlockStatus = unlockSystemRef.current.checkLocationUnlock(location, player, gameState);
+    if (!unlockStatus.unlocked) {
+      toast.warning('Location is locked', unlockStatus.unmetRequirements[0] || 'Requirements not met');
+      return;
+    }
+
     // Check for encounter during travel
-    if (location && location.encounterChance > 0) {
+    if (location.encounterChance > 0) {
       const encounter = CombatSystem.generateEncounter(location, player.level, gameState.difficulty);
       if (encounter) {
         toast.combat(`Ambushed by ${encounter.length} ${encounter.length === 1 ? 'enemy' : 'enemies'}!`);
@@ -6117,44 +6232,64 @@ const Game = () => {
         return;
       }
     }
-    
+
     // Check if first visit
-    const isFirstVisit = !player.visitedLocations.includes(travelDestination);
-    
+    const isFirstVisit = !player.visitedLocations.includes(destinationId);
+
     // Check for first_steps achievement (leaving starting inn)
-    if (player.currentLocation === 'starting_inn' && travelDestination !== 'starting_inn') {
+    if (player.currentLocation === 'starting_inn' && destinationId !== 'starting_inn') {
       unlockAchievement('first_steps');
     }
-    
+
     // Check for deep_delver achievement
-    if (travelDestination === 'deep_forest') {
+    if (destinationId === 'deep_forest') {
       unlockAchievement('deep_delver');
     }
-    
+
+    // Get region for the new location
+    const newRegion = location.parentRegion || player.currentRegion;
+
     // Move to location
     setPlayer(prev => ({
       ...prev,
-      currentLocation: travelDestination,
-      visitedLocations: prev.visitedLocations.includes(travelDestination) 
-        ? prev.visitedLocations 
-        : [...prev.visitedLocations, travelDestination]
+      currentLocation: destinationId,
+      currentRegion: newRegion,
+      visitedLocations: prev.visitedLocations.includes(destinationId)
+        ? prev.visitedLocations
+        : [...prev.visitedLocations, destinationId],
+      visitedRegions: prev.visitedRegions.includes(newRegion)
+        ? prev.visitedRegions
+        : [...prev.visitedRegions, newRegion],
+      unlockedLocations: prev.unlockedLocations.includes(destinationId)
+        ? prev.unlockedLocations
+        : [...prev.unlockedLocations, destinationId]
     }));
-    
-    // Show discovery toast for new locations
+
+    // Show location title on first visit
     if (isFirstVisit && location) {
+      const titleData = locationSystemRef.current.getTitleDisplayData(location);
+      setLocationTitleData(titleData);
+      setShowLocationTitle(true);
       toast.quest(`Discovered: ${location.name}`, 'New area unlocked!');
     }
-    
+
     // Check for cartographer achievement (all locations visited)
-    const newVisited = player.visitedLocations.includes(travelDestination) 
-      ? player.visitedLocations 
-      : [...player.visitedLocations, travelDestination];
+    const newVisited = player.visitedLocations.includes(destinationId)
+      ? player.visitedLocations
+      : [...player.visitedLocations, destinationId];
     if (newVisited.length >= GameData.locations.length) {
       unlockAchievement('cartographer');
     }
-    
+
     setShowTravelModal(false);
-    setTravelDestination(null);
+  }, [player, gameState, toast, unlockAchievement]);
+
+  // Legacy travel confirmation (for backwards compatibility)
+  const handleTravelConfirm = () => {
+    if (travelDestination) {
+      handleTravel(travelDestination);
+      setTravelDestination(null);
+    }
   };
   
   // Combat action handler
@@ -6445,9 +6580,24 @@ const Game = () => {
             <TravelModal
               isOpen={showTravelModal}
               onClose={() => setShowTravelModal(false)}
-              destination={travelDestination}
-              onConfirm={handleTravelConfirm}
+              currentLocation={player.currentLocation}
+              currentRegion={player.currentRegion}
+              playerState={player}
+              gameState={gameState}
+              locationSystem={locationSystemRef.current}
+              onTravel={handleTravel}
+              mapView={mapView}
+              onMapViewChange={setMapView}
             />
+            {showLocationTitle && locationTitleData && (
+              <LocationTitle
+                name={locationTitleData.name}
+                subtitle={locationTitleData.subtitle}
+                fontStyle={locationTitleData.fontStyle}
+                fontTag={locationTitleData.fontTag}
+                onComplete={() => setShowLocationTitle(false)}
+              />
+            )}
           </>
         );
         
@@ -6477,6 +6627,8 @@ const Game = () => {
               }
               setScreen('menu');
             }}
+            inventorySystem={inventorySystemRef.current}
+            onUpdatePlayer={setPlayer}
           />
         );
         

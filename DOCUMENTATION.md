@@ -14,22 +14,23 @@
 4. [Game Configuration](#4-game-configuration)
 5. [Creating Scenes](#5-creating-scenes)
 6. [Creating Locations](#6-creating-locations)
-7. [Creating Enemies](#7-creating-enemies)
-8. [Creating NPCs & Merchants](#8-creating-npcs--merchants)
-9. [Merchant System](#9-merchant-system)
-10. [Fame, Titles & Infamy](#10-fame-titles--infamy)
-11. [Creating Items](#11-creating-items)
-12. [Inventory System](#12-inventory-system)
-13. [Loot Tables](#13-loot-tables)
-14. [Effects & Status System](#14-effects--status-system)
-15. [Substance System](#15-substance-system)
-16. [Encounter System](#16-encounter-system)
-17. [Paperdoll System](#17-paperdoll-system)
-18. [Player State Schema](#18-player-state-schema)
-19. [Condition Reference](#19-condition-reference)
-20. [Effect Actions Reference](#20-effect-actions-reference)
-21. [Adding New Content](#21-adding-new-content)
-22. [Performance & Optimization](#22-performance--optimization)
+7. [Travel System](#7-travel-system)
+8. [Creating Enemies](#8-creating-enemies)
+9. [Creating NPCs & Merchants](#9-creating-npcs--merchants)
+10. [Merchant System](#10-merchant-system)
+11. [Fame, Titles & Infamy](#11-fame-titles--infamy)
+12. [Creating Items](#12-creating-items)
+13. [Inventory System](#13-inventory-system)
+14. [Loot Tables](#14-loot-tables)
+15. [Effects & Status System](#15-effects--status-system)
+16. [Substance System](#16-substance-system)
+17. [Encounter System](#17-encounter-system)
+18. [Paperdoll System](#18-paperdoll-system)
+19. [Player State Schema](#19-player-state-schema)
+20. [Condition Reference](#20-condition-reference)
+21. [Effect Actions Reference](#21-effect-actions-reference)
+22. [Adding New Content](#22-adding-new-content)
+23. [Performance & Optimization](#23-performance--optimization)
 
 ---
 
@@ -64,13 +65,23 @@ furrocity/
 │   ├── Game.jsx              # Main game component
 │   ├── GameConfig.js         # Game configuration
 │   └── components/
-│       └── inventory/
-│           ├── UniversalInventory.jsx   # Reusable inventory grid
-│           ├── UniversalInventory.css   # Inventory styles
-│           ├── InventoryItem.jsx        # Single item display
-│           ├── ItemContextMenu.jsx      # Right-click menu
-│           ├── InventoryFilters.jsx     # Tag filters + search
-│           └── MerchantView.jsx         # Trading UI
+│       ├── inventory/
+│       │   ├── UniversalInventory.jsx   # Reusable inventory grid
+│       │   ├── UniversalInventory.css   # Inventory styles
+│       │   ├── InventoryItem.jsx        # Single item display
+│       │   ├── ItemContextMenu.jsx      # Right-click menu
+│       │   ├── InventoryFilters.jsx     # Tag filters + search
+│       │   └── MerchantView.jsx         # Trading UI
+│       ├── travel/
+│       │   ├── TravelModal.jsx          # Map-based travel UI
+│       │   ├── TravelModal.css          # Travel modal styles
+│       │   ├── MapView.jsx              # Local/World map renderer
+│       │   ├── LocationMarker.jsx       # Clickable map markers
+│       │   └── RegionOverlay.jsx        # World map regions
+│       └── ui/
+│           ├── LocationTitle.jsx        # Animated location titles
+│           ├── LocationTitle.css        # Title animation styles
+│           └── RequirementTooltip.jsx   # Unlock requirement display
 │
 ├── engine/                   # Core game systems
 │   ├── index.js              # Engine exports
@@ -88,6 +99,8 @@ furrocity/
 │   ├── PlayerStateSchema.js  # Player data structure
 │   ├── LootTableSystem.js    # Loot generation
 │   ├── ConditionEvaluator.js # Condition checking
+│   ├── UnlockSystem.js       # Location/content unlocking
+│   ├── LocationSystem.js     # Travel & region management
 │   └── SaveSystem.js         # Save/load
 │
 ├── public/
@@ -105,13 +118,18 @@ furrocity/
 │   │       ├── loot_tables/
 │   │       ├── encounter_tables/
 │   │       ├── conditions/
-│   │       └── sprites/
+│   │       ├── sprites/
+│   │       └── ui/
+│   │           └── location_fonts.json  # Font tags for location titles
 │   │
 │   └── images/               # Game images
 │       ├── characters/
 │       ├── locations/
 │       ├── items/
-│       └── paperdoll/
+│       ├── paperdoll/
+│       └── maps/
+│           ├── regions/      # World map region images
+│           └── local/        # Local area maps
 │
 ├── package.json
 ├── vite.config.js
@@ -379,11 +397,13 @@ Scenes are the core narrative building blocks.
   "description": "A cozy tavern filled with warmth.",
   "image": "/images/locations/tavern.png",
   "type": "building",
-  "region": "millbrook",
+  "locationType": "local",
+  "parentRegion": "millbrook",
   "tags": ["safe", "tavern", "rest", "shop"],
 
   "connectedLocations": ["millbrook_square", "tavern_upstairs"],
-  "actions": ["rest", "shop", "talk", "leave"],
+  "neighbors": ["millbrook_square", "tavern_upstairs"],
+  "actions": ["rest", "shop", "talk", "move"],
   "npcs": ["greta_bartender", "tom_bard"],
 
   "scenes": {
@@ -391,7 +411,18 @@ Scenes are the core narrative building blocks.
     "onFirstVisit": "tavern_intro"
   },
 
-  "encounterChance": 0
+  "encounterChance": 0,
+
+  "mapData": {
+    "localMapPosition": { "x": 150, "y": 200 },
+    "icon": "building_tavern",
+    "iconSize": "medium"
+  },
+
+  "titleDisplay": {
+    "fontTag": "friendly_town",
+    "subtitle": "A Warm Welcome Awaits"
+  }
 }
 ```
 
@@ -435,9 +466,260 @@ Scenes are the core narrative building blocks.
 | `dungeon` | 40-60% |
 | `dangerous` | 50-80% |
 
+### Locked Location
+
+Locations can be locked until the player meets certain requirements.
+
+```json
+{
+  "id": "witch_hut",
+  "name": "Witch's Hut",
+  "type": "building",
+  "locationType": "local",
+  "parentRegion": "darkwood",
+  "neighbors": ["darkwood_forest", "darkwood_depths"],
+
+  "locked": true,
+  "initiallyUnlocked": false,
+
+  "unlockRequirements": {
+    "type": "or",
+    "conditions": [
+      { "type": "quest_complete", "quest": "forest_secrets" },
+      { "type": "npc_relationship", "npc": "forest_hermit", "stat": "trust", "operator": ">=", "value": 50 }
+    ]
+  },
+
+  "discoverableWhileExploring": true,
+  "discoveryChance": 0.15,
+
+  "mapData": {
+    "worldMapPosition": { "x": 45, "y": 62 },
+    "localMapPosition": { "x": 180, "y": 220 },
+    "icon": "building_mystical",
+    "iconSize": "medium"
+  },
+
+  "titleDisplay": {
+    "fontTag": "mystical",
+    "subtitle": "Home of Morrigan the Witch"
+  }
+}
+```
+
+### Location Lock Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `locked` | boolean | Whether location is currently locked |
+| `initiallyUnlocked` | boolean | Whether unlocked at game start |
+| `unlockRequirements` | object | Conditions to unlock |
+| `discoverableWhileExploring` | boolean | Can be found while exploring |
+| `discoveryChance` | number | Chance to discover (0.0-1.0) |
+
 ---
 
-## 7. Creating Enemies
+## 7. Travel System
+
+The travel system provides map-based navigation with location locking, region management, and animated location titles.
+
+### Map Views
+
+The TravelModal provides two map views:
+
+| View | Description |
+|------|-------------|
+| **Local Map** | Shows buildings/locations within current region |
+| **World Map** | Shows all regions with clickable navigation |
+
+### Region Definition
+
+Regions group locations together and have their own maps.
+
+**File: `locations/regions.json`**
+
+```json
+{
+  "id": "crossroads",
+  "name": "Crossroads Region",
+  "type": "region",
+  "locked": false,
+  "initiallyUnlocked": true,
+
+  "mapData": {
+    "worldMapImage": "/images/maps/regions/crossroads.png",
+    "localMapImage": "/images/maps/local/crossroads_detail.png",
+    "worldMapBounds": { "x": 100, "y": 150, "width": 200, "height": 180 }
+  },
+
+  "titleDisplay": {
+    "fontTag": "friendly_town",
+    "subtitle": "A Peaceful Frontier"
+  },
+
+  "childLocations": ["starting_inn", "town_square", "blacksmith"],
+  "neighborRegions": ["darkwood", "mountain_pass"]
+}
+```
+
+### Location Font Tags
+
+Custom fonts for location title animations.
+
+**File: `ui/location_fonts.json`**
+
+```json
+{
+  "fontTags": {
+    "friendly_town": {
+      "fontFamily": "'Cinzel', serif",
+      "color": "#ffd700",
+      "textShadow": "0 0 20px rgba(255, 215, 0, 0.5)"
+    },
+    "hostile_area": {
+      "fontFamily": "'Creepster', cursive",
+      "color": "#dc2626",
+      "textShadow": "0 0 20px rgba(220, 38, 38, 0.5)"
+    },
+    "hostile_forest": {
+      "fontFamily": "'MedievalSharp', cursive",
+      "color": "#22c55e"
+    },
+    "dungeon": {
+      "fontFamily": "'Pirata One', cursive",
+      "color": "#a855f7"
+    },
+    "mystical": {
+      "fontFamily": "'Uncial Antiqua', cursive",
+      "color": "#06b6d4"
+    },
+    "corrupted": {
+      "fontFamily": "'Nosifer', cursive",
+      "color": "#7c3aed"
+    }
+  },
+  "defaultFont": "friendly_town"
+}
+```
+
+### Unlock Requirement Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `level` | Player level | `{ "type": "level", "value": 5 }` |
+| `quest_complete` | Quest finished | `{ "type": "quest_complete", "quest": "main_quest_1" }` |
+| `npc_relationship` | NPC stat check | `{ "type": "npc_relationship", "npc": "hermit", "stat": "trust", "value": 50 }` |
+| `item_possession` | Has item | `{ "type": "item_possession", "item": "forest_key" }` |
+| `stat` | Player stat | `{ "type": "stat", "stat": "corruption", "operator": ">=", "value": 30 }` |
+| `addiction` | Addiction stage | `{ "type": "addiction", "substance": "bliss", "stage": "dependent" }` |
+| `title` | Has title | `{ "type": "title", "titleId": "hero_of_crossroads" }` |
+| `mark` | Has mark | `{ "type": "mark", "markId": "slave_brand" }` |
+| `flag` | Game flag set | `{ "type": "flag", "flag": "opened_secret_door" }` |
+| `visited_location` | Been somewhere | `{ "type": "visited_location", "location": "elder_tree" }` |
+| `fame` | Fame level | `{ "type": "fame", "operator": ">=", "value": 500 }` |
+| `infamy` | Infamy check | `{ "type": "infamy", "infamyType": "slut", "value": 50 }` |
+
+### Combining Requirements
+
+Use `and` or `or` to combine multiple conditions:
+
+```json
+{
+  "unlockRequirements": {
+    "type": "and",
+    "conditions": [
+      { "type": "level", "value": 10 },
+      { "type": "quest_complete", "quest": "prove_worthy" }
+    ]
+  }
+}
+```
+
+```json
+{
+  "unlockRequirements": {
+    "type": "or",
+    "conditions": [
+      { "type": "item_possession", "item": "master_key" },
+      { "type": "stat", "stat": "lockpicking", "operator": ">=", "value": 80 }
+    ]
+  }
+}
+```
+
+### Location Title Animation
+
+When entering a new location, an animated title displays with:
+- Fade in (0.5s)
+- Hold (2.5s)
+- Fade out (1s)
+
+The font style is determined by the location's `titleDisplay.fontTag`.
+
+### UnlockSystem API
+
+```javascript
+class UnlockSystem {
+  // Check if location is unlocked
+  checkLocationUnlock(location, playerState)
+  // Returns: { unlocked: boolean, requirements: [], metRequirements: [] }
+
+  // Evaluate a single requirement
+  evaluateRequirement(requirement, playerState)
+  // Returns: boolean
+
+  // Get human-readable requirement text
+  getRequirementDescription(requirement)
+  // Returns: string (e.g., "Reach level 10")
+
+  // Check if location can be discovered while exploring
+  canDiscoverLocation(location, playerState, currentLocation)
+  // Returns: boolean
+
+  // Process exploration to potentially discover locations
+  processExploration(currentLocation, playerState, locationData)
+  // Returns: { discovered: [locationIds] }
+}
+```
+
+### LocationSystem API
+
+```javascript
+class LocationSystem {
+  // Get all locations in a region
+  getRegionLocations(regionId)
+
+  // Get accessible neighbors from current location
+  getAccessibleNeighbors(locationId, playerState)
+
+  // Get all regions with their unlock status
+  getRegionsWithStatus(playerState)
+
+  // Handle travel to destination
+  travelTo(destinationId, playerState)
+
+  // Get locations discoverable from current position
+  getDiscoverableLocations(currentLocation, playerState)
+}
+```
+
+### Player State Extensions for Travel
+
+```javascript
+{
+  currentLocation: "starting_inn",
+  currentRegion: "crossroads",
+  visitedLocations: ["starting_inn"],
+  visitedRegions: ["crossroads"],
+  unlockedLocations: ["starting_inn", "town_square"],
+  unlockedRegions: ["crossroads"],
+  discoveredLocations: []
+}
+```
+
+---
+
+## 8. Creating Enemies
 
 ### Basic Enemy
 
@@ -508,7 +790,7 @@ Scenes are the core narrative building blocks.
 
 ---
 
-## 8. Creating NPCs & Merchants
+## 9. Creating NPCs & Merchants
 
 ### Basic NPC
 
@@ -540,7 +822,7 @@ Scenes are the core narrative building blocks.
 
 ---
 
-## 9. Merchant System
+## 10. Merchant System
 
 The merchant system supports tag-based filtering and dynamic pricing.
 
@@ -634,7 +916,7 @@ class MerchantSystem {
 
 ---
 
-## 10. Fame, Titles & Infamy
+## 11. Fame, Titles & Infamy
 
 ### Player State Extensions
 
@@ -719,7 +1001,7 @@ class FameSystem {
 
 ---
 
-## 11. Creating Items
+## 12. Creating Items
 
 ### Item Types
 
@@ -828,7 +1110,7 @@ class FameSystem {
 
 ---
 
-## 12. Inventory System
+## 13. Inventory System
 
 ### Item User Flags
 
@@ -879,7 +1161,7 @@ class InventorySystem {
 
 ---
 
-## 13. Loot Tables
+## 14. Loot Tables
 
 ### Basic Loot Table
 
@@ -939,7 +1221,7 @@ class InventorySystem {
 
 ---
 
-## 14. Effects & Status System
+## 15. Effects & Status System
 
 ### Buff Effect
 
@@ -1011,7 +1293,7 @@ class InventorySystem {
 
 ---
 
-## 15. Substance System
+## 16. Substance System
 
 ### Delivery Methods
 
@@ -1071,7 +1353,7 @@ class InventorySystem {
 
 ---
 
-## 16. Encounter System
+## 17. Encounter System
 
 ### Encounter Types
 
@@ -1117,7 +1399,7 @@ class InventorySystem {
 
 ---
 
-## 17. Paperdoll System
+## 18. Paperdoll System
 
 ### Body Regions
 
@@ -1161,7 +1443,7 @@ class InventorySystem {
 
 ---
 
-## 18. Player State Schema
+## 19. Player State Schema
 
 ```javascript
 const playerState = {
@@ -1214,7 +1496,7 @@ const playerState = {
 
 ---
 
-## 19. Condition Reference
+## 20. Condition Reference
 
 ### Stat Conditions
 ```json
@@ -1264,7 +1546,7 @@ const playerState = {
 
 ---
 
-## 20. Effect Actions Reference
+## 21. Effect Actions Reference
 
 ### Stat Modifications
 ```json
@@ -1305,7 +1587,7 @@ const playerState = {
 
 ---
 
-## 21. Adding New Content
+## 22. Adding New Content
 
 ### Step-by-Step: Adding a New Merchant
 
@@ -1381,7 +1663,7 @@ const playerState = {
 
 ---
 
-## 22. Performance & Optimization
+## 23. Performance & Optimization
 
 ### Best Practices
 

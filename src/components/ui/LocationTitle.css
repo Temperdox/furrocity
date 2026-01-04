@@ -1,0 +1,192 @@
+/**
+ * LocationTitle.css - Styles for animated location title display
+ */
+
+/* Overlay Container */
+.location-title-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Animation Phases */
+.location-title-overlay.fade-in {
+  animation: titleFadeIn 0.5s ease-out forwards;
+}
+
+.location-title-overlay.hold {
+  opacity: 1;
+}
+
+.location-title-overlay.fade-out {
+  animation: titleFadeOut 1s ease-in forwards;
+}
+
+@keyframes titleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes titleFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* Title Container */
+.location-title-container {
+  text-align: center;
+  max-width: 80%;
+}
+
+/* Title Text */
+.location-title-text {
+  margin: 0;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Subtitle */
+.location-title-subtitle {
+  margin: 12px 0 0;
+  font-size: 1.1rem;
+  color: #b0b0c0;
+  font-style: italic;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.05em;
+}
+
+/* Font Tag Specific Animations */
+.font-tag-corrupted {
+  animation: corruptedPulse 2s ease-in-out infinite;
+}
+
+@keyframes corruptedPulse {
+  0%, 100% {
+    filter: brightness(1) hue-rotate(0deg);
+    text-shadow: 0 0 20px rgba(124, 58, 237, 0.8), 0 0 40px rgba(124, 58, 237, 0.4);
+  }
+  50% {
+    filter: brightness(1.2) hue-rotate(10deg);
+    text-shadow: 0 0 30px rgba(124, 58, 237, 1), 0 0 60px rgba(124, 58, 237, 0.6);
+  }
+}
+
+.font-tag-drug_den {
+  animation: drugPulse 3s ease-in-out infinite;
+}
+
+@keyframes drugPulse {
+  0%, 100% {
+    filter: brightness(1) blur(0px);
+    text-shadow: 0 0 15px rgba(236, 72, 153, 0.7), 0 0 30px rgba(236, 72, 153, 0.4);
+  }
+  33% {
+    filter: brightness(1.1) blur(0.5px);
+    text-shadow: 0 0 25px rgba(236, 72, 153, 0.9), 0 0 50px rgba(236, 72, 153, 0.5);
+  }
+  66% {
+    filter: brightness(0.95) blur(0px);
+    text-shadow: 0 0 20px rgba(236, 72, 153, 0.6), 0 0 35px rgba(236, 72, 153, 0.3);
+  }
+}
+
+.font-tag-mystical {
+  animation: mysticalGlow 2.5s ease-in-out infinite;
+}
+
+@keyframes mysticalGlow {
+  0%, 100% {
+    text-shadow: 0 0 15px rgba(6, 182, 212, 0.7), 0 0 35px rgba(6, 182, 212, 0.4);
+  }
+  50% {
+    text-shadow: 0 0 25px rgba(6, 182, 212, 0.9), 0 0 50px rgba(6, 182, 212, 0.6), 0 0 70px rgba(6, 182, 212, 0.3);
+  }
+}
+
+.font-tag-holy {
+  animation: holyRadiance 2s ease-in-out infinite;
+}
+
+@keyframes holyRadiance {
+  0%, 100% {
+    text-shadow: 0 0 20px rgba(254, 243, 199, 0.8), 0 0 40px rgba(254, 243, 199, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 30px rgba(254, 243, 199, 1), 0 0 60px rgba(254, 243, 199, 0.7), 0 0 80px rgba(254, 243, 199, 0.4);
+  }
+}
+
+.font-tag-hostile_area {
+  animation: hostileFlicker 0.1s ease-in-out infinite;
+}
+
+@keyframes hostileFlicker {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+.font-tag-dungeon {
+  animation: dungeonEerie 3s ease-in-out infinite;
+}
+
+@keyframes dungeonEerie {
+  0%, 100% {
+    text-shadow: 0 0 12px rgba(168, 85, 247, 0.6), 0 0 30px rgba(168, 85, 247, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(168, 85, 247, 0.8), 0 0 45px rgba(168, 85, 247, 0.4);
+    transform: scale(1.01);
+  }
+}
+
+.font-tag-ice {
+  animation: iceShimmer 2s ease-in-out infinite;
+}
+
+@keyframes iceShimmer {
+  0%, 100% {
+    text-shadow: 0 0 15px rgba(125, 211, 252, 0.7), 0 0 30px rgba(125, 211, 252, 0.4);
+    filter: brightness(1);
+  }
+  50% {
+    text-shadow: 0 0 25px rgba(125, 211, 252, 0.9), 0 0 45px rgba(125, 211, 252, 0.5);
+    filter: brightness(1.1);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .location-title-overlay {
+    padding-top: 10vh;
+  }
+
+  .location-title-text {
+    font-size: 1.8rem !important;
+  }
+
+  .location-title-subtitle {
+    font-size: 0.95rem;
+  }
+}

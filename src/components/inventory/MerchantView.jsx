@@ -13,7 +13,8 @@
  * @see MerchantSystem - Trading logic
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import UniversalInventory from './UniversalInventory.jsx';
 import './UniversalInventory.css';
 
@@ -33,7 +34,7 @@ import './UniversalInventory.css';
  * +------------------------------------------+
  *
  * @param {Object} props
- * @param {Object} props.merchant - Merchant data
+ * @param {Object} props.merchant - Merchant data (should include gold property)
  * @param {Array} props.merchantStock - Merchant's items for sale
  * @param {Object} props.playerState - Player state
  * @param {Object} props.merchantSystem - MerchantSystem instance
@@ -53,6 +54,29 @@ const MerchantView = ({
   const [selectedMerchantItem, setSelectedMerchantItem] = useState(null);
   const [selectedPlayerItem, setSelectedPlayerItem] = useState(null);
   const [transactionMessage, setTransactionMessage] = useState(null);
+  // Hover state for showing item preview on hover
+  const [hoveredMerchantItem, setHoveredMerchantItem] = useState(null);
+  const [hoveredPlayerItem, setHoveredPlayerItem] = useState(null);
+  // Tooltip position tracking - updates live with mouse movement
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const containerRef = useRef(null);
+
+  // Track mouse movement globally when hovering an item
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (hoveredMerchantItem || hoveredPlayerItem) {
+        setTooltipPosition({ x: e.clientX, y: e.clientY });
+      }
+    };
+
+    if (hoveredMerchantItem || hoveredPlayerItem) {
+      document.addEventListener('mousemove', handleMouseMove);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [hoveredMerchantItem, hoveredPlayerItem]);
 
   // Calculate prices for merchant stock (player buying)
   const merchantPriceInfo = useMemo(() => {
@@ -175,6 +199,28 @@ const MerchantView = ({
     setSelectedMerchantItem(null);
   }, []);
 
+  // Handle item hover (for showing preview tooltip)
+  const handleMerchantItemHover = useCallback((item, event) => {
+    setHoveredMerchantItem(item);
+    setHoveredPlayerItem(null);
+    if (event) {
+      setTooltipPosition({ x: event.clientX, y: event.clientY });
+    }
+  }, []);
+
+  const handlePlayerItemHover = useCallback((item, event) => {
+    setHoveredPlayerItem(item);
+    setHoveredMerchantItem(null);
+    if (event) {
+      setTooltipPosition({ x: event.clientX, y: event.clientY });
+    }
+  }, []);
+
+  const handleItemHoverEnd = useCallback(() => {
+    setHoveredMerchantItem(null);
+    setHoveredPlayerItem(null);
+  }, []);
+
   // Handle double-click to buy/sell
   const handleMerchantItemDoubleClick = useCallback((item) => {
     handleBuy(item);
@@ -226,17 +272,16 @@ const MerchantView = ({
   // Get merchant dialogue
   const greeting = merchant.dialogue?.greeting || 'What can I do for you?';
 
+  // Merchant's available gold for buying items from player
+  const merchantGold = merchant.gold ?? 1000; // Default to 1000 if not specified
+
   return (
-    <div className="merchant-view">
+    <div className="merchant-view" ref={containerRef}>
       {/* Header */}
       <div className="merchant-header">
         <div className="merchant-info">
           <h2 className="merchant-name">{merchant.name}</h2>
           <p className="merchant-greeting">{greeting}</p>
-        </div>
-        <div className="player-gold">
-          <span className="gold-icon">G</span>
-          <span className="gold-amount">{(playerState.gold || 0).toLocaleString()}</span>
         </div>
       </div>
 
@@ -255,15 +300,18 @@ const MerchantView = ({
             mode="merchant-stock"
             items={merchantStock}
             title={`${merchant.name}'s Wares`}
-            gold={undefined}
+            gold={merchantGold}
             onItemClick={handleMerchantItemClick}
             onItemDoubleClick={handleMerchantItemDoubleClick}
             onContextAction={handleMerchantContextAction}
+            onItemHover={handleMerchantItemHover}
+            onItemHoverEnd={handleItemHoverEnd}
             disabledCheck={canAffordCheck}
             selectedItems={selectedMerchantItem ? [selectedMerchantItem.uniqueId] : []}
             priceInfo={merchantPriceInfo}
             isBuying={true}
             emptyMessage="Nothing for sale"
+            showTooltip={false}
           />
         </div>
 
@@ -273,15 +321,18 @@ const MerchantView = ({
             mode="merchant"
             items={playerState.inventory || []}
             title="Your Inventory"
-            gold={playerState.gold}
+            gold={playerState.gold || 0}
             onItemClick={handlePlayerItemClick}
             onItemDoubleClick={handlePlayerItemDoubleClick}
             onContextAction={handlePlayerContextAction}
+            onItemHover={handlePlayerItemHover}
+            onItemHoverEnd={handleItemHoverEnd}
             disabledCheck={canSellCheck}
             selectedItems={selectedPlayerItem ? [selectedPlayerItem.uniqueId] : []}
             priceInfo={playerPriceInfo}
             isBuying={false}
             emptyMessage="Your inventory is empty"
+            showTooltip={false}
           />
         </div>
       </div>
@@ -307,51 +358,138 @@ const MerchantView = ({
         </div>
       </div>
 
-      {/* Selected item preview */}
-      {(selectedMerchantItem || selectedPlayerItem) && (
-        <div className="item-preview">
+      {/* Hovered item preview (shows on hover, rendered via portal, follows cursor) */}
+      {(hoveredMerchantItem || hoveredPlayerItem) && createPortal(
+        <div
+          className="item-preview item-preview--floating"
+          style={{
+            position: 'fixed',
+            left: `${tooltipPosition.x}px`,
+            top: `${tooltipPosition.y - 20}px`,
+            transform: 'translate(-50%, -100%)',
+            zIndex: 10001,
+            pointerEvents: 'none'
+          }}
+        >
           <ItemPreview
-            item={selectedMerchantItem || selectedPlayerItem}
-            price={selectedMerchantItem
-              ? merchantPriceInfo[selectedMerchantItem.uniqueId]
-              : playerPriceInfo[selectedPlayerItem?.uniqueId]}
-            isBuying={!!selectedMerchantItem}
+            item={hoveredMerchantItem || hoveredPlayerItem}
+            price={hoveredMerchantItem
+              ? merchantPriceInfo[hoveredMerchantItem.uniqueId]
+              : playerPriceInfo[hoveredPlayerItem?.uniqueId]}
+            isBuying={!!hoveredMerchantItem}
             merchant={merchant}
             playerState={playerState}
             merchantSystem={merchantSystem}
           />
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
 };
 
 /**
- * ItemPreview - Shows detailed item info when selected
+ * ItemPreview - Shows detailed item info from item data (JSON-driven)
+ * All item info displayed here comes from the item object itself,
+ * allowing datapacks to define descriptions, effects, and stats.
  */
 const ItemPreview = ({ item, price, isBuying, merchant, playerState, merchantSystem }) => {
   if (!item) return null;
 
-  const dealQuality = merchantSystem.evaluateDeal(item, merchant, playerState, isBuying);
+  const dealQuality = merchantSystem?.evaluateDeal?.(item, merchant, playerState, isBuying)
+    || { label: '', color: '#888' };
+
+  // Get rarity color from item or derive from rarity name
+  const RARITY_COLORS = {
+    common: '#9ca3af',
+    uncommon: '#22c55e',
+    rare: '#3b82f6',
+    epic: '#a855f7',
+    legendary: '#f97316',
+    mythic: '#ffd700',
+    divine: '#fef3c7'
+  };
+  const rarityColor = item.rarityColor || RARITY_COLORS[item.rarity] || RARITY_COLORS.common;
+
+  // Format effect text from item effects array (from JSON)
+  const formatEffectText = (effect) => {
+    if (typeof effect === 'string') return effect;
+
+    // Handle effect objects with type, target, value, duration
+    if (effect.type && effect.value !== undefined) {
+      const sign = effect.value >= 0 ? '+' : '';
+      const duration = effect.duration ? ` (${effect.duration} turns)` : '';
+      const target = effect.target ? ` ${effect.target}` : '';
+      return `${sign}${effect.value}${target} ${effect.type}${duration}`;
+    }
+
+    // Handle simple key-value effects
+    if (typeof effect === 'object') {
+      return Object.entries(effect)
+        .map(([key, val]) => {
+          if (key === 'type' || key === 'chance') return null;
+          const sign = typeof val === 'number' && val >= 0 ? '+' : '';
+          return `${sign}${val} ${key}`;
+        })
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    return JSON.stringify(effect);
+  };
+
+  // Get effects to display - check multiple possible locations in item data
+  const effects = item.effects || item.useEffects || item.equipEffects || [];
+  const hasEffects = Array.isArray(effects) && effects.length > 0;
+
+  // Get stats to display (for equipment)
+  const stats = item.finalStats || item.stats || item.bonuses || {};
+  const hasStats = Object.keys(stats).length > 0;
 
   return (
     <div className="item-preview-content">
       <div className="preview-header">
-        <span className="preview-name" style={{ color: item.rarityColor || '#e0e0e0' }}>
+        <span className="preview-name" style={{ color: rarityColor }}>
           {item.name}
         </span>
         {item.level && <span className="preview-level">Lv.{item.level}</span>}
       </div>
 
-      <div className="preview-rarity" style={{ color: item.rarityColor }}>
-        {item.rarity?.charAt(0).toUpperCase() + item.rarity?.slice(1)}
+      <div className="preview-meta">
+        <span className="preview-rarity" style={{ color: rarityColor }}>
+          {item.rarity?.charAt(0).toUpperCase() + item.rarity?.slice(1)}
+        </span>
+        {item.category && (
+          <span className="preview-category"> - {item.category}</span>
+        )}
+        {item.slot && (
+          <span className="preview-slot"> ({item.slot})</span>
+        )}
       </div>
 
-      <p className="preview-description">{item.description}</p>
+      {/* Description from item data */}
+      {item.description && (
+        <p className="preview-description">{item.description}</p>
+      )}
 
-      {item.finalStats && Object.keys(item.finalStats).length > 0 && (
+      {/* Item effects from JSON (for consumables, etc.) */}
+      {hasEffects && (
+        <div className="preview-effects">
+          <span className="effects-label">Effects:</span>
+          <ul className="effects-list">
+            {effects.map((effect, index) => (
+              <li key={index} className="effect-item">
+                {formatEffectText(effect)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Equipment stats from JSON */}
+      {hasStats && (
         <div className="preview-stats">
-          {Object.entries(item.finalStats).map(([stat, value]) => (
+          {Object.entries(stats).map(([stat, value]) => (
             <div key={stat} className="preview-stat">
               <span className="stat-name">{stat}:</span>
               <span className={`stat-value ${value >= 0 ? 'positive' : 'negative'}`}>
@@ -362,13 +500,35 @@ const ItemPreview = ({ item, price, isBuying, merchant, playerState, merchantSys
         </div>
       )}
 
-      <div className="preview-price">
-        <span className="price-label">{isBuying ? 'Buy Price:' : 'Sell Price:'}</span>
-        <span className="price-value">{price}g</span>
-        <span className="deal-quality" style={{ color: dealQuality.color }}>
-          {dealQuality.label}
-        </span>
-      </div>
+      {/* Item tags */}
+      {item.tags && item.tags.length > 0 && (
+        <div className="preview-tags">
+          {item.tags.slice(0, 4).map(tag => (
+            <span key={tag} className="preview-tag">{tag}</span>
+          ))}
+        </div>
+      )}
+
+      {/* Price and deal quality */}
+      {price !== undefined && (
+        <div className="preview-price">
+          <span className="price-label">{isBuying ? 'Buy:' : 'Sell:'}</span>
+          <span className="price-value">{price}g</span>
+          {dealQuality.label && (
+            <span className="deal-quality" style={{ color: dealQuality.color }}>
+              {dealQuality.label}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Base value if available */}
+      {item.baseValue && !price && (
+        <div className="preview-value">
+          <span className="value-label">Value:</span>
+          <span className="value-amount">{item.baseValue}g</span>
+        </div>
+      )}
     </div>
   );
 };

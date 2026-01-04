@@ -13,6 +13,7 @@
  * - Price display for merchant contexts
  * - Disabled items with tooltip reasons
  * - Multi-select support
+ * - Built-in item tooltip on hover
  *
  * @module components/inventory/UniversalInventory
  * @see InventoryItem - Individual item display
@@ -20,11 +21,25 @@
  * @see ItemContextMenu - Right-click menu
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import InventoryItem from './InventoryItem.jsx';
 import InventoryFilters from './InventoryFilters.jsx';
 import ItemContextMenu from './ItemContextMenu.jsx';
 import './UniversalInventory.css';
+
+/**
+ * Rarity colors for item display
+ */
+const RARITY_COLORS = {
+  common: '#9ca3af',
+  uncommon: '#22c55e',
+  rare: '#3b82f6',
+  epic: '#a855f7',
+  legendary: '#f97316',
+  mythic: '#ffd700',
+  divine: '#fef3c7'
+};
 
 /**
  * UniversalInventory - Reusable inventory grid component
@@ -59,6 +74,8 @@ const UniversalInventory = ({
   onItemClick,
   onItemDoubleClick,
   onContextAction,
+  onItemHover,
+  onItemHoverEnd,
   disabledCheck,
   selectedItems = [],
   onSelectionChange,
@@ -66,11 +83,33 @@ const UniversalInventory = ({
   showFilters = true,
   priceInfo = {},
   isBuying = false,
-  emptyMessage = 'No items'
+  emptyMessage = 'No items',
+  showTooltip = true // Enable built-in tooltip by default
 }) => {
   const [contextMenu, setContextMenu] = useState(null);
   const [activeFilters, setActiveFilters] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Built-in tooltip state
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+
+  // Track mouse movement globally when hovering an item
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (hoveredItem) {
+        setTooltipPosition({ x: e.clientX, y: e.clientY });
+      }
+    };
+
+    if (hoveredItem) {
+      document.addEventListener('mousemove', handleMouseMove);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [hoveredItem]);
 
   // Filter items based on active filters and search
   const filteredItems = useMemo(() => {
@@ -114,6 +153,33 @@ const UniversalInventory = ({
       onItemDoubleClick(item, event);
     }
   }, [onItemDoubleClick]);
+
+  // Handle item hover (mouse enter)
+  const handleItemHover = useCallback((item, event) => {
+    // Set local hover state for built-in tooltip
+    if (showTooltip) {
+      setHoveredItem(item);
+      if (event) {
+        setTooltipPosition({ x: event.clientX, y: event.clientY });
+      }
+    }
+    // Also call external handler if provided
+    if (onItemHover) {
+      onItemHover(item, event);
+    }
+  }, [onItemHover, showTooltip]);
+
+  // Handle item hover end (mouse leave)
+  const handleItemHoverEnd = useCallback((item, event) => {
+    // Clear local hover state
+    if (showTooltip) {
+      setHoveredItem(null);
+    }
+    // Also call external handler if provided
+    if (onItemHoverEnd) {
+      onItemHoverEnd(item, event);
+    }
+  }, [onItemHoverEnd, showTooltip]);
 
   // Handle context menu (right-click)
   const handleContextMenu = useCallback((item, event) => {
@@ -212,6 +278,8 @@ const UniversalInventory = ({
                     onClick={handleItemClick}
                     onDoubleClick={handleItemDoubleClick}
                     onContextMenu={handleContextMenu}
+                    onMouseEnter={handleItemHover}
+                    onMouseLeave={handleItemHoverEnd}
                   />
                 );
               })}
@@ -229,6 +297,155 @@ const UniversalInventory = ({
           onAction={handleContextAction}
           onClose={() => setContextMenu(null)}
         />
+      )}
+
+      {/* Built-in item tooltip (rendered via portal) */}
+      {showTooltip && hoveredItem && createPortal(
+        <div
+          className="item-preview item-preview--floating"
+          style={{
+            position: 'fixed',
+            left: `${tooltipPosition.x}px`,
+            top: `${tooltipPosition.y - 20}px`,
+            transform: 'translate(-50%, -100%)',
+            zIndex: 10001,
+            pointerEvents: 'none'
+          }}
+        >
+          <ItemTooltip
+            item={hoveredItem}
+            price={priceInfo[hoveredItem.uniqueId]}
+            isBuying={isBuying}
+          />
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
+
+/**
+ * ItemTooltip - Shows detailed item info from item data (JSON-driven)
+ * All item info displayed here comes from the item object itself,
+ * allowing datapacks to define descriptions, effects, and stats.
+ */
+const ItemTooltip = ({ item, price, isBuying }) => {
+  if (!item) return null;
+
+  const rarityColor = item.rarityColor || RARITY_COLORS[item.rarity] || RARITY_COLORS.common;
+
+  // Format effect text from item effects array (from JSON)
+  const formatEffectText = (effect) => {
+    if (typeof effect === 'string') return effect;
+
+    // Handle effect objects with type, target, value, duration
+    if (effect.type && effect.value !== undefined) {
+      const sign = effect.value >= 0 ? '+' : '';
+      const duration = effect.duration ? ` (${effect.duration} turns)` : '';
+      const target = effect.target ? ` ${effect.target}` : '';
+      return `${sign}${effect.value}${target} ${effect.type}${duration}`;
+    }
+
+    // Handle simple key-value effects
+    if (typeof effect === 'object') {
+      return Object.entries(effect)
+        .map(([key, val]) => {
+          if (key === 'type' || key === 'chance') return null;
+          const sign = typeof val === 'number' && val >= 0 ? '+' : '';
+          return `${sign}${val} ${key}`;
+        })
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    return JSON.stringify(effect);
+  };
+
+  // Get effects to display - check multiple possible locations in item data
+  const effects = item.effects || item.useEffects || item.equipEffects || [];
+  const hasEffects = Array.isArray(effects) && effects.length > 0;
+
+  // Get stats to display (for equipment)
+  const stats = item.finalStats || item.stats || item.bonuses || {};
+  const hasStats = Object.keys(stats).length > 0;
+
+  return (
+    <div className="item-preview-content">
+      <div className="preview-header">
+        <span className="preview-name" style={{ color: rarityColor }}>
+          {item.name}
+        </span>
+        {item.level && <span className="preview-level">Lv.{item.level}</span>}
+      </div>
+
+      <div className="preview-meta">
+        <span className="preview-rarity" style={{ color: rarityColor }}>
+          {item.rarity?.charAt(0).toUpperCase() + item.rarity?.slice(1)}
+        </span>
+        {item.category && (
+          <span className="preview-category"> - {item.category}</span>
+        )}
+        {item.slot && (
+          <span className="preview-slot"> ({item.slot})</span>
+        )}
+      </div>
+
+      {/* Description from item data */}
+      {item.description && (
+        <p className="preview-description">{item.description}</p>
+      )}
+
+      {/* Item effects from JSON (for consumables, etc.) */}
+      {hasEffects && (
+        <div className="preview-effects">
+          <span className="effects-label">Effects:</span>
+          <ul className="effects-list">
+            {effects.map((effect, index) => (
+              <li key={index} className="effect-item">
+                {formatEffectText(effect)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Equipment stats from JSON */}
+      {hasStats && (
+        <div className="preview-stats">
+          {Object.entries(stats).map(([stat, value]) => (
+            <div key={stat} className="preview-stat">
+              <span className="stat-name">{stat}:</span>
+              <span className={`stat-value ${value >= 0 ? 'positive' : 'negative'}`}>
+                {value >= 0 ? '+' : ''}{value}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Item tags */}
+      {item.tags && item.tags.length > 0 && (
+        <div className="preview-tags">
+          {item.tags.slice(0, 4).map(tag => (
+            <span key={tag} className="preview-tag">{tag}</span>
+          ))}
+        </div>
+      )}
+
+      {/* Price display (for merchant contexts) */}
+      {price !== undefined && (
+        <div className="preview-price">
+          <span className="price-label">{isBuying ? 'Buy:' : 'Sell:'}</span>
+          <span className="price-value">{price}g</span>
+        </div>
+      )}
+
+      {/* Base value (for non-merchant contexts) */}
+      {price === undefined && item.baseValue && (
+        <div className="preview-value">
+          <span className="value-label">Value:</span>
+          <span className="value-amount">{item.baseValue}g</span>
+        </div>
       )}
     </div>
   );

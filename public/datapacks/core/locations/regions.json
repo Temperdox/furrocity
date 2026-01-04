@@ -1,0 +1,191 @@
+[
+  {
+    "id": "crossroads",
+    "name": "Crossroads Region",
+    "description": "A peaceful frontier region centered around a small trading town at the crossroads of major trade routes.",
+    "type": "region",
+    "locked": false,
+    "initiallyUnlocked": true,
+    "mapData": {
+      "worldMapImage": "/maps/regions/crossroads.png",
+      "localMapImage": "/maps/local/crossroads_detail.png",
+      "worldMapBounds": { "x": 100, "y": 150, "width": 200, "height": 180 },
+      "worldMapPosition": { "x": 200, "y": 240 }
+    },
+    "titleDisplay": {
+      "fontTag": "friendly_town",
+      "subtitle": "A Peaceful Frontier"
+    },
+    "childLocations": [
+      "starting_inn",
+      "town_square",
+      "blacksmith",
+      "temple",
+      "market_district",
+      "residential_area"
+    ],
+    "neighborRegions": ["darkwood", "mountain_pass", "plains"],
+    "tags": ["safe", "town", "trading"],
+    "ambiance": {
+      "music": "peaceful_town",
+      "sounds": ["crowd_chatter", "merchant_calls", "birds"]
+    }
+  },
+  {
+    "id": "darkwood",
+    "name": "Darkwood Forest",
+    "description": "An ancient, corrupted forest full of dangers. Strange creatures lurk in the shadows, and the trees seem to whisper secrets.",
+    "type": "region",
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "or",
+      "conditions": [
+        { "type": "visited_location", "location": "forest_edge" },
+        { "type": "level", "operator": ">=", "value": 3 }
+      ]
+    },
+    "mapData": {
+      "worldMapImage": "/maps/regions/darkwood.png",
+      "localMapImage": "/maps/local/darkwood_detail.png",
+      "worldMapBounds": { "x": 300, "y": 100, "width": 250, "height": 220 },
+      "worldMapPosition": { "x": 425, "y": 210 }
+    },
+    "titleDisplay": {
+      "fontTag": "hostile_forest",
+      "subtitle": "The Corrupted Woods"
+    },
+    "childLocations": [
+      "forest_edge",
+      "forest_path",
+      "deep_forest",
+      "wolf_den",
+      "witch_hut",
+      "corrupted_grove",
+      "ancient_ruins"
+    ],
+    "neighborRegions": ["crossroads", "demon_realm", "mountain_pass"],
+    "tags": ["dangerous", "forest", "corrupted", "magic"],
+    "ambiance": {
+      "music": "dark_forest",
+      "sounds": ["wind_howling", "branches_creaking", "distant_howls"]
+    }
+  },
+  {
+    "id": "mountain_pass",
+    "name": "Mountain Pass",
+    "description": "A treacherous mountain path connecting the lowlands to the highland territories. Bandits and worse prey on travelers.",
+    "type": "region",
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "and",
+      "conditions": [
+        { "type": "level", "operator": ">=", "value": 5 },
+        { "type": "quest_complete", "quest": "mountain_guide" }
+      ]
+    },
+    "mapData": {
+      "worldMapImage": "/maps/regions/mountain_pass.png",
+      "localMapImage": "/maps/local/mountain_pass_detail.png",
+      "worldMapBounds": { "x": 200, "y": 50, "width": 180, "height": 150 },
+      "worldMapPosition": { "x": 290, "y": 125 }
+    },
+    "titleDisplay": {
+      "fontTag": "hostile_area",
+      "subtitle": "The Perilous Heights"
+    },
+    "childLocations": [
+      "mountain_entrance",
+      "bandit_camp",
+      "mountain_shrine",
+      "eagles_nest",
+      "abandoned_mine",
+      "summit_pass"
+    ],
+    "neighborRegions": ["crossroads", "darkwood", "highland_fortress"],
+    "tags": ["dangerous", "mountain", "bandits"],
+    "ambiance": {
+      "music": "mountain_wind",
+      "sounds": ["wind_gusts", "rocks_falling", "eagle_cries"]
+    }
+  },
+  {
+    "id": "plains",
+    "name": "Golden Plains",
+    "description": "Vast grasslands stretching to the horizon. Nomadic tribes roam these lands, and ancient burial mounds dot the landscape.",
+    "type": "region",
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "or",
+      "conditions": [
+        { "type": "level", "operator": ">=", "value": 4 },
+        { "type": "npc_relationship", "npc": "caravan_master", "stat": "trust", "operator": ">=", "value": 30 }
+      ]
+    },
+    "mapData": {
+      "worldMapImage": "/maps/regions/plains.png",
+      "localMapImage": "/maps/local/plains_detail.png",
+      "worldMapBounds": { "x": 50, "y": 200, "width": 150, "height": 200 },
+      "worldMapPosition": { "x": 125, "y": 300 }
+    },
+    "titleDisplay": {
+      "fontTag": "friendly_town",
+      "subtitle": "The Endless Grasslands"
+    },
+    "childLocations": [
+      "plains_entrance",
+      "nomad_camp",
+      "burial_mounds",
+      "oasis",
+      "wild_horse_meadow"
+    ],
+    "neighborRegions": ["crossroads", "desert_wastes"],
+    "tags": ["outdoor", "plains", "nomads"],
+    "ambiance": {
+      "music": "open_plains",
+      "sounds": ["wind_grass", "horse_neighs", "distant_drums"]
+    }
+  },
+  {
+    "id": "demon_realm",
+    "name": "The Demon Realm",
+    "description": "A twisted dimension where demons hold sway. The very air is thick with corruption and dark magic.",
+    "type": "region",
+    "locked": true,
+    "initiallyUnlocked": false,
+    "unlockRequirements": {
+      "type": "and",
+      "conditions": [
+        { "type": "level", "operator": ">=", "value": 10 },
+        { "type": "quest_complete", "quest": "demon_portal" },
+        { "type": "stat", "stat": "corruptionResistance", "operator": ">=", "value": 5 }
+      ]
+    },
+    "mapData": {
+      "worldMapImage": "/maps/regions/demon_realm.png",
+      "localMapImage": "/maps/local/demon_realm_detail.png",
+      "worldMapBounds": { "x": 450, "y": 150, "width": 200, "height": 200 },
+      "worldMapPosition": { "x": 550, "y": 250 }
+    },
+    "titleDisplay": {
+      "fontTag": "corrupted",
+      "subtitle": "Domain of the Fallen"
+    },
+    "childLocations": [
+      "demon_portal",
+      "corruption_pools",
+      "succubus_den",
+      "demon_marketplace",
+      "throne_of_lust",
+      "slave_pens"
+    ],
+    "neighborRegions": ["darkwood"],
+    "tags": ["dangerous", "demon", "corrupted", "nsfw"],
+    "ambiance": {
+      "music": "demonic_ambient",
+      "sounds": ["screams", "dark_whispers", "chains"]
+    }
+  }
+]
