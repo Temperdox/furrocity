@@ -573,7 +573,29 @@ export const comprehensivePlayerState = {
   factionReputation: {
     // [factionId]: { reputation: -100 to 100, rank: 0-10, flags: [] }
   },
-  
+
+  // ============================================================================
+  // FAME, TITLES & INFAMY
+  // ============================================================================
+  fame: {
+    value: 0,              // -1000 to 1000 (negative = infamous, positive = famous)
+    heroicDeeds: 0,        // Total positive fame gained
+    villainousDeeds: 0,    // Total negative fame gained
+    fameHistory: []        // { reason, amount, timestamp }
+  },
+
+  titles: {
+    active: null,          // Currently displayed title ID
+    unlocked: [],          // Array of unlocked title IDs
+    equipped: null         // Title ID providing active buffs (can differ from display)
+  },
+
+  infamy: {
+    slut: 0,               // 0-100: Sexual infamy (affects prices, triggers encounters)
+    criminal: 0,           // 0-100: Crime infamy (guards, bounties)
+    corrupted: 0           // 0-100: Corruption infamy (demons, cults)
+  },
+
   // ============================================================================
   // QUESTS & PROGRESS
   // ============================================================================

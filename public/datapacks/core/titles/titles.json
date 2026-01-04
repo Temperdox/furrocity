@@ -1,0 +1,222 @@
+[
+  {
+    "id": "novice_adventurer",
+    "name": "Novice Adventurer",
+    "description": "One who has just begun their journey.",
+    "category": "progression",
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "level", "operator": ">=", "value": 1 }
+      ]
+    },
+    "effects": {}
+  },
+  {
+    "id": "seasoned_adventurer",
+    "name": "Seasoned Adventurer",
+    "description": "An experienced traveler who has seen much.",
+    "category": "progression",
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "level", "operator": ">=", "value": 10 }
+      ]
+    },
+    "effects": {
+      "buyPriceModifier": -0.05,
+      "sellPriceModifier": 0.05
+    }
+  },
+  {
+    "id": "hero_of_crossroads",
+    "name": "Hero of Crossroads",
+    "description": "Recognized as the savior of Crossroads.",
+    "category": "reputation",
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "fame", "operator": ">=", "value": 500 },
+        { "type": "flag", "flag": "saved_crossroads" }
+      ]
+    },
+    "effects": {
+      "buyPriceModifier": -0.15,
+      "sellPriceModifier": 0.10,
+      "factionReputation": { "crossroads_guild": 50 }
+    }
+  },
+  {
+    "id": "slayer_of_beasts",
+    "name": "Slayer of Beasts",
+    "description": "A hunter renowned for slaying dangerous creatures.",
+    "category": "combat",
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "stat", "stat": "enemiesDefeated", "operator": ">=", "value": 100 },
+        { "type": "flag", "flag": "killed_alpha_wolf" }
+      ]
+    },
+    "effects": {
+      "buyPriceModifier": -0.05,
+      "combatBonus": { "damageVsBeasts": 10 }
+    }
+  },
+  {
+    "id": "demon_slayer",
+    "name": "Demon Slayer",
+    "description": "One who has faced the forces of darkness and prevailed.",
+    "category": "combat",
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "flag", "flag": "defeated_succubus" },
+        { "type": "fame", "operator": ">=", "value": 300 }
+      ]
+    },
+    "effects": {
+      "buyPriceModifier": -0.10,
+      "combatBonus": { "damageVsDemons": 15 },
+      "resistanceBonus": { "corruption": 20 }
+    }
+  },
+  {
+    "id": "blessed_one",
+    "name": "The Blessed One",
+    "description": "Favored by the Temple of Light.",
+    "category": "faction",
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "factionRep", "factionId": "temple_of_light", "operator": ">=", "value": 75 },
+        { "type": "flag", "flag": "temple_devotee" }
+      ]
+    },
+    "effects": {
+      "buyPriceModifier": -0.10,
+      "sellPriceModifier": 0.05,
+      "holyDamageBonus": 10,
+      "corruptionDecay": 1
+    }
+  },
+  {
+    "id": "notorious_outlaw",
+    "name": "Notorious Outlaw",
+    "description": "Wanted in multiple territories.",
+    "category": "infamy",
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "infamy", "infamyType": "criminal", "operator": ">=", "value": 50 }
+      ]
+    },
+    "effects": {
+      "buyPriceModifier": 0.10,
+      "sellPriceModifier": -0.05,
+      "criminalFactionBonus": 25
+    }
+  },
+  {
+    "id": "silver_tongue",
+    "name": "Silver Tongue",
+    "description": "A master of persuasion and negotiation.",
+    "category": "social",
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "stat", "stat": "charisma", "operator": ">=", "value": 15 },
+        { "type": "level", "operator": ">=", "value": 5 }
+      ]
+    },
+    "effects": {
+      "buyPriceModifier": -0.12,
+      "sellPriceModifier": 0.08
+    }
+  },
+  {
+    "id": "corrupted_soul",
+    "name": "Corrupted Soul",
+    "description": "Tainted by dark forces beyond redemption.",
+    "category": "infamy",
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "infamy", "infamyType": "corrupted", "operator": ">=", "value": 75 }
+      ]
+    },
+    "effects": {
+      "buyPriceModifier": 0.15,
+      "darkDamageBonus": 20,
+      "demonAffinity": true
+    }
+  },
+  {
+    "id": "village_slut",
+    "name": "Village 'Friend'",
+    "description": "Known for being... friendly with everyone.",
+    "category": "infamy",
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "infamy", "infamyType": "slut", "operator": ">=", "value": 50 }
+      ]
+    },
+    "effects": {
+      "buyPriceModifier": 0.20,
+      "sellPriceModifier": -0.10,
+      "seductionBonus": 15
+    }
+  },
+  {
+    "id": "merchant_prince",
+    "name": "Merchant Prince",
+    "description": "A master of commerce and trade.",
+    "category": "social",
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "stat", "stat": "goldEarned", "operator": ">=", "value": 50000 },
+        { "type": "stat", "stat": "itemsSold", "operator": ">=", "value": 200 }
+      ]
+    },
+    "effects": {
+      "buyPriceModifier": -0.15,
+      "sellPriceModifier": 0.15
+    }
+  },
+  {
+    "id": "witch_friend",
+    "name": "Friend of the Witch",
+    "description": "An ally to Morrigan and her dark arts.",
+    "category": "faction",
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "flag", "flag": "witch_ally" }
+      ]
+    },
+    "effects": {
+      "buyPriceModifier": -0.10,
+      "alchemyBonus": 10
+    }
+  },
+  {
+    "id": "legendary_hero",
+    "name": "Legendary Hero",
+    "description": "A name spoken with reverence across all lands.",
+    "category": "reputation",
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "fame", "operator": ">=", "value": 900 },
+        { "type": "level", "operator": ">=", "value": 20 }
+      ]
+    },
+    "effects": {
+      "buyPriceModifier": -0.20,
+      "sellPriceModifier": 0.15,
+      "allStats": 2
+    }
+  }
+]

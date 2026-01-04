@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useContext, createContext, useCallback, useMemo, useRef } from 'react';
 import GameConfig from './GameConfig.js';
+import MerchantView from './components/inventory/MerchantView.jsx';
+import { MerchantSystem } from '../engine/MerchantSystem.js';
+import { InventorySystem } from '../engine/InventorySystem.js';
+import { FameSystem } from '../engine/FameSystem.js';
 
 // ============================================================================
 // GAME DATA STRUCTURES (JSON-DRIVEN CONTENT)
@@ -1566,7 +1570,7 @@ const defaultPlayerState = {
   
   // Inventory
   inventory: [],
-  gold: 0,
+  gold: 100, // Starting gold for new players
   
   // Skills
   unlockedSkills: [],
@@ -5674,7 +5678,79 @@ const Game = () => {
   
   // Combat state
   const [combatEnemies, setCombatEnemies] = useState([]);
-  
+
+  // Merchant state
+  const [showMerchantView, setShowMerchantView] = useState(false);
+  const [activeMerchant, setActiveMerchant] = useState(null);
+  const [merchantStock, setMerchantStock] = useState([]);
+
+  // Engine system refs
+  const inventorySystemRef = useRef(null);
+  const fameSystemRef = useRef(null);
+  const merchantSystemRef = useRef(null);
+  const systemsInitializedRef = useRef(false);
+
+  // Initialize engine systems
+  useEffect(() => {
+    if (!systemsInitializedRef.current) {
+      // Create system instances
+      inventorySystemRef.current = new InventorySystem();
+      fameSystemRef.current = new FameSystem();
+      merchantSystemRef.current = new MerchantSystem(null, fameSystemRef.current, inventorySystemRef.current);
+
+      // Initialize merchant data from GameData merchants
+      // Since we don't have full DataRegistry integration, we'll manually populate merchants
+      const merchantData = [
+        {
+          id: 'innkeeper_mary',
+          name: 'Mary the Innkeeper',
+          locationId: 'starting_inn',
+          dialogue: {
+            greeting: "Welcome to the Weary Traveler! What can I get for you?",
+            cannotBuy: "I don't have much use for that, I'm afraid.",
+            farewell: "Safe travels, dear!"
+          },
+          buyConfig: {
+            acceptedTags: ['food', 'drink', 'consumable'],
+            rejectedTags: ['weapon', 'armor', 'cursed'],
+            buyPriceMultiplier: 0.3
+          },
+          sellConfig: {
+            mode: 'static',
+            sellPriceMultiplier: 1.1
+          }
+        },
+        {
+          id: 'merchant_joe',
+          name: 'Merchant Joe',
+          locationId: 'town_square',
+          dialogue: {
+            greeting: "Looking to buy or sell? You've come to the right place!",
+            cannotBuy: "Sorry, I only deal in general goods.",
+            farewell: "Come back anytime!"
+          },
+          buyConfig: {
+            acceptedTags: ['misc', 'material', 'trinket', 'tool'],
+            rejectedTags: ['cursed', 'illegal'],
+            buyPriceMultiplier: 0.4
+          },
+          sellConfig: {
+            mode: 'static',
+            sellPriceMultiplier: 1.0
+          }
+        }
+      ];
+
+      // Populate merchant cache
+      merchantData.forEach(m => {
+        merchantSystemRef.current.merchantCache.set(m.id, m);
+      });
+
+      systemsInitializedRef.current = true;
+      console.log('[Game] Engine systems initialized');
+    }
+  }, []);
+
   // Auto-save timer
   const playTimeRef = useRef(0);
   const lastAutosaveRef = useRef(0);
@@ -5925,11 +6001,107 @@ const Game = () => {
         break;
         
       case 'shop':
-        toast.info('Shop', 'Shop system coming soon...');
+        // Find merchants at current location
+        if (merchantSystemRef.current) {
+          const merchants = merchantSystemRef.current.getMerchantsAtLocation(player.currentLocation);
+          if (merchants.length > 0) {
+            // For now, open the first merchant found
+            const merchant = merchants[0];
+            setActiveMerchant(merchant);
+
+            // Generate some sample merchant stock
+            const sampleStock = [
+              {
+                uniqueId: 'shop_health_potion_1',
+                id: 'health_potion',
+                name: 'Health Potion',
+                description: 'Restores 50 HP when consumed.',
+                basePrice: 25,
+                rarity: 'common',
+                rarityColor: '#9ca3af',
+                tags: ['consumable', 'healing'],
+                quantity: 5,
+                category: 'consumable',
+                canSell: true
+              },
+              {
+                uniqueId: 'shop_bread_1',
+                id: 'bread',
+                name: 'Fresh Bread',
+                description: 'A warm loaf of bread. Restores 10 HP.',
+                basePrice: 5,
+                rarity: 'common',
+                rarityColor: '#9ca3af',
+                tags: ['food', 'consumable'],
+                quantity: 10,
+                category: 'consumable',
+                canSell: true
+              },
+              {
+                uniqueId: 'shop_ale_1',
+                id: 'ale',
+                name: 'Hearty Ale',
+                description: 'Strong ale that warms the spirit.',
+                basePrice: 8,
+                rarity: 'common',
+                rarityColor: '#9ca3af',
+                tags: ['drink', 'consumable'],
+                quantity: 8,
+                category: 'consumable',
+                canSell: true
+              }
+            ];
+            setMerchantStock(sampleStock);
+            setShowMerchantView(true);
+          } else {
+            toast.info('No Shop', 'There are no merchants here.');
+          }
+        } else {
+          toast.info('Shop', 'Shop system not available.');
+        }
         break;
     }
   };
   
+  // Merchant transaction handler
+  const handleMerchantTransaction = useCallback((type, result) => {
+    // Handle different transaction types
+    if (type === 'buy' && result.success) {
+      // Deduct gold and add item to inventory
+      setPlayer(prev => ({
+        ...prev,
+        gold: (prev.gold || 0) - result.price,
+        inventory: [...(prev.inventory || []), result.item]
+      }));
+      // Remove from merchant stock
+      setMerchantStock(prev => prev.filter(item => item.uniqueId !== result.item.uniqueId));
+    } else if (type === 'sell' && result.success) {
+      // Add gold and remove item from inventory
+      setPlayer(prev => ({
+        ...prev,
+        gold: (prev.gold || 0) + result.price,
+        inventory: (prev.inventory || []).filter(item => item.uniqueId !== result.item.uniqueId)
+      }));
+    } else if (type === 'autoSellJunk' && result.soldCount > 0) {
+      // Update player after auto-selling junk
+      setPlayer(prev => ({
+        ...prev,
+        gold: (prev.gold || 0) + result.totalGold,
+        inventory: (prev.inventory || []).filter(item => !result.soldItems?.includes(item.uniqueId))
+      }));
+    } else if (type === 'flagChange') {
+      // Force re-render after toggling favorite/junk
+      setPlayer(prev => ({ ...prev }));
+    }
+  }, []);
+
+  // Close merchant view
+  const handleCloseMerchant = useCallback(() => {
+    setShowMerchantView(false);
+    setActiveMerchant(null);
+    setMerchantStock([]);
+  }, []);
+
   // Travel confirmation
   const handleTravelConfirm = () => {
     const location = GameData.locations.find(l => l.id === travelDestination);
@@ -6379,7 +6551,34 @@ const Game = () => {
         onClose={() => setShowDifficultyModal(false)}
         onSelect={handleDifficultySelect}
       />
-      
+
+      {/* Merchant View Overlay */}
+      {showMerchantView && activeMerchant && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem'
+        }}>
+          <MerchantView
+            merchant={activeMerchant}
+            merchantStock={merchantStock}
+            playerState={player}
+            merchantSystem={merchantSystemRef.current}
+            inventorySystem={inventorySystemRef.current}
+            onTransaction={handleMerchantTransaction}
+            onClose={handleCloseMerchant}
+          />
+        </div>
+      )}
+
       {renderScreen()}
     </GameContext.Provider>
   );

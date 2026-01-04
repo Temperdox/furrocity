@@ -56,6 +56,14 @@
     "scenes": {
       "path": "scenes/",
       "files": ["intro_scenes.json"]
+    },
+    "merchants": {
+      "path": "merchants/",
+      "files": ["merchants.json", "shop_inventories.json"]
+    },
+    "titles": {
+      "path": "titles/",
+      "files": ["titles.json"]
     }
   }
 }

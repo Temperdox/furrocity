@@ -1,0 +1,94 @@
+{
+  "inn_stock": {
+    "id": "inn_stock",
+    "merchantId": "innkeeper_mary",
+    "restockInterval": 86400000,
+    "items": [
+      { "itemId": "bread", "quantity": 10 },
+      { "itemId": "cheese", "quantity": 5 },
+      { "itemId": "ale", "quantity": 20 },
+      { "itemId": "wine", "quantity": 5 },
+      { "itemId": "water_flask", "quantity": 10 },
+      { "itemId": "ration", "quantity": 15 },
+      { "itemId": "healing_herb", "quantity": 5 }
+    ]
+  },
+  "general_store_stock": {
+    "id": "general_store_stock",
+    "merchantId": "merchant_joe",
+    "restockInterval": 86400000,
+    "items": [
+      { "itemId": "health_potion", "quantity": 10 },
+      { "itemId": "stamina_potion", "quantity": 10 },
+      { "itemId": "antidote", "quantity": 5 },
+      { "itemId": "torch", "quantity": 20 },
+      { "itemId": "rope", "quantity": 5 },
+      { "itemId": "bandage", "quantity": 15 },
+      { "itemId": "camping_kit", "quantity": 3 },
+      { "itemId": "lockpick", "quantity": 5, "minLevel": 3 },
+      { "itemId": "map_darkwood", "quantity": 1, "requiresFlag": "explored_forest_path" }
+    ]
+  },
+  "blacksmith_stock": {
+    "id": "blacksmith_stock",
+    "merchantId": "blacksmith",
+    "restockInterval": 172800000,
+    "items": [
+      { "itemId": "iron_sword", "quantity": 3 },
+      { "itemId": "iron_dagger", "quantity": 5 },
+      { "itemId": "iron_axe", "quantity": 2 },
+      { "itemId": "wooden_shield", "quantity": 3 },
+      { "itemId": "iron_shield", "quantity": 2 },
+      { "itemId": "leather_armor", "quantity": 3 },
+      { "itemId": "chainmail", "quantity": 2, "minLevel": 5 },
+      { "itemId": "iron_helmet", "quantity": 3 },
+      { "itemId": "steel_sword", "quantity": 1, "minLevel": 8 },
+      { "itemId": "repair_kit", "quantity": 5 }
+    ]
+  },
+  "temple_stock": {
+    "id": "temple_stock",
+    "merchantId": "priestess_elena",
+    "restockInterval": 86400000,
+    "items": [
+      { "itemId": "holy_water", "quantity": 10 },
+      { "itemId": "blessed_bandage", "quantity": 5 },
+      { "itemId": "purification_potion", "quantity": 3 },
+      { "itemId": "ward_charm", "quantity": 2 },
+      { "itemId": "prayer_beads", "quantity": 3 },
+      { "itemId": "divine_light_scroll", "quantity": 2, "minLevel": 5 },
+      { "itemId": "resurrection_charm", "quantity": 1, "minLevel": 10, "requiresFlag": "temple_devotee" }
+    ]
+  },
+  "witch_stock": {
+    "id": "witch_stock",
+    "merchantId": "witch_morrigan",
+    "restockInterval": 259200000,
+    "items": [
+      { "itemId": "mana_potion", "quantity": 5 },
+      { "itemId": "poison_vial", "quantity": 5 },
+      { "itemId": "aphrodisiac", "quantity": 3 },
+      { "itemId": "transformation_potion", "quantity": 1 },
+      { "itemId": "curse_removal_scroll", "quantity": 2 },
+      { "itemId": "dark_essence", "quantity": 3 },
+      { "itemId": "hex_bag", "quantity": 2 },
+      { "itemId": "succubus_tears", "quantity": 1, "minLevel": 10 },
+      { "itemId": "corruption_ward", "quantity": 2 }
+    ]
+  },
+  "black_market_stock": {
+    "id": "black_market_stock",
+    "merchantId": "shady_dealer",
+    "restockInterval": 604800000,
+    "items": [
+      { "itemId": "lockpick_set", "quantity": 3 },
+      { "itemId": "poison_dagger", "quantity": 2 },
+      { "itemId": "smoke_bomb", "quantity": 5 },
+      { "itemId": "disguise_kit", "quantity": 2 },
+      { "itemId": "forged_documents", "quantity": 1 },
+      { "itemId": "assassin_blade", "quantity": 1, "minLevel": 10 },
+      { "itemId": "shadow_cloak", "quantity": 1, "minLevel": 8 },
+      { "itemId": "slave_collar", "quantity": 1, "requiresFlag": "underworld_trusted" }
+    ]
+  }
+}

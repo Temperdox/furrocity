@@ -217,7 +217,10 @@ export class DataRegistry {
       dialogues: { idPrefix: 'dialogue:', chunkPrefix: 'dialogues_' },
       skills: { idPrefix: 'skill:', chunkPrefix: 'skills_' },
       quests: { idPrefix: 'quest:', chunkPrefix: 'quests_' },
-      substances: { idPrefix: 'substance:', chunkPrefix: 'substances_' }
+      substances: { idPrefix: 'substance:', chunkPrefix: 'substances_' },
+      merchants: { idPrefix: 'merchant:', chunkPrefix: 'merchants_' },
+      titles: { idPrefix: 'title:', chunkPrefix: 'titles_' },
+      shop_inventories: { idPrefix: 'shop:', chunkPrefix: 'shop_inventories_' }
     };
   }
 
@@ -642,7 +645,7 @@ export class DataRegistry {
   async getQuest(questId) {
     const cacheKey = `quest:${questId}`;
     if (this.itemCache.has(cacheKey)) return this.itemCache.get(cacheKey);
-    
+
     const chunkId = this._findChunkForId('quests', questId);
     if (chunkId) {
       const chunk = await this.loadChunk(chunkId);
@@ -653,6 +656,119 @@ export class DataRegistry {
       }
     }
     return null;
+  }
+
+  /**
+   * Get a merchant by ID
+   * @param {string} merchantId - Merchant ID
+   * @returns {Promise<Object|null>}
+   */
+  async getMerchant(merchantId) {
+    if (this.useDataPacks && this.dataPackManager) {
+      return this.dataPackManager.getContentById('merchants', merchantId);
+    }
+
+    const cacheKey = `merchant:${merchantId}`;
+    if (this.itemCache.has(cacheKey)) return this.itemCache.get(cacheKey);
+
+    const chunkId = this._findChunkForId('merchants', merchantId);
+    if (chunkId) {
+      const chunk = await this.loadChunk(chunkId);
+      const merchant = chunk.merchants?.[merchantId] || chunk[merchantId];
+      if (merchant) {
+        this.itemCache.set(cacheKey, merchant);
+        return merchant;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get a title by ID
+   * @param {string} titleId - Title ID
+   * @returns {Promise<Object|null>}
+   */
+  async getTitle(titleId) {
+    if (this.useDataPacks && this.dataPackManager) {
+      return this.dataPackManager.getContentById('titles', titleId);
+    }
+
+    const cacheKey = `title:${titleId}`;
+    if (this.itemCache.has(cacheKey)) return this.itemCache.get(cacheKey);
+
+    const chunkId = this._findChunkForId('titles', titleId);
+    if (chunkId) {
+      const chunk = await this.loadChunk(chunkId);
+      const title = chunk.titles?.[titleId] || chunk[titleId];
+      if (title) {
+        this.itemCache.set(cacheKey, title);
+        return title;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get a shop inventory by ID
+   * @param {string} shopId - Shop inventory ID
+   * @returns {Promise<Object|null>}
+   */
+  async getShopInventory(shopId) {
+    if (this.useDataPacks && this.dataPackManager) {
+      return this.dataPackManager.getContentById('shop_inventories', shopId);
+    }
+
+    const cacheKey = `shop:${shopId}`;
+    if (this.itemCache.has(cacheKey)) return this.itemCache.get(cacheKey);
+
+    const chunkId = this._findChunkForId('shop_inventories', shopId);
+    if (chunkId) {
+      const chunk = await this.loadChunk(chunkId);
+      const shop = chunk.shop_inventories?.[shopId] || chunk[shopId];
+      if (shop) {
+        this.itemCache.set(cacheKey, shop);
+        return shop;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get generic content by type and ID
+   * @param {string} contentType - Content type (e.g., 'merchants', 'titles')
+   * @param {string} id - Content ID
+   * @returns {Promise<Object|null>}
+   */
+  async getContent(contentType, id) {
+    if (this.useDataPacks && this.dataPackManager) {
+      return this.dataPackManager.getContentById(contentType, id);
+    }
+
+    const cacheKey = `${contentType}:${id}`;
+    if (this.itemCache.has(cacheKey)) return this.itemCache.get(cacheKey);
+
+    const chunkId = this._findChunkForId(contentType, id);
+    if (chunkId) {
+      const chunk = await this.loadChunk(chunkId);
+      const content = chunk[contentType]?.[id] || chunk[id];
+      if (content) {
+        this.itemCache.set(cacheKey, content);
+        return content;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get all content of a type
+   * @param {string} contentType - Content type
+   * @returns {Array} Array of content items
+   */
+  getContentByType(contentType) {
+    if (this.useDataPacks && this.dataPackManager) {
+      return this.dataPackManager.getContentByType(contentType) || [];
+    }
+    return [];
   }
 
   // ========================================

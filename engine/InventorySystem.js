@@ -1,15 +1,40 @@
 /**
- * InventorySystem - Item management, equipment, and crafting
- * 
- * Handles:
- * - Adding/removing items
- * - Stacking stackable items
- * - Equipment slots and requirements
- * - Item effects on equip/unequip
- * - Clothing durability and exposure
+ * @fileoverview InventorySystem - Complete item and equipment management
+ *
+ * This system handles all aspects of item management including:
+ * - Adding/removing items with automatic stacking
+ * - Equipment slots with stat bonuses and requirements
+ * - Consumable items with various effects
+ * - Clothing durability and exposure mechanics
+ * - User flags (favorite/junk) for item organization
+ *
+ * @module engine/InventorySystem
+ *
+ * @example
+ * // Create and use the inventory system
+ * const inventorySystem = new InventorySystem(registry, effectSystem);
+ *
+ * // Add an item
+ * const result = await inventorySystem.addItem(inventory, 'health_potion', 5);
+ *
+ * // Equip an item
+ * await inventorySystem.equipItem(player, inventory, item.uniqueId);
+ *
+ * // Mark item as junk for auto-sell
+ * inventorySystem.toggleJunk(inventory, item.uniqueId);
+ *
+ * @author Furrocity Team
+ * @version 1.0.0
  */
 
-// Equipment slots
+// ============================================================================
+// CONSTANTS - Equipment slots, item categories, and rarity tiers
+// ============================================================================
+
+/**
+ * Available equipment slots for the player character.
+ * @constant {Object.<string, string>}
+ */
 export const EQUIPMENT_SLOTS = {
   HEAD: 'head',
   FACE: 'face',
@@ -28,7 +53,10 @@ export const EQUIPMENT_SLOTS = {
   SPECIAL: 'special'
 };
 
-// Item categories
+/**
+ * Item category types for filtering and sorting.
+ * @constant {Object.<string, string>}
+ */
 export const ITEM_CATEGORIES = {
   WEAPON: 'weapon',
   ARMOR: 'armor',
@@ -41,7 +69,11 @@ export const ITEM_CATEGORIES = {
   MISC: 'misc'
 };
 
-// Rarity tiers
+/**
+ * Item rarity tiers from most common to most rare.
+ * Affects item value, drop rates, and stat bonuses.
+ * @constant {Object.<string, string>}
+ */
 export const RARITY = {
   COMMON: 'common',
   UNCOMMON: 'uncommon',
@@ -52,7 +84,11 @@ export const RARITY = {
   DIVINE: 'divine'
 };
 
-// Rarity colors for UI
+/**
+ * UI colors for each rarity tier (hex format).
+ * Used for item name display and borders.
+ * @constant {Object.<string, string>}
+ */
 export const RARITY_COLORS = {
   common: '#9ca3af',
   uncommon: '#22c55e',
@@ -63,24 +99,95 @@ export const RARITY_COLORS = {
   divine: '#fef3c7'
 };
 
-// Generate unique ID for item instances
+/**
+ * Generate a unique ID for item instances.
+ * Combines timestamp and random string for guaranteed uniqueness.
+ *
+ * @returns {string} Unique item ID (e.g., "item_1704393600000_abc123def")
+ * @private
+ */
 function generateUniqueId() {
   return `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
 /**
- * Main Inventory System class
+ * InventorySystem - Core item and equipment management
+ *
+ * Features:
+ * - Automatic stacking of stackable items
+ * - Equipment with stat bonuses and curse mechanics
+ * - Consumable items with HP/mana/stamina restoration
+ * - Clothing durability and exposure system
+ * - User flags (favorite/junk) for organization
+ * - Sorting and filtering capabilities
+ *
+ * @class
  */
 export class InventorySystem {
+  /**
+   * Create a new InventorySystem instance.
+   *
+   * @param {DataRegistry|null} registry - Registry for loading item definitions
+   * @param {EffectSystem|null} effectSystem - Effect system for item effects
+   * @param {Object} [options={}] - Configuration options
+   * @param {Object} [options.callbacks] - Event callbacks
+   * @param {Function} [options.callbacks.onItemAdded] - Called when item added
+   * @param {Function} [options.callbacks.onItemRemoved] - Called when item removed
+   * @param {Function} [options.callbacks.onItemEquipped] - Called when item equipped
+   * @param {Function} [options.callbacks.onItemUnequipped] - Called when item unequipped
+   * @param {Function} [options.callbacks.onItemUsed] - Called when item used
+   * @param {number} [options.maxInventorySize=100] - Maximum inventory slots
+   *
+   * @example
+   * const inventorySystem = new InventorySystem(registry, effectSystem, {
+   *   maxInventorySize: 50,
+   *   callbacks: {
+   *     onItemAdded: (item) => console.log(`Got ${item.name}!`)
+   *   }
+   * });
+   */
   constructor(registry, effectSystem, options = {}) {
+    /** @type {DataRegistry|null} Item definition registry */
     this.registry = registry;
+
+    /** @type {EffectSystem|null} Effect system for applying item effects */
     this.effectSystem = effectSystem;
+
+    /** @type {Object} Event callback functions */
     this.callbacks = options.callbacks || {};
+
+    /** @type {number} Maximum number of inventory slots */
     this.maxInventorySize = options.maxInventorySize || 100;
   }
 
+  // ============================================================================
+  // CORE INVENTORY OPERATIONS
+  // ============================================================================
+
   /**
-   * Add item to inventory
+   * Add an item to the player's inventory.
+   * Automatically stacks stackable items up to their max stack size.
+   *
+   * @async
+   * @param {Array} inventory - Player's inventory array (will be modified)
+   * @param {string|Object} itemIdOrData - Item ID string or full item data object
+   * @param {number} [count=1] - Number of items to add
+   * @param {Object} [options={}] - Additional options
+   * @param {Object} [options.curse] - Curse to apply to the item
+   * @param {boolean} [options.skipRandom] - Skip random stat generation
+   * @returns {Promise<Object>} Result object
+   * @returns {boolean} result.success - Whether item was added
+   * @returns {string} [result.error] - Error message if failed
+   * @returns {number} [result.added] - Number of items added
+   * @returns {Object} [result.item] - The added item instance
+   * @returns {boolean} [result.stacked] - Whether items were stacked
+   *
+   * @example
+   * // Add by item ID
+   * const result = await inventorySystem.addItem(player.inventory, 'health_potion', 5);
+   *
+   * // Add by item data
+   * const result = await inventorySystem.addItem(player.inventory, itemData, 1);
    */
   async addItem(inventory, itemIdOrData, count = 1, options = {}) {
     // Get item data
@@ -155,7 +262,11 @@ export class InventorySystem {
       ...itemData,
       uniqueId: generateUniqueId(),
       count: itemData.stackable ? count : 1,
-      acquiredAt: Date.now()
+      acquiredAt: Date.now(),
+      userFlags: {
+        favorite: false,
+        junk: false
+      }
     };
     
     // Apply curse if specified
@@ -684,15 +795,165 @@ export class InventorySystem {
       if (filter.rarity && item.rarity !== filter.rarity) return false;
       if (filter.type && item.type !== filter.type) return false;
       if (filter.tag && !item.tags?.includes(filter.tag)) return false;
+      if (filter.favorite !== undefined && item.userFlags?.favorite !== filter.favorite) return false;
+      if (filter.junk !== undefined && item.userFlags?.junk !== filter.junk) return false;
       if (filter.search) {
         const search = filter.search.toLowerCase();
-        if (!item.name?.toLowerCase().includes(search) && 
+        if (!item.name?.toLowerCase().includes(search) &&
             !item.description?.toLowerCase().includes(search)) {
           return false;
         }
       }
       return true;
     });
+  }
+
+  // ============================================================================
+  // USER FLAGS (Favorite/Junk)
+  // ============================================================================
+
+  /**
+   * Toggle favorite flag on an item
+   * @param {Array} inventory - Player inventory
+   * @param {string} itemUniqueId - Item's unique ID
+   * @returns {Object} Result with new state
+   */
+  toggleFavorite(inventory, itemUniqueId) {
+    const item = inventory.find(i => i.uniqueId === itemUniqueId);
+    if (!item) {
+      return { success: false, error: 'Item not found' };
+    }
+
+    // Initialize userFlags if missing
+    if (!item.userFlags) {
+      item.userFlags = { favorite: false, junk: false };
+    }
+
+    // Toggle favorite
+    item.userFlags.favorite = !item.userFlags.favorite;
+
+    // If marking as favorite, remove junk flag (mutually exclusive)
+    if (item.userFlags.favorite) {
+      item.userFlags.junk = false;
+    }
+
+    return {
+      success: true,
+      item,
+      favorite: item.userFlags.favorite
+    };
+  }
+
+  /**
+   * Toggle junk flag on an item
+   * @param {Array} inventory - Player inventory
+   * @param {string} itemUniqueId - Item's unique ID
+   * @returns {Object} Result with new state
+   */
+  toggleJunk(inventory, itemUniqueId) {
+    const item = inventory.find(i => i.uniqueId === itemUniqueId);
+    if (!item) {
+      return { success: false, error: 'Item not found' };
+    }
+
+    // Initialize userFlags if missing
+    if (!item.userFlags) {
+      item.userFlags = { favorite: false, junk: false };
+    }
+
+    // Toggle junk
+    item.userFlags.junk = !item.userFlags.junk;
+
+    // If marking as junk, remove favorite flag (mutually exclusive)
+    if (item.userFlags.junk) {
+      item.userFlags.favorite = false;
+    }
+
+    return {
+      success: true,
+      item,
+      junk: item.userFlags.junk
+    };
+  }
+
+  /**
+   * Set favorite flag on an item
+   */
+  setFavorite(inventory, itemUniqueId, value) {
+    const item = inventory.find(i => i.uniqueId === itemUniqueId);
+    if (!item) return { success: false, error: 'Item not found' };
+
+    if (!item.userFlags) {
+      item.userFlags = { favorite: false, junk: false };
+    }
+
+    item.userFlags.favorite = value;
+    if (value) item.userFlags.junk = false;
+
+    return { success: true, item, favorite: value };
+  }
+
+  /**
+   * Set junk flag on an item
+   */
+  setJunk(inventory, itemUniqueId, value) {
+    const item = inventory.find(i => i.uniqueId === itemUniqueId);
+    if (!item) return { success: false, error: 'Item not found' };
+
+    if (!item.userFlags) {
+      item.userFlags = { favorite: false, junk: false };
+    }
+
+    item.userFlags.junk = value;
+    if (value) item.userFlags.favorite = false;
+
+    return { success: true, item, junk: value };
+  }
+
+  /**
+   * Get all items marked as junk
+   */
+  getJunkItems(inventory) {
+    return inventory.filter(item => item.userFlags?.junk === true);
+  }
+
+  /**
+   * Get all items marked as favorite
+   */
+  getFavoriteItems(inventory) {
+    return inventory.filter(item => item.userFlags?.favorite === true);
+  }
+
+  /**
+   * Get unique tags from inventory (for filter UI)
+   */
+  getInventoryTags(inventory) {
+    const tagSet = new Set();
+    for (const item of inventory) {
+      if (item.tags) {
+        for (const tag of item.tags) {
+          tagSet.add(tag);
+        }
+      }
+      // Also add category as a pseudo-tag
+      if (item.category) {
+        tagSet.add(item.category);
+      }
+    }
+    return Array.from(tagSet).sort();
+  }
+
+  /**
+   * Get unique categories from inventory
+   */
+  getInventoryCategories(inventory) {
+    const categories = new Set();
+    for (const item of inventory) {
+      if (item.category) {
+        categories.add(item.category);
+      }
+    }
+    return Array.from(categories).sort();
   }
 }
 

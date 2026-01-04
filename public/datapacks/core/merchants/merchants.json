@@ -1,0 +1,172 @@
+[
+  {
+    "id": "innkeeper_mary",
+    "name": "Mary the Innkeeper",
+    "description": "A kind-faced woman who runs the Weary Traveler Inn.",
+    "locationId": "starting_inn",
+    "factionId": "crossroads_guild",
+    "buyConfig": {
+      "acceptedTags": ["food", "drink", "ingredient", "material"],
+      "rejectedTags": ["cursed", "contraband", "nsfw"],
+      "buyPriceMultiplier": 0.35,
+      "maxBuyValue": 500
+    },
+    "sellConfig": {
+      "mode": "static",
+      "stockId": "inn_stock",
+      "sellPriceMultiplier": 1.0
+    },
+    "dialogue": {
+      "greeting": "Welcome to the Weary Traveler! Can I get you something?",
+      "cannotBuy": "I'm afraid I can't take that off your hands.",
+      "farewell": "Safe travels, friend!"
+    }
+  },
+  {
+    "id": "merchant_joe",
+    "name": "Joe the General Merchant",
+    "description": "A portly man with a bushy mustache who sells a bit of everything.",
+    "locationId": "town_square",
+    "factionId": "crossroads_guild",
+    "buyConfig": {
+      "acceptedTags": ["material", "ingredient", "misc", "tool", "consumable"],
+      "rejectedTags": ["cursed", "weapon", "armor"],
+      "buyPriceMultiplier": 0.4,
+      "maxBuyValue": 1000
+    },
+    "sellConfig": {
+      "mode": "static",
+      "stockId": "general_store_stock",
+      "sellPriceMultiplier": 1.1
+    },
+    "dialogue": {
+      "greeting": "Welcome, welcome! Take a look around!",
+      "cannotBuy": "Sorry, I don't deal in those kinds of goods.",
+      "farewell": "Come back soon!"
+    }
+  },
+  {
+    "id": "blacksmith",
+    "name": "Grom the Blacksmith",
+    "description": "A muscular man covered in soot, with arms like tree trunks.",
+    "locationId": "blacksmith",
+    "factionId": "crossroads_guild",
+    "buyConfig": {
+      "acceptedTags": ["weapon", "armor", "metal", "ore"],
+      "rejectedTags": ["cursed", "organic", "food"],
+      "buyPriceMultiplier": 0.5,
+      "maxBuyValue": 5000
+    },
+    "sellConfig": {
+      "mode": "static",
+      "stockId": "blacksmith_stock",
+      "sellPriceMultiplier": 1.0
+    },
+    "dialogue": {
+      "greeting": "Need something forged? Or perhaps you've got metal to sell?",
+      "cannotBuy": "That's not my trade. Try the general store.",
+      "farewell": "May your blade strike true!"
+    }
+  },
+  {
+    "id": "priestess_elena",
+    "name": "Priestess Elena",
+    "description": "A serene woman in white robes who tends the Temple of Light.",
+    "locationId": "temple",
+    "factionId": "temple_of_light",
+    "buyConfig": {
+      "acceptedTags": ["holy", "blessed", "religious", "offering"],
+      "rejectedTags": ["cursed", "dark", "demonic", "nsfw", "contraband"],
+      "buyPriceMultiplier": 0.6,
+      "maxBuyValue": 2000
+    },
+    "sellConfig": {
+      "mode": "static",
+      "stockId": "temple_stock",
+      "sellPriceMultiplier": 0.9
+    },
+    "dialogue": {
+      "greeting": "May the light guide you. How may I be of service?",
+      "cannotBuy": "The temple cannot accept such... tainted offerings.",
+      "farewell": "Go in peace, child."
+    }
+  },
+  {
+    "id": "witch_morrigan",
+    "name": "Morrigan the Witch",
+    "description": "A mysterious woman with dark hair and knowing eyes.",
+    "locationId": "witch_hut",
+    "factionId": null,
+    "buyConfig": {
+      "acceptedTags": ["ingredient", "monster_part", "cursed", "magical", "alchemical", "rare"],
+      "rejectedTags": ["holy", "blessed"],
+      "buyPriceMultiplier": 0.55,
+      "maxBuyValue": 10000
+    },
+    "sellConfig": {
+      "mode": "static",
+      "stockId": "witch_stock",
+      "sellPriceMultiplier": 1.3
+    },
+    "dialogue": {
+      "greeting": "Ah, a visitor... How delightful. What brings you to my humble abode?",
+      "cannotBuy": "That holds no interest for me. Bring me something... darker.",
+      "farewell": "Do come again... if you dare."
+    }
+  },
+  {
+    "id": "traveling_merchant",
+    "name": "Zephyr the Wanderer",
+    "description": "A cloaked figure with a cart full of exotic goods.",
+    "locationId": null,
+    "factionId": null,
+    "tags": ["traveling", "random_encounter"],
+    "buyConfig": {
+      "acceptedTags": ["rare", "epic", "legendary", "exotic", "unique"],
+      "rejectedTags": [],
+      "buyPriceMultiplier": 0.7,
+      "maxBuyValue": 50000
+    },
+    "sellConfig": {
+      "mode": "dynamic",
+      "saleTags": ["rare", "exotic", "magical", "unique"],
+      "maxRarity": "legendary",
+      "stockSize": 8,
+      "sellPriceMultiplier": 1.5
+    },
+    "dialogue": {
+      "greeting": "Greetings, traveler! I have wares from distant lands...",
+      "cannotBuy": "Common goods? I seek only the extraordinary.",
+      "farewell": "Until our paths cross again..."
+    }
+  },
+  {
+    "id": "shady_dealer",
+    "name": "The Whisper",
+    "description": "A hooded figure who deals in... questionable goods.",
+    "locationId": "bandit_camp",
+    "factionId": "underworld",
+    "requirements": {
+      "or": [
+        { "type": "infamy", "infamyType": "criminal", "operator": ">=", "value": 20 },
+        { "type": "flag", "flag": "knows_underworld" }
+      ]
+    },
+    "buyConfig": {
+      "acceptedTags": ["stolen", "contraband", "poison", "weapon", "lockpick"],
+      "rejectedTags": ["holy", "blessed"],
+      "buyPriceMultiplier": 0.6,
+      "maxBuyValue": 20000
+    },
+    "sellConfig": {
+      "mode": "static",
+      "stockId": "black_market_stock",
+      "sellPriceMultiplier": 1.2
+    },
+    "dialogue": {
+      "greeting": "You didn't see me, and I didn't see you. What do you need?",
+      "cannotBuy": "I don't deal in that. Too clean for my taste.",
+      "farewell": "Remember... we never spoke."
+    }
+  }
+]
