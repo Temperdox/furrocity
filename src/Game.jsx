@@ -6407,7 +6407,7 @@ const Game = () => {
 
     // Show location title when traveling
     if (location) {
-      const titleData = locationSystemRef.current.getTitleDisplayData(location);
+      const titleData = locationSystemRef.current.getTitleDisplayData(location, player);
       setLocationTitleData(titleData);
       setShowLocationTitle(true);
 

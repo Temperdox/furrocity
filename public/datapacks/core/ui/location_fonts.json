@@ -1,4 +1,7 @@
 {
+  "$schema": "./location_fonts.schema.json",
+  "$comment": "Font configuration for location titles with hierarchical tag matching and gradient support",
+
   "fontTags": {
     "friendly_town": {
       "fontFamily": "'Cinzel', serif",
@@ -139,5 +142,74 @@
     "auction": "slave_district",
     "drugs": "drug_den",
     "addiction": "drug_den"
+  },
+
+  "tagPriority": {
+    "$comment": "Higher values = higher priority when multiple tags match. Tags not listed default to 0.",
+    "corrupted": 100,
+    "demon": 95,
+    "cursed": 90,
+    "haunted": 85,
+    "dangerous": 50,
+    "hostile": 45,
+    "drugs": 80,
+    "addiction": 75,
+    "slave": 70,
+    "dungeon": 60,
+    "magic": 40,
+    "arcane": 40,
+    "holy": 35,
+    "temple": 30,
+    "church": 30,
+    "forest": 10,
+    "cave": 10,
+    "desert": 10,
+    "ice": 10,
+    "swamp": 10,
+    "ruins": 15,
+    "safe": 5,
+    "town": 5,
+    "inn": 5
+  },
+
+  "combinationFontTags": {
+    "$comment": "Specific font styles for tag combinations. Keys are sorted tags joined with '+'. If not defined, system generates gradients automatically.",
+    "corrupted+dangerous+forest": {
+      "fontFamily": "'Nosifer', cursive",
+      "color": "#7c3aed",
+      "textShadow": "0 0 20px rgba(124,58,237,0.8), 0 0 40px rgba(34,197,94,0.4), 0 0 60px rgba(220,38,38,0.3)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400",
+      "animation": "corruptedPulse 2s ease-in-out infinite"
+    },
+    "corrupted+forest": {
+      "fontFamily": "'Nosifer', cursive",
+      "color": "linear-gradient(90deg, #22c55e 0%, #7c3aed 100%)",
+      "textShadow": "0 0 15px rgba(124,58,237,0.6), 0 0 30px rgba(34,197,94,0.4)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400"
+    },
+    "dangerous+forest": {
+      "fontFamily": "'MedievalSharp', cursive",
+      "color": "linear-gradient(90deg, #22c55e 0%, #dc2626 100%)",
+      "textShadow": "0 0 10px rgba(220,38,38,0.5), 0 0 25px rgba(34,197,94,0.4)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400"
+    },
+    "corrupted+dungeon": {
+      "fontFamily": "'Nosifer', cursive",
+      "color": "linear-gradient(90deg, #a855f7 0%, #7c3aed 100%)",
+      "textShadow": "0 0 20px rgba(124,58,237,0.8), 0 0 40px rgba(168,85,247,0.5)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400",
+      "animation": "corruptedPulse 2s ease-in-out infinite"
+    },
+    "cursed+haunted": {
+      "fontFamily": "'Creepster', cursive",
+      "color": "linear-gradient(90deg, #a855f7 0%, #6366f1 100%)",
+      "textShadow": "0 0 15px rgba(168,85,247,0.7), 0 0 30px rgba(99,102,241,0.5)",
+      "fontSize": "2.5rem",
+      "fontWeight": "400"
+    }
   }
 }

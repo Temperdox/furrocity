@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] - 2026-01-05
+
+### Added
+- **Hierarchical Location Title Fonts**: Location titles now support multi-tag font resolution
+  - Tags are matched in combination (all tags, then pairs) before falling back to individual tags
+  - Gradient text for locations with multiple matched tags
+  - Tag priority system determines which tag takes precedence for single matches
+  - Hidden tags are filtered out until discovered by the player
+- **Combination Font Tags**: Define custom font styles for specific tag combinations
+  - Example: `corrupted+dangerous+forest` can have its own unique style
+  - Sorted tag keys for consistent lookup
+- **Auto-Generated Gradients**: When no combination is defined, colors blend automatically
+  - Gradient follows tag order from location definition
+  - First tag's font family is used with blended colors
+- **Changelog Modal**: View version history from main menu and pause menu
+  - Markdown rendering with react-markdown
+  - Infinite scroll for older versions
+  - Version dropdown for quick navigation
+
+### Changed
+- `LocationSystem.getFontStyleForLocation()` now accepts `playerState` parameter
+- `LocationSystem.getTitleDisplayData()` returns additional gradient metadata
+- `LocationTitle` component handles CSS gradient text with background-clip
+- `location_fonts.json` structure expanded with `tagPriority` and `combinationFontTags`
+
+---
+
 ## [0.3.0] - 2026-01-04
 
 ### Changed

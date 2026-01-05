@@ -4,14 +4,24 @@
  * Shows the location name at the top of the screen with:
  * - Fade in (0.5s) → Hold (2.5s) → Fade out (1s)
  * - Tag-based custom fonts
+ * - Gradient text support for multi-tag locations
  * - Optional subtitle
  *
  * @module components/ui/LocationTitle
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import './LocationTitle.css';
+
+/**
+ * Check if a color value is a CSS gradient
+ * @param {string} color - Color value to check
+ * @returns {boolean} True if color is a gradient
+ */
+const isGradient = (color) => {
+  return typeof color === 'string' && color.includes('gradient');
+};
 
 /**
  * LocationTitle - Displays animated location title on area change
@@ -61,15 +71,39 @@ const LocationTitle = ({
     };
   }, [name]); // Only re-run when name changes, not when onComplete reference changes
 
-  // Build style object from fontStyle
-  const titleStyle = {
-    fontFamily: fontStyle.fontFamily || "'Crimson Text', Georgia, serif",
-    color: fontStyle.color || '#e0e0e0',
-    textShadow: fontStyle.textShadow || '0 2px 4px rgba(0,0,0,0.6)',
-    fontSize: fontStyle.fontSize || '2.5rem',
-    fontWeight: fontStyle.fontWeight || '600',
-    ...(fontStyle.animation && { animation: fontStyle.animation })
-  };
+  // Build style object from fontStyle, handling gradients
+  const titleStyle = useMemo(() => {
+    const color = fontStyle.color || '#e0e0e0';
+    const hasGradient = isGradient(color);
+
+    const baseStyle = {
+      fontFamily: fontStyle.fontFamily || "'Crimson Text', Georgia, serif",
+      textShadow: fontStyle.textShadow || '0 2px 4px rgba(0,0,0,0.6)',
+      fontSize: fontStyle.fontSize || '2.5rem',
+      fontWeight: fontStyle.fontWeight || '600',
+      ...(fontStyle.animation && { animation: fontStyle.animation })
+    };
+
+    if (hasGradient) {
+      // For gradient text, use background-clip technique
+      return {
+        ...baseStyle,
+        background: color,
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text'
+      };
+    } else {
+      // For solid colors, use color property
+      return {
+        ...baseStyle,
+        color
+      };
+    }
+  }, [fontStyle]);
+
+  // Determine CSS class based on whether we have a gradient
+  const hasGradientClass = isGradient(fontStyle.color) ? 'has-gradient' : '';
 
   if (phase === 'complete') {
     return null;
@@ -79,7 +113,7 @@ const LocationTitle = ({
     <div className={`location-title-overlay ${phase}`}>
       <div className="location-title-container">
         <h1
-          className={`location-title-text font-tag-${fontTag}`}
+          className={`location-title-text font-tag-${fontTag} ${hasGradientClass}`}
           style={titleStyle}
         >
           {name}

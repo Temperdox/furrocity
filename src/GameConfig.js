@@ -12,7 +12,7 @@ const GameConfig = {
   game: {
     title: "FURROCITY",
     subtitle: "Unleash your inner beast or have it be tamed...",
-    version: "0.1.0",
+    version: "0.4.0",
     engineName: "Furrocity Engine",
     
     // Copyright info (displayed in footer)

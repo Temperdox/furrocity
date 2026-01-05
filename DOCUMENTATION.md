@@ -1,6 +1,6 @@
 # Furrocity Engine - Complete Documentation
 
-> **Version:** 0.3.0
+> **Version:** 0.4.0
 > **Engine:** Furrocity Engine
 > **Authors:** Cotton Le Sergal & Shluggo
 
@@ -652,9 +652,11 @@ Regions group locations together and have their own maps.
 
 ### Location Font Tags
 
-Custom fonts for location title animations.
+Custom fonts for location title animations with hierarchical tag matching and gradient support.
 
 **File: `ui/location_fonts.json`**
+
+#### Font Tag Definitions
 
 ```json
 {
@@ -662,33 +664,113 @@ Custom fonts for location title animations.
     "friendly_town": {
       "fontFamily": "'Cinzel', serif",
       "color": "#ffd700",
-      "textShadow": "0 0 20px rgba(255, 215, 0, 0.5)"
+      "textShadow": "0 0 20px rgba(255, 215, 0, 0.5)",
+      "fontSize": "2.5rem",
+      "fontWeight": "600"
     },
     "hostile_area": {
       "fontFamily": "'Creepster', cursive",
       "color": "#dc2626",
       "textShadow": "0 0 20px rgba(220, 38, 38, 0.5)"
     },
-    "hostile_forest": {
-      "fontFamily": "'MedievalSharp', cursive",
-      "color": "#22c55e"
-    },
-    "dungeon": {
-      "fontFamily": "'Pirata One', cursive",
-      "color": "#a855f7"
-    },
-    "mystical": {
-      "fontFamily": "'Uncial Antiqua', cursive",
-      "color": "#06b6d4"
-    },
     "corrupted": {
       "fontFamily": "'Nosifer', cursive",
-      "color": "#7c3aed"
+      "color": "#7c3aed",
+      "animation": "corruptedPulse 2s ease-in-out infinite"
     }
   },
-  "defaultFont": "friendly_town"
+  "defaultFont": "neutral"
 }
 ```
+
+#### Tag Mappings
+
+Maps location tags to font tag definitions:
+
+```json
+{
+  "tagMappings": {
+    "safe": "friendly_town",
+    "town": "friendly_town",
+    "dangerous": "hostile_area",
+    "forest": "hostile_forest",
+    "corrupted": "corrupted",
+    "dungeon": "dungeon"
+  }
+}
+```
+
+#### Tag Priority
+
+Higher values = higher priority when multiple tags match a single font:
+
+```json
+{
+  "tagPriority": {
+    "corrupted": 100,
+    "dangerous": 50,
+    "dungeon": 60,
+    "forest": 10,
+    "safe": 5
+  }
+}
+```
+
+#### Combination Font Tags
+
+Define custom styles for specific tag combinations (keys are sorted alphabetically):
+
+```json
+{
+  "combinationFontTags": {
+    "corrupted+dangerous+forest": {
+      "fontFamily": "'Nosifer', cursive",
+      "color": "#7c3aed",
+      "textShadow": "0 0 20px rgba(124,58,237,0.8), 0 0 40px rgba(34,197,94,0.4)",
+      "animation": "corruptedPulse 2s ease-in-out infinite"
+    },
+    "dangerous+forest": {
+      "fontFamily": "'MedievalSharp', cursive",
+      "color": "linear-gradient(90deg, #22c55e 0%, #dc2626 100%)"
+    }
+  }
+}
+```
+
+### Hierarchical Font Resolution
+
+When determining font style for a location, the system checks in this order:
+
+1. **Explicit fontTag**: If `titleDisplay.fontTag` is set, use that directly
+2. **Combination Tags**: Check for defined combinations (all matched tags, then pairs)
+3. **Auto-Generated Gradient**: If multiple tags match, blend colors in tag order
+4. **Single Tag Priority**: Use highest priority matched tag
+5. **Default Font**: Fall back to `defaultFont`
+
+#### Example: Location with tags `["forest", "dangerous", "corrupted"]`
+
+1. System finds font mappings for: forest → hostile_forest, dangerous → hostile_area, corrupted → corrupted
+2. Checks for `corrupted+dangerous+forest` combination (sorted key)
+3. If no combination defined, generates gradient: `linear-gradient(90deg, #22c55e 0%, #dc2626 50%, #7c3aed 100%)`
+4. Uses first tag's font family (`'MedievalSharp'` from forest)
+
+#### Hidden Tags
+
+Tags in `hiddenTags` are excluded from font resolution until discovered:
+
+```json
+{
+  "tags": ["forest", "outdoor", "cursed"],
+  "hiddenTags": {
+    "cursed": {
+      "alwaysHidden": false,
+      "discoveryConditions": { "interactions": { "type": "explore", "min": 2 } }
+    }
+  }
+}
+```
+
+Until the player discovers the "cursed" tag, it won't affect the title's font style.
 
 ### Unlock Requirement Types
 
@@ -742,7 +824,13 @@ When entering a new location, an animated title displays with:
 - Hold (2.5s)
 - Fade out (1s)
 
-The font style is determined by the location's `titleDisplay.fontTag`.
+The font style is determined by hierarchical tag resolution (see above). For gradient text, the system uses CSS `background-clip: text` to render multi-color titles.
+
+The `LocationTitle` component receives:
+- `fontStyle.color` - Solid color or CSS gradient
+- `fontStyle.isGradient` - Boolean flag for gradient detection
+- `fontStyle.gradientColors` - Array of colors used in the gradient
+- `fontStyle.matchedTags` - Array of font tags that were combined
 
 ### UnlockSystem API
 
