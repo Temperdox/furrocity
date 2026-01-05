@@ -9,13 +9,29 @@
  * Players can regain access through:
  * - Completing quests
  * - Paying gold
- * - Charity work
- * - Waiting a period of time
+ * - Charity work (in-game days)
+ * - Waiting a period of time (in-game days)
  */
 
-class LocationBarringSystem {
-  constructor() {
-    // Nothing to initialize
+export class LocationBarringSystem {
+  /**
+   * @param {Object} options - Configuration options
+   * @param {Function} options.gameTimeProvider - Function that returns { currentDay, currentAction }
+   */
+  constructor(options = {}) {
+    // Game time provider for turn-based timing
+    this.gameTimeProvider = options.gameTimeProvider || (() => ({
+      currentDay: 0,
+      currentAction: 0
+    }));
+  }
+
+  /**
+   * Get current game day
+   */
+  getCurrentDay() {
+    const time = this.gameTimeProvider();
+    return time.currentDay ?? 0;
   }
 
   /**
@@ -62,15 +78,16 @@ class LocationBarringSystem {
 
     const existingBan = playerState.locationBans[locationId];
     const offenseCount = (existingBan?.offenseCount || 0) + 1;
+    const currentDay = this.getCurrentDay();
 
     playerState.locationBans[locationId] = {
       banned: true,
       reason,
-      bannedAt: Date.now(),
+      bannedOnDay: currentDay,
       offenseCount,
       offenseHistory: [
         ...(existingBan?.offenseHistory || []),
-        { reason, timestamp: Date.now() }
+        { reason, day: currentDay }
       ],
       redemptionTasks: redemptionTasks.length > 0
         ? redemptionTasks
@@ -95,7 +112,7 @@ class LocationBarringSystem {
     }
 
     playerState.locationBans[locationId].banned = false;
-    playerState.locationBans[locationId].unbannedAt = Date.now();
+    playerState.locationBans[locationId].unbannedOnDay = this.getCurrentDay();
 
     return { success: true, locationId };
   }
@@ -173,20 +190,20 @@ class LocationBarringSystem {
         break;
 
       case 'time':
-        // Start the timer
-        if (!task.startedAt) {
-          task.startedAt = Date.now();
+        // Start the timer (day-based)
+        if (task.startedOnDay === undefined) {
+          task.startedOnDay = this.getCurrentDay();
           result.success = true;
-          result.message = `Timer started. Wait ${task.hours} hours.`;
+          result.message = `Timer started. Wait ${task.days} day(s).`;
         } else {
-          // Check if enough time has passed
-          const hoursPassed = (Date.now() - task.startedAt) / (1000 * 60 * 60);
-          if (hoursPassed >= task.hours) {
+          // Check if enough days have passed
+          const daysPassed = this.getCurrentDay() - task.startedOnDay;
+          if (daysPassed >= task.days) {
             result.success = true;
             result.timeComplete = true;
           } else {
             result.reason = 'time_remaining';
-            result.hoursRemaining = Math.ceil(task.hours - hoursPassed);
+            result.daysRemaining = task.days - daysPassed;
           }
         }
         break;
@@ -238,16 +255,16 @@ class LocationBarringSystem {
         return task.paid === true;
 
       case 'charity':
-        return (task.completed || 0) >= task.hours;
+        return (task.completed || 0) >= (task.days || task.hours || 1);
 
       case 'quest':
         return task.completed === true ||
                playerState.completedQuests?.includes(task.questId);
 
       case 'time':
-        if (!task.startedAt) return false;
-        const hoursPassed = (Date.now() - task.startedAt) / (1000 * 60 * 60);
-        return hoursPassed >= task.hours;
+        if (task.startedOnDay === undefined) return false;
+        const daysPassed = this.getCurrentDay() - task.startedOnDay;
+        return daysPassed >= task.days;
 
       default:
         return false;
@@ -268,11 +285,12 @@ class LocationBarringSystem {
         };
 
       case 'charity':
+        const charityRequired = task.days || task.hours || 1;
         return {
           type: 'charity',
-          required: task.hours,
+          required: charityRequired,
           completed: task.completed || 0,
-          remaining: Math.max(0, task.hours - (task.completed || 0))
+          remaining: Math.max(0, charityRequired - (task.completed || 0))
         };
 
       case 'quest':
@@ -283,21 +301,21 @@ class LocationBarringSystem {
         };
 
       case 'time':
-        if (!task.startedAt) {
+        if (task.startedOnDay === undefined) {
           return {
             type: 'time',
-            required: task.hours,
+            required: task.days,
             started: false,
-            remaining: task.hours
+            remaining: task.days
           };
         }
-        const hoursPassed = (Date.now() - task.startedAt) / (1000 * 60 * 60);
+        const daysPassed = this.getCurrentDay() - task.startedOnDay;
         return {
           type: 'time',
-          required: task.hours,
+          required: task.days,
           started: true,
-          passed: Math.floor(hoursPassed),
-          remaining: Math.max(0, Math.ceil(task.hours - hoursPassed))
+          passed: daysPassed,
+          remaining: Math.max(0, task.days - daysPassed)
         };
 
       default:
@@ -322,13 +340,13 @@ class LocationBarringSystem {
           description: `Pay ${50 * offenseCount} gold as penance`
         });
 
-        // Charity work for repeat offenders
+        // Charity work for repeat offenders (in days of service)
         if (offenseCount >= 2) {
           tasks.push({
             type: 'charity',
-            hours: 2 * offenseCount,
+            days: offenseCount,
             completed: 0,
-            description: `Complete ${2 * offenseCount} hours of community service`
+            description: `Complete ${offenseCount} day(s) of community service`
           });
         }
 
@@ -336,9 +354,9 @@ class LocationBarringSystem {
         if (offenseCount >= 4) {
           tasks.push({
             type: 'time',
-            hours: 24 * offenseCount,
-            startedAt: null,
-            description: `Wait ${offenseCount} days before returning`
+            days: offenseCount,
+            startedOnDay: undefined,
+            description: `Wait ${offenseCount} day(s) before returning`
           });
         }
         break;
@@ -352,9 +370,9 @@ class LocationBarringSystem {
         });
         tasks.push({
           type: 'time',
-          hours: 48 * offenseCount,
-          startedAt: null,
-          description: `Serve ${offenseCount * 2} days of exile`
+          days: offenseCount * 2,
+          startedOnDay: undefined,
+          description: `Serve ${offenseCount * 2} day(s) of exile`
         });
         break;
 
@@ -407,26 +425,26 @@ class LocationBarringSystem {
     switch (task.type) {
       case 'gold':
         return progress.paid
-          ? `✓ Paid ${task.amount} gold`
+          ? `Paid ${task.amount} gold`
           : `Pay ${task.amount} gold (You have: ${playerState.gold})`;
 
       case 'charity':
         return progress.completed >= progress.required
-          ? `✓ Completed ${task.hours} hours of charity`
-          : `Complete ${progress.remaining} more hours of charity (${progress.completed}/${task.hours})`;
+          ? `Completed ${progress.required} day(s) of charity`
+          : `Complete ${progress.remaining} more day(s) of charity (${progress.completed}/${progress.required})`;
 
       case 'quest':
         return progress.completed
-          ? `✓ Quest completed`
+          ? `Quest completed`
           : `Complete quest: ${task.questId}`;
 
       case 'time':
         if (!progress.started) {
-          return `Wait ${task.hours} hours (not started)`;
+          return `Wait ${task.days} day(s) (not started)`;
         }
         return progress.remaining <= 0
-          ? `✓ Wait time complete`
-          : `Wait ${progress.remaining} more hours`;
+          ? `Wait time complete`
+          : `Wait ${progress.remaining} more day(s)`;
 
       default:
         return task.description || 'Unknown task';

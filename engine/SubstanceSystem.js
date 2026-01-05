@@ -56,6 +56,14 @@ export const RESISTANCE_SOURCE = {
   TRAINING: 'training'      // Learned resistance
 };
 
+// Duration types for turn-based timing
+export const SUBSTANCE_DURATION_TYPE = {
+  ACTIONS: 'actions',       // Player actions (explore, rest, talk, etc.)
+  TURNS: 'turns',           // Combat turns
+  DAYS: 'days',             // Rest cycles / days
+  HOURS: 'hours'            // In-game hours (abstract, not real-time)
+};
+
 // ============================================================================
 // DEFAULT PLAYER SUBSTANCE STATE
 // ============================================================================
@@ -69,9 +77,10 @@ export const defaultSubstanceState = {
     //   dosesInSystem: 2,
     //   totalDoseToday: 3,
     //   currentIntensity: 0.8,  // 0-1, affected by tolerance
-    //   timeApplied: timestamp,
-    //   peakTime: timestamp,
-    //   wearOffTime: timestamp,
+    //   durationType: 'actions',  // Duration type for this substance
+    //   timeApplied: 0,  // Action/turn count when applied
+    //   peakTime: 1,     // Action/turn count when peak starts
+    //   wearOffTime: 16, // Action/turn count when effect ends
     //   phase: 'peak', // 'onset', 'peak', 'plateau', 'comedown', 'aftermath'
     //   stackId: 'unique_id'
     // }
@@ -83,24 +92,26 @@ export const defaultSubstanceState = {
     // 'stimulant_x': {
     //   level: 45,  // 0-100
     //   stage: 'habitual',
-    //   lastUseTime: timestamp,
+    //   lastUseAction: 0,  // Action count when last used
     //   totalUses: 23,
     //   withdrawalActive: false,
-    //   withdrawalSeverity: 0
+    //   withdrawalSeverity: 0,
+    //   gainToday: 0
     // }
   },
-  
+
   // Tolerance levels (reduces effectiveness, requires higher doses)
   tolerances: {
     // Per specific substance
     // 'stimulant_x': {
     //   level: 30,  // 0-100, higher = more tolerant
-    //   lastUseTime: timestamp,
-    //   peakTolerance: 45  // Highest it's ever been
+    //   lastUseAction: 0,  // Action count when last used
+    //   peakTolerance: 45,  // Highest it's ever been
+    //   gainToday: 0
     // }
-    
+
     // Per category (builds slower but affects all in category)
-    // '_category_stimulant': { level: 15 }
+    // '_category_stimulant': { level: 15, lastUseAction: 0 }
   },
   
   // Active resistances (reduce or block substance effects)
@@ -113,9 +124,9 @@ export const defaultSubstanceState = {
     //   categories: ['all'],  // Substance categories blocked
     //   value: 75,  // 0-100 resistance percentage
     //   quality: 'high',  // Affects decay rate
-    //   appliedTime: timestamp,
-    //   duration: 3600000,  // ms, or null for permanent/equipment
-    //   decayRate: 5,  // Points per hour
+    //   appliedTime: 0,  // Action count when applied
+    //   durationActions: 12,  // Duration in actions, or null for permanent
+    //   decayPerAction: 5,  // Points per action
     //   equipmentSlot: null  // If from equipment
     // }
   ],
@@ -147,7 +158,7 @@ export const defaultSubstanceState = {
   // Daily tracking (resets each in-game day)
   daily: {
     dosesPerSubstance: {},  // { substanceId: count }
-    lastResetTime: null
+    lastResetDay: -1        // Day number of last reset
   },
   
   // Encounter modifiers from substance effects
@@ -189,14 +200,15 @@ export const exampleSubstanceDefinition = {
     maxStacks: 3                // Max doses active at once
   },
   
-  // Timing (in milliseconds for game time, or turns for combat)
+  // Timing (in actions/turns for turn-based gameplay)
   timing: {
-    onsetDuration: 30000,       // 30 seconds to kick in
-    peakDuration: 300000,       // 5 minutes at peak
-    plateauDuration: 600000,    // 10 minutes plateau
-    comedownDuration: 300000,   // 5 minutes comedown
-    aftermathDuration: 600000,  // 10 minutes aftermath/hangover
-    totalDuration: 1800000      // 30 minutes total
+    durationType: 'actions',    // 'actions', 'turns', 'days', or 'hours'
+    onsetDuration: 1,           // 1 action to kick in
+    peakDuration: 3,            // 3 actions at peak
+    plateauDuration: 5,         // 5 actions plateau
+    comedownDuration: 3,        // 3 actions comedown
+    aftermathDuration: 4,       // 4 actions aftermath/hangover
+    totalDuration: 16           // 16 actions total
   },
   
   // Effects during different phases
@@ -276,24 +288,24 @@ export const exampleSubstanceDefinition = {
       mild: {  // 20-39% addiction
         statModifiers: { willpower: -2, stamina: -5 },
         statusEffects: ['craving', 'irritable'],
-        duration: 86400000  // 24 hours
+        durationDays: 1  // 1 day
       },
       moderate: {  // 40-59%
         statModifiers: { willpower: -5, stamina: -10, strength: -3 },
         statusEffects: ['craving', 'shaking', 'anxious'],
-        duration: 172800000  // 48 hours
+        durationDays: 2  // 2 days
       },
       severe: {  // 60-79%
         statModifiers: { willpower: -10, stamina: -20, strength: -5, intelligence: -3 },
         statusEffects: ['desperate_craving', 'tremors', 'nausea', 'hallucinating'],
-        duration: 259200000  // 72 hours
+        durationDays: 3  // 3 days
       },
       extreme: {  // 80-100%
         statModifiers: { willpower: -15, stamina: -30, strength: -8, intelligence: -5, evasion: -5 },
         statusEffects: ['agonizing_withdrawal', 'seizures', 'delirium'],
-        duration: 432000000,  // 5 days
+        durationDays: 5,  // 5 days
         canBeLethal: true,
-        damagePerHour: 5
+        damagePerRest: 5  // Damage per rest/day cycle
       }
     }
   },
@@ -305,7 +317,7 @@ export const exampleSubstanceDefinition = {
         all: { type: 'percent', value: -50 }
       },
       statusEffects: ['overdosing', 'unconscious', 'vulnerable'],
-      duration: 3600000  // 1 hour blackout
+      durationActions: 8  // 8 actions blackout
     },
     encounterModifiers: {
       passedOutChance: 100,  // Guaranteed encounter roll
@@ -317,7 +329,7 @@ export const exampleSubstanceDefinition = {
     },
     recoveryEffects: {
       statModifiers: { all: { type: 'flat', value: -5 } },
-      duration: 7200000  // 2 hours of debuffs after waking
+      durationActions: 12  // 12 actions of debuffs after waking
     }
   },
   
@@ -369,11 +381,11 @@ export const exampleResistanceItems = {
       categories: ['all'],
       value: 75,
       quality: 'high',
-      duration: 7200000,  // 2 hours
-      decayRate: 10  // Points per hour
+      durationActions: 12,  // 12 actions
+      decayPerAction: 5  // Points per action
     }
   },
-  
+
   inhalant_filter_pill: {
     id: 'inhalant_filter_pill',
     name: 'Lung Filter Pill',
@@ -385,8 +397,8 @@ export const exampleResistanceItems = {
       categories: ['all'],
       value: 90,
       quality: 'medium',
-      duration: 3600000,  // 1 hour
-      decayRate: 15
+      durationActions: 6,  // 6 actions
+      decayPerAction: 10
     }
   },
   
@@ -478,7 +490,7 @@ export const encounterModifyingEffects = {
       attractsTypes: ['humanoid', 'beast', 'monster'],
       repelsTypes: []
     },
-    duration: 1800000,  // 30 minutes
+    durationActions: 8,  // 8 actions
     visible: true,
     removable: true,
     removeMethod: ['shower', 'cleanse_spell', 'time']
@@ -525,9 +537,9 @@ export const encounterModifyingEffects = {
         predatory: 3.0,
         monster: 2.0
       },
-      guaranteedEncounterTypes: ['hunter'],
-      duration: 86400000  // 24 hours
-    }
+      guaranteedEncounterTypes: ['hunter']
+    },
+    durationDays: 1  // 1 day
   }
 };
 
@@ -540,8 +552,56 @@ export class SubstanceSystem {
     this.registry = registry;
     this.effectSystem = effectSystem;
     this.callbacks = options.callbacks || {};
-    this.gameTimeProvider = options.gameTimeProvider || (() => Date.now());
     this.safeLocations = options.safeLocations || [];
+
+    // Game time provider returns game state time, not real time
+    // Expected format: { currentAction: 0, currentTurn: 0, currentDay: 0, currentHour: 12 }
+    this.gameTimeProvider = options.gameTimeProvider || (() => ({
+      currentAction: 0,
+      currentTurn: 0,
+      currentDay: 0,
+      currentHour: 12
+    }));
+
+    // Default duration type for substances without explicit timing
+    this.defaultDurationType = options.defaultDurationType || SUBSTANCE_DURATION_TYPE.ACTIONS;
+  }
+
+  /**
+   * Get the current game time value based on duration type
+   * @param {string} durationType - The type of duration to get
+   * @returns {number} Current time value for that duration type
+   */
+  getGameTime(durationType = this.defaultDurationType) {
+    const time = this.gameTimeProvider();
+
+    // Handle legacy millisecond providers
+    if (typeof time === 'number') {
+      console.warn('SubstanceSystem: Using legacy millisecond time provider. Consider updating to turn-based.');
+      return time;
+    }
+
+    switch (durationType) {
+      case SUBSTANCE_DURATION_TYPE.ACTIONS:
+        return time.currentAction ?? 0;
+      case SUBSTANCE_DURATION_TYPE.TURNS:
+        return time.currentTurn ?? 0;
+      case SUBSTANCE_DURATION_TYPE.DAYS:
+        return time.currentDay ?? 0;
+      case SUBSTANCE_DURATION_TYPE.HOURS:
+        return (time.currentDay ?? 0) * 24 + (time.currentHour ?? 12);
+      default:
+        return time.currentAction ?? 0;
+    }
+  }
+
+  /**
+   * Get the duration type for a substance
+   * @param {Object} substance - Substance definition
+   * @returns {string} Duration type
+   */
+  getSubstanceDurationType(substance) {
+    return substance?.timing?.durationType ?? this.defaultDurationType;
   }
 
   // =========================================================================
@@ -552,14 +612,15 @@ export class SubstanceSystem {
    * Administer a substance to a character
    */
   async administerSubstance(character, substanceId, options = {}) {
-    const substance = await this.registry?.getItem(substanceId) || 
+    const substance = await this.registry?.getItem(substanceId) ||
                       this.getSubstanceDefinition(substanceId);
-    
+
     if (!substance) {
       return { success: false, reason: 'Substance not found' };
     }
 
-    const currentTime = this.gameTimeProvider();
+    const durationType = this.getSubstanceDurationType(substance);
+    const currentTime = this.getGameTime(durationType);
     const state = character.substanceState || { ...defaultSubstanceState };
     
     // Check daily dose reset
@@ -618,6 +679,9 @@ export class SubstanceSystem {
     }
     
     // Apply the substance
+    const timing = substance.timing || {};
+    const totalDuration = timing.totalDuration ?? 16;  // Default 16 actions
+
     const activeEffect = {
       substanceId: substance.id,
       substanceName: substance.name,
@@ -625,9 +689,10 @@ export class SubstanceSystem {
       totalDoseToday: newDoseCount,
       currentIntensity: effectiveness,
       effectiveness,
+      durationType,
       timeApplied: currentTime,
-      peakTime: currentTime + (substance.timing?.onsetDuration || 30000),
-      wearOffTime: currentTime + (substance.timing?.totalDuration || 1800000),
+      peakTime: currentTime + (timing.onsetDuration ?? 1),
+      wearOffTime: currentTime + totalDuration,
       phase: 'onset',
       stackId: `${substance.id}_${currentTime}`,
       deliveryMethod: substance.deliveryMethod,
@@ -640,12 +705,12 @@ export class SubstanceSystem {
     
     if (existingEffects.length >= maxStacks) {
       // Refresh existing instead of adding new
-      const oldest = existingEffects.reduce((a, b) => 
+      const oldest = existingEffects.reduce((a, b) =>
         a.timeApplied < b.timeApplied ? a : b
       );
       oldest.dosesInSystem++;
       oldest.currentIntensity = Math.min(1, oldest.currentIntensity + effectiveness * 0.5);
-      oldest.wearOffTime = currentTime + (substance.timing?.totalDuration || 1800000);
+      oldest.wearOffTime = currentTime + totalDuration;
     } else {
       state.activeSubstances.push(activeEffect);
     }
@@ -702,8 +767,9 @@ export class SubstanceSystem {
     state.status.isOverdosing = true;
     state.status.overdoseSubstance = substance.id;
     state.status.isBlackedOut = true;
-    
-    const odDuration = substance.overdose?.effects?.duration || 3600000;
+
+    // Use action-based duration (durationActions) or default to 8 actions
+    const odDuration = substance.overdose?.effects?.durationActions ?? 8;
     state.status.blackoutEndTime = currentTime + odDuration;
     
     // Apply OD effects
@@ -764,17 +830,17 @@ export class SubstanceSystem {
   }
 
   /**
-   * Get resistance value after decay
+   * Get resistance value after decay (turn-based)
    */
   getDecayedResistanceValue(resistance) {
-    if (resistance.quality === 'permanent' || !resistance.decayRate) {
+    if (resistance.quality === 'permanent' || !resistance.decayPerAction) {
       return resistance.value;
     }
-    
-    const currentTime = this.gameTimeProvider();
-    const elapsedHours = (currentTime - resistance.appliedTime) / 3600000;
-    const decayed = resistance.value - (resistance.decayRate * elapsedHours);
-    
+
+    const currentTime = this.getGameTime(SUBSTANCE_DURATION_TYPE.ACTIONS);
+    const elapsedActions = currentTime - (resistance.appliedTime ?? 0);
+    const decayed = resistance.value - (resistance.decayPerAction * elapsedActions);
+
     return Math.max(0, decayed);
   }
 
@@ -782,8 +848,8 @@ export class SubstanceSystem {
    * Apply a resistance effect (from item, spell, etc.)
    */
   applyResistance(state, resistanceEffect, source, sourceId) {
-    const currentTime = this.gameTimeProvider();
-    
+    const currentTime = this.getGameTime(SUBSTANCE_DURATION_TYPE.ACTIONS);
+
     const newResistance = {
       id: `resist_${currentTime}_${Math.random().toString(36).substr(2, 9)}`,
       source,
@@ -793,8 +859,8 @@ export class SubstanceSystem {
       value: resistanceEffect.value || 50,
       quality: resistanceEffect.quality || 'medium',
       appliedTime: currentTime,
-      duration: resistanceEffect.duration,
-      decayRate: resistanceEffect.decayRate || 10,
+      durationActions: resistanceEffect.durationActions,
+      decayPerAction: resistanceEffect.decayPerAction || 5,
       equipmentSlot: resistanceEffect.equipmentSlot || null,
       permanent: resistanceEffect.permanent || false
     };
@@ -850,57 +916,60 @@ export class SubstanceSystem {
   }
 
   /**
-   * Update tolerance after substance use
+   * Update tolerance after substance use (turn-based)
    */
   updateTolerance(state, substance, currentTime) {
     const toleranceConfig = substance.toleranceScaling || {};
     const substanceId = substance.id;
-    
+    const currentAction = this.getGameTime(SUBSTANCE_DURATION_TYPE.ACTIONS);
+
     // Initialize if needed
     if (!state.tolerances[substanceId]) {
       state.tolerances[substanceId] = {
         level: 0,
-        lastUseTime: currentTime,
+        lastUseAction: currentAction,
         peakTolerance: 0,
         gainToday: 0
       };
     }
-    
+
     const tol = state.tolerances[substanceId];
     const gainPerUse = toleranceConfig.toleranceGainPerUse || 5;
     const maxGainPerDay = toleranceConfig.maxToleranceGainPerDay || 20;
-    
+
     // Check daily limit
     const remainingGain = maxGainPerDay - (tol.gainToday || 0);
     const actualGain = Math.min(gainPerUse, remainingGain);
-    
+
     tol.level = Math.min(100, tol.level + actualGain);
-    tol.lastUseTime = currentTime;
+    tol.lastUseAction = currentAction;
     tol.gainToday = (tol.gainToday || 0) + actualGain;
     tol.peakTolerance = Math.max(tol.peakTolerance, tol.level);
-    
+
     // Category tolerance
     if (toleranceConfig.buildsCategoryTolerance && substance.category) {
       const catKey = `_category_${substance.category}`;
       if (!state.tolerances[catKey]) {
-        state.tolerances[catKey] = { level: 0, lastUseTime: currentTime };
+        state.tolerances[catKey] = { level: 0, lastUseAction: currentAction };
       }
-      state.tolerances[catKey].level = Math.min(100, 
+      state.tolerances[catKey].level = Math.min(100,
         state.tolerances[catKey].level + (toleranceConfig.categoryToleranceGain || 2)
       );
-      state.tolerances[catKey].lastUseTime = currentTime;
+      state.tolerances[catKey].lastUseAction = currentAction;
     }
   }
 
   /**
-   * Decay tolerance over time
+   * Decay tolerance over time (called per day/rest)
+   * @param {Object} state - Substance state
+   * @param {number} days - Number of days elapsed (typically 1)
    */
-  decayTolerances(state, elapsedHours) {
+  decayTolerances(state, days = 1) {
     for (const [key, tol] of Object.entries(state.tolerances)) {
       if (tol.level > 0) {
-        // Get decay rate (could be customized per substance)
-        const decayRate = 2;  // Default 2 points per hour
-        tol.level = Math.max(0, tol.level - decayRate * elapsedHours);
+        // Decay rate per day (could be customized per substance)
+        const decayRate = 2;  // Default 2 points per day
+        tol.level = Math.max(0, tol.level - decayRate * days);
       }
     }
   }
@@ -923,40 +992,42 @@ export class SubstanceSystem {
   }
 
   /**
-   * Update addiction after substance use
+   * Update addiction after substance use (turn-based)
    */
   updateAddiction(state, substance, currentTime) {
     const addictionConfig = substance.addiction || {};
     const substanceId = substance.id;
-    
+
     if (!addictionConfig.addictiveness) return;
-    
+
+    const currentAction = this.getGameTime(SUBSTANCE_DURATION_TYPE.ACTIONS);
+
     // Initialize if needed
     if (!state.addictions[substanceId]) {
       state.addictions[substanceId] = {
         level: 0,
         stage: ADDICTION_STAGE.NONE,
-        lastUseTime: currentTime,
+        lastUseAction: currentAction,
         totalUses: 0,
         withdrawalActive: false,
         withdrawalSeverity: 0,
         gainToday: 0
       };
     }
-    
+
     const addiction = state.addictions[substanceId];
-    
+
     // Calculate addiction gain
     const baseGain = addictionConfig.addictionGainPerUse || 3;
     const addictiveness = addictionConfig.addictiveness / 100;
     const maxGainPerDay = addictionConfig.maxAddictionGainPerDay || 10;
-    
+
     const remainingGain = maxGainPerDay - (addiction.gainToday || 0);
     const actualGain = Math.min(baseGain * addictiveness, remainingGain);
-    
+
     addiction.level = Math.min(100, addiction.level + actualGain);
     addiction.stage = this.getAddictionStage(addiction.level);
-    addiction.lastUseTime = currentTime;
+    addiction.lastUseAction = currentAction;
     addiction.totalUses++;
     addiction.gainToday = (addiction.gainToday || 0) + actualGain;
     
@@ -977,20 +1048,20 @@ export class SubstanceSystem {
   }
 
   /**
-   * Process withdrawal for all addictions
+   * Process withdrawal for all addictions (turn-based)
    */
-  processWithdrawals(character, state, elapsedTime) {
-    const currentTime = this.gameTimeProvider();
+  processWithdrawals(character, state, tickType) {
+    const currentActions = this.getGameTime(SUBSTANCE_DURATION_TYPE.ACTIONS);
     const withdrawalEffects = [];
-    
+
     for (const [substanceId, addiction] of Object.entries(state.addictions)) {
       if (addiction.level < 20) continue;  // No withdrawal below casual
-      
-      // Check time since last use
-      const timeSinceUse = currentTime - addiction.lastUseTime;
+
+      // Check actions since last use
+      const actionsSinceUse = currentActions - (addiction.lastUseAction ?? 0);
       const withdrawalThreshold = this.getWithdrawalThreshold(addiction.stage);
-      
-      if (timeSinceUse > withdrawalThreshold && !addiction.withdrawalActive) {
+
+      if (actionsSinceUse > withdrawalThreshold && !addiction.withdrawalActive) {
         // Enter withdrawal
         addiction.withdrawalActive = true;
         
@@ -1027,17 +1098,18 @@ export class SubstanceSystem {
   }
 
   /**
-   * Get withdrawal threshold based on addiction stage
+   * Get withdrawal threshold based on addiction stage (in actions)
    */
   getWithdrawalThreshold(stage) {
+    // Thresholds in actions (roughly: 1 action = exploration/activity)
     const thresholds = {
-      [ADDICTION_STAGE.CASUAL]: 86400000,     // 24 hours
-      [ADDICTION_STAGE.HABITUAL]: 43200000,   // 12 hours
-      [ADDICTION_STAGE.DEPENDENT]: 21600000,  // 6 hours
-      [ADDICTION_STAGE.ADDICTED]: 10800000,   // 3 hours
-      [ADDICTION_STAGE.ENSLAVED]: 3600000     // 1 hour
+      [ADDICTION_STAGE.CASUAL]: 24,      // ~24 actions (full day of activity)
+      [ADDICTION_STAGE.HABITUAL]: 12,    // ~12 actions (half day)
+      [ADDICTION_STAGE.DEPENDENT]: 6,    // ~6 actions
+      [ADDICTION_STAGE.ADDICTED]: 3,     // ~3 actions
+      [ADDICTION_STAGE.ENSLAVED]: 1      // Just 1 action
     };
-    return thresholds[stage] || 86400000;
+    return thresholds[stage] || 24;
   }
 
   /**
@@ -1076,25 +1148,33 @@ export class SubstanceSystem {
   // =========================================================================
 
   /**
-   * Process all time-based effects
+   * Process all time-based effects (turn-based version)
+   * @param {Object} character - Character state
+   * @param {string} tickType - Type of tick: 'action', 'turn', 'day', 'hour', 'rest'
+   * @param {Object} context - Additional context
    */
-  tick(character, deltaTime) {
+  tick(character, tickType = 'action', context = {}) {
     const state = character.substanceState;
     if (!state) return { changes: [] };
-    
-    const currentTime = this.gameTimeProvider();
+
     const changes = [];
-    
-    // Check daily reset
-    this.checkDailyReset(state, currentTime);
-    
+
+    // Check daily reset on day tick
+    if (tickType === 'day' || tickType === 'rest') {
+      const currentDay = this.getGameTime(SUBSTANCE_DURATION_TYPE.DAYS);
+      this.checkDailyReset(state, currentDay);
+    }
+
     // Process active substances
     for (let i = state.activeSubstances.length - 1; i >= 0; i--) {
       const active = state.activeSubstances[i];
       const substance = this.getSubstanceDefinition(active.substanceId);
-      
+
       if (!substance) continue;
-      
+
+      const durationType = this.getSubstanceDurationType(substance);
+      const currentTime = this.getGameTime(durationType);
+
       // Check if worn off
       if (currentTime >= active.wearOffTime) {
         // Remove and apply aftermath
@@ -1106,19 +1186,19 @@ export class SubstanceSystem {
         });
         continue;
       }
-      
+
       // Update phase
       const newPhase = this.calculatePhase(active, substance, currentTime);
       if (newPhase !== active.phase) {
         const oldPhase = active.phase;
         active.phase = newPhase;
-        
+
         // Apply new phase effects
         this.applyPhaseEffects(character, substance, newPhase, active.effectiveness);
-        
+
         // Remove old phase effects
         this.removePhaseEffects(character, substance, oldPhase);
-        
+
         changes.push({
           type: 'phase_change',
           substanceId: active.substanceId,
@@ -1128,50 +1208,55 @@ export class SubstanceSystem {
         });
       }
     }
-    
+
     // Update intoxication level
     this.updateIntoxicationLevel(state);
-    
-    // Process blackout recovery
-    if (state.status.isBlackedOut && currentTime >= state.status.blackoutEndTime) {
+
+    // Process blackout recovery (check on any tick)
+    const currentActions = this.getGameTime(SUBSTANCE_DURATION_TYPE.ACTIONS);
+    if (state.status.isBlackedOut && currentActions >= state.status.blackoutEndTime) {
       state.status.isBlackedOut = false;
       state.status.isOverdosing = false;
       state.status.overdoseSubstance = null;
       changes.push({ type: 'blackout_ended' });
     }
-    
-    // Decay tolerances (per hour)
-    const elapsedHours = deltaTime / 3600000;
-    if (elapsedHours > 0) {
-      this.decayTolerances(state, elapsedHours);
+
+    // Decay tolerances (per day or on rest)
+    if (tickType === 'day' || tickType === 'rest') {
+      this.decayTolerances(state, 1); // 1 day's worth of decay
     }
-    
+
     // Process withdrawals
-    const withdrawals = this.processWithdrawals(character, state, deltaTime);
+    const withdrawals = this.processWithdrawals(character, state, tickType);
     if (withdrawals.length > 0) {
       changes.push({ type: 'withdrawal_started', withdrawals });
     }
-    
+
     // Decay expired resistances
-    this.cleanupExpiredResistances(state, currentTime);
-    
+    this.cleanupExpiredResistances(state, currentActions);
+
     // Update encounter modifiers
     this.recalculateEncounterModifiers(state);
-    
+
     return { changes };
   }
 
   /**
-   * Calculate current phase based on timing
+   * Calculate current phase based on timing (turn-based)
+   * @param {Object} activeEffect - Active substance effect
+   * @param {Object} substance - Substance definition
+   * @param {number} currentTime - Current game time value
+   * @returns {string} Current phase name
    */
   calculatePhase(activeEffect, substance, currentTime) {
     const timing = substance.timing || {};
     const elapsed = currentTime - activeEffect.timeApplied;
-    
-    const onsetEnd = timing.onsetDuration || 30000;
-    const peakEnd = onsetEnd + (timing.peakDuration || 300000);
-    const plateauEnd = peakEnd + (timing.plateauDuration || 600000);
-    const comedownEnd = plateauEnd + (timing.comedownDuration || 300000);
+
+    // Default durations (in actions/turns, not milliseconds)
+    const onsetEnd = timing.onsetDuration ?? 1;
+    const peakEnd = onsetEnd + (timing.peakDuration ?? 3);
+    const plateauEnd = peakEnd + (timing.plateauDuration ?? 5);
+    const comedownEnd = plateauEnd + (timing.comedownDuration ?? 3);
     
     if (elapsed < onsetEnd) return 'onset';
     if (elapsed < peakEnd) return 'peak';
@@ -1181,16 +1266,15 @@ export class SubstanceSystem {
   }
 
   /**
-   * Check and reset daily tracking
+   * Check and reset daily tracking (turn-based)
    */
-  checkDailyReset(state, currentTime) {
-    const lastReset = state.daily.lastResetTime;
-    const dayMs = 86400000;
-    
-    if (!lastReset || currentTime - lastReset >= dayMs) {
+  checkDailyReset(state, currentDay) {
+    const lastResetDay = state.daily.lastResetDay ?? -1;
+
+    if (currentDay > lastResetDay) {
       state.daily.dosesPerSubstance = {};
-      state.daily.lastResetTime = currentTime;
-      
+      state.daily.lastResetDay = currentDay;
+
       // Reset daily gain limits for tolerances and addictions
       for (const tol of Object.values(state.tolerances)) {
         tol.gainToday = 0;
@@ -1206,38 +1290,44 @@ export class SubstanceSystem {
   // =========================================================================
 
   /**
-   * Update encounter modifiers based on current substance effects
+   * Update encounter modifiers based on current substance effects (turn-based)
    */
   updateEncounterModifiers(state, substance, phase) {
     const phaseEffects = substance.effects?.[phase];
     if (!phaseEffects?.encounterModifiers) return;
-    
+
     const mods = phaseEffects.encounterModifiers;
-    
+    const durationType = this.getSubstanceDurationType(substance);
+    const currentTime = this.getGameTime(durationType);
+    const totalDuration = substance.timing?.totalDuration ?? 16;
+
     state.encounterModifiers.activeModifiers.push({
       source: `${substance.id}_${phase}`,
       passedOutChance: mods.passedOutChance || 0,
       baseModifier: mods.attractionModifier || 1,
-      expires: this.gameTimeProvider() + (substance.timing?.totalDuration || 1800000)
+      durationType,
+      expires: currentTime + totalDuration
     });
   }
 
   /**
-   * Recalculate total encounter modifiers
+   * Recalculate total encounter modifiers (turn-based)
    */
   recalculateEncounterModifiers(state) {
-    const currentTime = this.gameTimeProvider();
-    
-    // Remove expired modifiers
-    state.encounterModifiers.activeModifiers = 
-      state.encounterModifiers.activeModifiers.filter(m => m.expires > currentTime);
-    
+    // Remove expired modifiers (check each by its own duration type)
+    state.encounterModifiers.activeModifiers =
+      state.encounterModifiers.activeModifiers.filter(m => {
+        const durationType = m.durationType || SUBSTANCE_DURATION_TYPE.ACTIONS;
+        const currentTime = this.getGameTime(durationType);
+        return m.expires > currentTime;
+      });
+
     // Sum up passed out chance
     let totalPassedOutChance = 0;
     for (const mod of state.encounterModifiers.activeModifiers) {
       totalPassedOutChance += mod.passedOutChance || 0;
     }
-    
+
     state.encounterModifiers.passedOutEncounterChance = Math.min(100, totalPassedOutChance);
   }
 
@@ -1377,22 +1467,37 @@ export class SubstanceSystem {
   }
 
   /**
-   * Clean up expired resistances
+   * Clean up expired resistances (turn-based)
    */
-  cleanupExpiredResistances(state, currentTime) {
+  cleanupExpiredResistances(state, currentActions) {
     state.resistances = state.resistances.filter(r => {
       if (r.permanent || r.quality === 'permanent') return true;
-      if (!r.duration) return true;
-      return currentTime < r.appliedTime + r.duration;
+      if (!r.durationActions) return true;
+      return currentActions < (r.appliedTime ?? 0) + r.durationActions;
     });
   }
 
   /**
-   * Get substance definition (placeholder - would use registry in real implementation)
+   * Get substance definition from registry
+   * @param {string} substanceId - Substance ID to look up
+   * @returns {Object|null} Substance definition or null if not found
    */
   getSubstanceDefinition(substanceId) {
-    // This would normally fetch from the registry
-    // For now, return null (should be overridden or use registry)
+    if (!substanceId) return null;
+
+    // Try to get from registry (substances can be items or dedicated substance entries)
+    if (this.registry) {
+      // Try as item first (most substances are items)
+      const item = this.registry.getItemSync?.(substanceId) ||
+                   this.registry.items?.get?.(substanceId);
+      if (item) return item;
+
+      // Try as dedicated substance
+      const substance = this.registry.getSubstanceSync?.(substanceId) ||
+                       this.registry.substances?.get?.(substanceId);
+      if (substance) return substance;
+    }
+
     return null;
   }
 

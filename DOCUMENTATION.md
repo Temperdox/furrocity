@@ -1,6 +1,6 @@
 # Furrocity Engine - Complete Documentation
 
-> **Version:** 0.2.0
+> **Version:** 0.3.0
 > **Engine:** Furrocity Engine
 > **Authors:** Cotton Le Sergal & Shluggo
 
@@ -1730,7 +1730,7 @@ Custom witness chances per location:
 
 ### Location Barring
 
-Players can be barred from locations for misbehavior:
+Players can be barred from locations for misbehavior. All time-based redemption tasks use in-game days rather than real-time.
 
 ```javascript
 // Barring increases with each offense
@@ -1741,12 +1741,21 @@ Players can be barred from locations for misbehavior:
 {
   "redemptionTasks": [
     { "type": "gold", "amount": 100, "paid": false },
-    { "type": "charity", "hours": 4, "completed": 0 },
+    { "type": "charity", "days": 2, "completed": 0 },
     { "type": "quest", "questId": "church_redemption" },
-    { "type": "time", "hours": 168, "startedAt": null }
+    { "type": "time", "days": 7, "startedOnDay": null }
   ]
 }
 ```
+
+### Redemption Task Types
+
+| Type | Description | Completion |
+|------|-------------|------------|
+| `gold` | Pay a gold fine | Automatic when paid |
+| `charity` | Perform community service | Days of volunteer work |
+| `quest` | Complete a specific quest | Quest must be finished |
+| `time` | Wait a number of in-game days | Automatic after days pass |
 
 ### Player State Fields
 
@@ -2142,6 +2151,8 @@ All effects use turn-based or action-based durations (no real-time).
 
 ## 19. Substance System
 
+All substance timing uses turn-based durations (actions, turns, days) rather than real-time milliseconds.
+
 ### Delivery Methods
 
 | Method | Blocked By |
@@ -2151,6 +2162,15 @@ All effects use turn-based or action-based durations (no real-time).
 | `injectable` | Armor |
 | `contact` | Hazmat suits |
 | `ambient` | Sealed areas |
+
+### Duration Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `actions` | Player actions (explore, rest, talk) | Default for most substances |
+| `turns` | Combat turns | Combat-focused substances |
+| `days` | Rest cycles / in-game days | Long-acting substances |
+| `hours` | Abstract in-game hours | Calculated as `day * 24 + hour` |
 
 ### Substance Definition
 
@@ -2162,9 +2182,13 @@ All effects use turn-based or action-based durations (no real-time).
   "category": "aphrodisiac",
 
   "timing": {
-    "onsetDuration": 30000,
-    "peakDuration": 300000,
-    "comedownDuration": 300000
+    "durationType": "actions",
+    "onsetDuration": 1,
+    "peakDuration": 3,
+    "plateauDuration": 5,
+    "comedownDuration": 3,
+    "aftermathDuration": 4,
+    "totalDuration": 16
   },
 
   "effects": {
@@ -2181,7 +2205,17 @@ All effects use turn-based or action-based durations (no real-time).
 
   "addiction": {
     "addictiveness": 65,
-    "addictionGainPerUse": 5
+    "addictionGainPerUse": 5,
+    "withdrawalEffects": {
+      "mild": {
+        "statModifiers": { "willpower": -2 },
+        "durationDays": 1
+      },
+      "severe": {
+        "statModifiers": { "willpower": -10, "stamina": -20 },
+        "durationDays": 3
+      }
+    }
   }
 }
 ```
@@ -2526,12 +2560,22 @@ const playerState = {
 - Prefix categories: `forest_wolf`, `forest_bandit`
 - Descriptive file names: `forest_enemies.json`
 
-### Time Values (milliseconds)
+### Time Values (Turn-Based)
 
-- 1 second = 1,000 ms
-- 1 minute = 60,000 ms
-- 1 hour = 3,600,000 ms
-- 1 day = 86,400,000 ms
+This game uses turn-based timing, not real-time. All durations are expressed in game units:
+
+| Unit | Description | When it ticks |
+|------|-------------|---------------|
+| `actions` | Player actions | Each explore, rest, talk, etc. |
+| `turns` | Combat turns | Each combat round |
+| `days` | In-game days | On rest/sleep |
+| `locationChanges` | Location transitions | On travel |
+
+**Example durations:**
+- Short buff: 3-5 actions
+- Combat poison: 3 turns
+- Long-term blessing: 3 days
+- Location barring: 7+ days
 
 ### Testing
 

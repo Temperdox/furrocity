@@ -17,6 +17,7 @@ import PublicEventSystem from '../engine/PublicEventSystem.js';
 import LocationBarringSystem from '../engine/LocationBarringSystem.js';
 import RumorConfrontation, { RumorConfrontationResult } from './components/ui/RumorConfrontation.jsx';
 import ServiceInteraction, { ServiceResult } from './components/ui/ServiceInteraction.jsx';
+import ChangelogModal from './components/ui/ChangelogModal.jsx';
 
 // ============================================================================
 // GAME DATA STRUCTURES (JSON-DRIVEN CONTENT)
@@ -3317,7 +3318,7 @@ const CharacterCard = ({ character, isSelected, onSelect }) => (
 // ============================================================================
 
 // Main Menu Screen
-const MainMenuScreen = ({ onStart, onContinue, onLoad, onSettings, onSupport }) => {
+const MainMenuScreen = ({ onStart, onContinue, onLoad, onSettings, onSupport, onChangelog }) => {
   const hasAutosave = SaveSystem.hasAutosave();
   
   return (
@@ -3475,6 +3476,7 @@ const MainMenuScreen = ({ onStart, onContinue, onLoad, onSettings, onSupport }) 
           {[
             { label: 'Load Game', action: onLoad },
             { label: 'Settings', action: onSettings },
+            { label: 'Changelog', action: onChangelog },
             { label: 'Support', action: onSupport }
           ].map((btn, i) => (
             <button 
@@ -4533,7 +4535,7 @@ const CombatScreen = ({ player, enemies, onAction, onFlee }) => {
 };
 
 // Pause Menu (Skyrim-style)
-const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, onExit, inventorySystem, onUpdatePlayer }) => {
+const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, onChangelog, onExit, inventorySystem, onUpdatePlayer }) => {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState('menu');
   const [statsSubTab, setStatsSubTab] = useState('overview');
@@ -4908,6 +4910,7 @@ const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, on
             </Button>
             <Button onClick={onLoad} variant="secondary">Load Game</Button>
             <Button onClick={onSettings} variant="secondary">Settings</Button>
+            <Button onClick={onChangelog} variant="secondary">Changelog</Button>
             <Button onClick={onExit} variant="danger">Exit to Menu</Button>
           </div>
         );
@@ -5759,6 +5762,9 @@ const Game = () => {
   const [serviceInteractionData, setServiceInteractionData] = useState(null);
   const [showServiceResult, setShowServiceResult] = useState(false);
   const [serviceResult, setServiceResult] = useState(null);
+
+  // Changelog modal state
+  const [showChangelog, setShowChangelog] = useState(false);
 
   // Engine system refs
   const inventorySystemRef = useRef(null);
@@ -6813,6 +6819,7 @@ const Game = () => {
             onContinue={handleContinue}
             onLoad={() => setScreen('loadGame')}
             onSettings={() => setScreen('settings')}
+            onChangelog={() => setShowChangelog(true)}
             onSupport={() => window.open('https://example.com/support', '_blank')}
           />
         );
@@ -6914,6 +6921,7 @@ const Game = () => {
             onSave={() => setScreen('saveGame')}
             onLoad={() => setScreen('loadGame')}
             onSettings={() => setScreen('settings')}
+            onChangelog={() => setShowChangelog(true)}
             onExit={() => {
               const success = SaveSystem.save('auto', player, gameState);
               if (success) {
@@ -7066,6 +7074,12 @@ const Game = () => {
           onClose={handleServiceResultClose}
         />
       )}
+
+      {/* Changelog Modal */}
+      <ChangelogModal
+        isOpen={showChangelog}
+        onClose={() => setShowChangelog(false)}
+      />
 
       {renderScreen()}
     </GameContext.Provider>
