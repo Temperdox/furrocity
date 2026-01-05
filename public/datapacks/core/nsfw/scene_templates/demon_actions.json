@@ -1,0 +1,72 @@
+{
+  "version": "1.0.0",
+  "description": "NSFW scene templates for demon enemy types",
+
+  "demon_grope_0": [
+    "{enemy_name} caresses {player_possessive} {chest_descriptor} with burning fingers, dark energy crackling.",
+    "Clawed hands claim {player_possessive} {chest_descriptor}, demonic heat searing into your skin.",
+    "{enemy_name} gropes {player_name} possessively, {pronoun_possessive} touch leaving trails of corruption."
+  ],
+
+  "demon_corrupt_0": [
+    "Dark energy flows from {enemy_possessive} hands into {player_name}, corrupting {pronoun_possessive} very soul.",
+    "{enemy_name} whispers forbidden promises as corruption seeps through your veins.",
+    "You feel your purity crumbling under {enemy_possessive} corrupting influence.",
+    "{enemy_name} presses a mark of corruption into your flesh, claiming you."
+  ],
+
+  "demon_corrupt_1": [
+    "Unholy pleasure wracks your body as {enemy_name_mid} corrupts you from within.",
+    "Your thoughts grow darker as {enemy_possessive} corruption takes hold.",
+    "{enemy_name} feeds on your purity, replacing it with dark desires."
+  ],
+
+  "demon_seduce_0": [
+    "{enemy_name}'s voice drips with seduction as {pronoun_subject} breaks down your resistance.",
+    "Demonic allure washes over you as {enemy_name_mid} whispers sweet corruption.",
+    "You find yourself drawn to {enemy_name_mid}, unable to resist {pronoun_possessive} charms.",
+    "{enemy_name} seduces {player_name} with supernatural skill, pleasure becoming irresistible."
+  ],
+
+  "demon_dominate_0": [
+    "{enemy_name} asserts {pronoun_possessive} will over {player_name}, demanding total submission.",
+    "Demonic power presses down on your mind as {enemy_name_mid} claims dominance.",
+    "You feel {enemy_possessive} overwhelming presence crushing your resistance.",
+    "{enemy_name} marks {player_name} as {pronoun_possessive} property with infernal fire."
+  ],
+
+  "demon_feed_0": [
+    "{enemy_name} drinks in {player_possessive} arousal, growing stronger with each moan.",
+    "The demon feeds on your lust, drawing it out with skilled touches.",
+    "Your pleasure sustains {enemy_name_mid} as {pronoun_subject} drains your energy."
+  ],
+
+  "demon_brand_0": [
+    "Burning pain sears your skin as {enemy_name_mid} brands you with {pronoun_possessive} mark.",
+    "{enemy_name} presses a mark of ownership into {player_possessive} flesh.",
+    "A demonic sigil burns itself into your body, binding you to {enemy_name_mid}."
+  ],
+
+  "demon_fondle_0": [
+    "{if has_dick}{enemy_name}'s tail coils around {player_possessive} {dick_descriptor}, stroking with supernatural skill.{/if}{if has_pussy}A forked tongue parts {player_possessive} {pussy_descriptor}, tasting {pronoun_possessive} arousal.{/if}",
+    "{enemy_name} explores {player_name}'s body with demonic curiosity."
+  ],
+
+  "demon_tail_0": [
+    "{enemy_name}'s tail snakes between {player_possessive} legs, probing and teasing.",
+    "A prehensile tail wraps around your body, touching everywhere at once.",
+    "{enemy_name}'s tail pushes into you, filling you with hellish heat."
+  ],
+
+  "demon_inject_0": [
+    "{enemy_name} injects {pronoun_possessive} corrupting essence directly into {player_name}.",
+    "Dark ichor flows from {enemy_name_mid} into your body, changing you from within.",
+    "You feel {enemy_possessive} tainted seed filling you with corruption."
+  ],
+
+  "demon_hypnotize_0": [
+    "{enemy_name}'s eyes glow as {pronoun_subject} captures {player_name}'s mind.",
+    "Your will crumbles as {enemy_name_mid} implants commands in your psyche.",
+    "Spiraling patterns in {enemy_possessive} eyes draw you into trance."
+  ]
+}

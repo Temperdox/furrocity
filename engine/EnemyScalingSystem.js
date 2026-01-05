@@ -495,7 +495,8 @@ export class EnemyScalingSystem {
 
   /**
    * Create a scaled variant of an enemy
-   * Useful for creating elite/boss versions
+   * Note: For bosses/minibosses, create separate enemy JSON files instead
+   * This is mainly for programmatic elite/strong enemy generation
    */
   createVariant(enemyDef, variant, context) {
     const variants = {
@@ -503,8 +504,7 @@ export class EnemyScalingSystem {
       normal: { levelMod: 0, statMod: 1.0, rewardMod: 1.0 },
       strong: { levelMod: 2, statMod: 1.3, rewardMod: 1.3 },
       elite: { levelMod: 3, statMod: 1.5, rewardMod: 1.8, prefix: 'Elite' },
-      champion: { levelMod: 5, statMod: 1.8, rewardMod: 2.5, prefix: 'Champion' },
-      boss: { levelMod: 8, statMod: 2.5, rewardMod: 4.0, prefix: 'Boss' }
+      champion: { levelMod: 5, statMod: 1.8, rewardMod: 2.5, prefix: 'Champion' }
     };
 
     const variantConfig = variants[variant] || variants.normal;
@@ -535,6 +535,133 @@ export class EnemyScalingSystem {
     resolved.goldDrop.max = Math.round(resolved.goldDrop.max * variantConfig.rewardMod);
 
     return resolved;
+  }
+
+  // ===========================================================================
+  // ENCOUNTER RESOLUTION (JSON-based elite chance)
+  // ===========================================================================
+
+  /**
+   * Resolve an encounter from JSON config with elite chance support
+   * @param {Object} encounterConfig - Encounter configuration from JSON
+   * @param {Array|Object} encounterConfig.enemies - Enemy IDs or definitions
+   * @param {number} [encounterConfig.eliteChance] - % chance each enemy becomes elite (0-100)
+   * @param {number} [encounterConfig.strongChance] - % chance each enemy becomes strong (0-100)
+   * @param {string} [encounterConfig.forceVariant] - Force all enemies to this variant
+   * @param {Object} context - Resolution context (player, location, etc.)
+   * @param {Function} getEnemyDef - Function to get enemy definition by ID
+   * @returns {Array} Array of resolved enemy objects
+   */
+  resolveEncounter(encounterConfig, context, getEnemyDef) {
+    const {
+      enemies,
+      eliteChance = 0,
+      strongChance = 0,
+      championChance = 0,
+      forceVariant = null
+    } = encounterConfig;
+
+    // Normalize enemies to array
+    const enemyList = Array.isArray(enemies) ? enemies : [enemies];
+    const resolved = [];
+
+    for (const enemyEntry of enemyList) {
+      // Get enemy definition
+      let enemyDef;
+      if (typeof enemyEntry === 'string') {
+        // Enemy ID reference
+        enemyDef = getEnemyDef(enemyEntry);
+        if (!enemyDef) {
+          console.warn(`Enemy not found: ${enemyEntry}`);
+          continue;
+        }
+      } else if (typeof enemyEntry === 'object') {
+        // Inline enemy definition or reference with overrides
+        if (enemyEntry.enemyId) {
+          enemyDef = { ...getEnemyDef(enemyEntry.enemyId), ...enemyEntry };
+        } else {
+          enemyDef = enemyEntry;
+        }
+      }
+
+      // Determine variant
+      let variant = 'normal';
+
+      if (forceVariant) {
+        variant = forceVariant;
+      } else {
+        // Roll for variant (check in order: champion > elite > strong > normal)
+        const roll = Math.random() * 100;
+
+        if (championChance > 0 && roll < championChance) {
+          variant = 'champion';
+        } else if (eliteChance > 0 && roll < eliteChance) {
+          variant = 'elite';
+        } else if (strongChance > 0 && roll < strongChance) {
+          variant = 'strong';
+        }
+      }
+
+      // Resolve enemy with variant
+      let resolvedEnemy;
+      if (variant !== 'normal') {
+        resolvedEnemy = this.createVariant(enemyDef, variant, context);
+      } else {
+        resolvedEnemy = this.resolveEnemy(enemyDef, context);
+      }
+
+      // Handle count (spawn multiple of same enemy)
+      const count = enemyEntry.count || 1;
+      for (let i = 0; i < count; i++) {
+        resolved.push({
+          ...resolvedEnemy,
+          // Give each instance a unique runtime ID
+          _instanceId: `${resolvedEnemy.id}_${Date.now()}_${i}`
+        });
+      }
+    }
+
+    return resolved;
+  }
+
+  /**
+   * Resolve a scene combat encounter
+   * Handles the encounter config format used in scene nodes
+   * @param {Object} sceneEncounter - Scene encounter configuration
+   * @param {Object} context - Resolution context
+   * @param {Function} getEnemyDef - Function to get enemy definition by ID
+   * @returns {Array} Array of resolved enemies
+   */
+  resolveSceneEncounter(sceneEncounter, context, getEnemyDef) {
+    // Scene encounters can specify enemies in various formats
+    const config = {
+      enemies: sceneEncounter.enemies || sceneEncounter.enemyIds || [],
+      eliteChance: sceneEncounter.eliteChance || 0,
+      strongChance: sceneEncounter.strongChance || 0,
+      championChance: sceneEncounter.championChance || 0,
+      forceVariant: sceneEncounter.forceVariant || sceneEncounter.variant || null
+    };
+
+    return this.resolveEncounter(config, context, getEnemyDef);
+  }
+
+  /**
+   * Check if an enemy should be promoted based on chance
+   * Utility for external systems
+   */
+  rollForVariant(eliteChance = 0, strongChance = 0, championChance = 0) {
+    const roll = Math.random() * 100;
+
+    if (championChance > 0 && roll < championChance) {
+      return 'champion';
+    }
+    if (eliteChance > 0 && roll < eliteChance) {
+      return 'elite';
+    }
+    if (strongChance > 0 && roll < strongChance) {
+      return 'strong';
+    }
+    return 'normal';
   }
 }
 

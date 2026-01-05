@@ -1,0 +1,91 @@
+{
+  "version": "1.0.0",
+  "description": "NSFW scene templates for humanoid enemy types",
+
+  "humanoid_grope_0": [
+    "{enemy_name} reaches out and roughly gropes {player_possessive} {chest_descriptor}, fingers digging in possessively.",
+    "{enemy_name} cups {player_possessive} {chest_descriptor} with a cruel smile, squeezing firmly.",
+    "Calloused hands find {player_possessive} {chest_descriptor}, and {enemy_name_mid} gropes without mercy."
+  ],
+
+  "humanoid_grope_1": [
+    "{enemy_name} runs rough hands over {player_possessive} {chest_descriptor}, testing their weight.",
+    "With a lecherous grin, {enemy_name_mid} mauls {player_possessive} {chest_descriptor}.",
+    "{enemy_name} grabs {player_possessive} {chest_descriptor} and squeezes hard, watching your reaction."
+  ],
+
+  "humanoid_grope_with_piercing": [
+    "{enemy_name} discovers the piercings adorning {player_possessive} nipples and tugs on them cruelly.",
+    "Fingers find the rings through {player_possessive} nipples, and {enemy_name_mid} twists them painfully.",
+    "{enemy_name} flicks at {player_possessive} pierced nipples, making you gasp as the metal shifts."
+  ],
+
+  "humanoid_strip_0": [
+    "{enemy_name} tears at {player_possessive} clothing, ripping fabric away to expose vulnerable flesh.",
+    "With practiced efficiency, {enemy_name_mid} strips away {player_possessive} garments piece by piece.",
+    "{enemy_name} yanks {player_possessive} clothes aside, leaving {pronoun_object} exposed and vulnerable."
+  ],
+
+  "humanoid_strip_1": [
+    "Rough hands grab at your clothing as {enemy_name_mid} tears it away.",
+    "{enemy_name} rips {player_possessive} garments off with obvious enjoyment.",
+    "Your clothes are no match for {enemy_possessive} determined stripping."
+  ],
+
+  "humanoid_fondle_0": [
+    "{if has_dick}{enemy_name} wraps a hand around {player_possessive} {dick_descriptor}, stroking slowly.{/if}{if has_pussy}{enemy_name}'s fingers trace along {player_possessive} {pussy_descriptor}, teasing mercilessly.{/if}",
+    "{enemy_name} reaches between {player_possessive} legs, {if has_dick}gripping {pronoun_possessive} {dick_descriptor}{/if}{if has_pussy}parting {pronoun_possessive} {pussy_descriptor}{/if} with obvious intent."
+  ],
+
+  "humanoid_fondle_1": [
+    "{if has_dick}{enemy_name} strokes {player_possessive} {dick_descriptor} with expert hands, watching you squirm.{/if}{if has_pussy}Skilled fingers work at {player_possessive} {pussy_descriptor}, drawing out your pleasure.{/if}",
+    "{enemy_name_mid} explores between your legs, {if has_dick}pumping {player_possessive} {dick_descriptor}{/if}{if has_pussy}fingering {player_possessive} {pussy_descriptor}{/if} relentlessly."
+  ],
+
+  "humanoid_tease_0": [
+    "{enemy_name} traces fingers across {player_possessive} exposed skin, leaving trails of heat.",
+    "Teasing touches from {enemy_name_mid} dance across your sensitive areas.",
+    "{enemy_name} toys with {player_name}, drawing out whimpers with skilled touches."
+  ],
+
+  "humanoid_tease_toy_0": [
+    "{enemy_name} discovers the {plug_name} inside you and presses against it firmly, forcing a moan from your lips.",
+    "A wicked grin spreads across {enemy_possessive} face as {pronoun_subject} finds your hidden toy and begins to manipulate it.",
+    "{enemy_name} pushes on the {plug_name}, watching you squirm as it shifts inside."
+  ],
+
+  "humanoid_dominate_0": [
+    "{enemy_name} forces you to your knees, a hand gripping your hair. 'You belong to me now.'",
+    "'{player_name} will learn obedience,' {enemy_name_mid} growls, pressing you down submissively.",
+    "{enemy_name} pins you down, demonstrating {pronoun_possessive} dominance over your helpless form."
+  ],
+
+  "humanoid_dominate_1": [
+    "A collar appears in {enemy_possessive} hands. 'This is where you belong.'",
+    "{enemy_name} marks {player_name} as {pronoun_possessive} property with cruel efficiency.",
+    "You feel {enemy_possessive} will pressing down on yours, demanding submission."
+  ],
+
+  "humanoid_corrupt_0": [
+    "Dark energy flows from {enemy_possessive} hands into {player_name}, corrupting {pronoun_possessive} essence.",
+    "{enemy_name} whispers dark promises as corruption seeps into your soul.",
+    "You feel your purity slipping away under {enemy_possessive} corrupting touch."
+  ],
+
+  "humanoid_seduce_0": [
+    "{enemy_name} whispers seductively, {pronoun_possessive} words breaking down your resistance.",
+    "Honeyed words and skilled touches from {enemy_name_mid} cloud your judgment.",
+    "{enemy_name} plays {player_name}'s body like an instrument, drawing out shameful desires."
+  ],
+
+  "humanoid_penetrate_0": [
+    "{if has_pussy}{enemy_name} thrusts into {player_possessive} {pussy_descriptor}, filling {pronoun_object} completely.{/if}{if !has_pussy}{enemy_name} forces {pronoun_possessive} way into you, claiming you.{/if}",
+    "{enemy_name} takes {player_name} roughly, caring nothing for {pronoun_possessive} comfort."
+  ],
+
+  "humanoid_oral_0": [
+    "{enemy_name} forces {pronoun_possessive} length into {player_possessive} {mouth_descriptor}.",
+    "Your mouth is claimed by {enemy_name_mid}, used for {pronoun_possessive} pleasure.",
+    "{enemy_name} pushes into {player_possessive} {mouth_descriptor}, holding your head in place."
+  ]
+}

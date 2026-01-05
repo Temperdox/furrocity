@@ -102,6 +102,23 @@ export {
 } from './SubstanceSystem.js';
 
 // =============================================================================
+// NSFW COMBAT SCENE SYSTEMS
+// =============================================================================
+
+export {
+  BodyDescriptorSystem,
+  SIZE_TIERS,
+  AROUSAL_LEVELS,
+  CORRUPTION_LEVELS
+} from './BodyDescriptorSystem.js';
+export { EnemyNamingSystem } from './EnemyNamingSystem.js';
+export { NSFWTextInterpolator } from './NSFWTextInterpolator.js';
+export {
+  NSFWCombatSceneSystem,
+  DEFAULT_NSFW_ACTION_CHANCE
+} from './NSFWCombatSceneSystem.js';
+
+// =============================================================================
 // PLAYER STATE
 // =============================================================================
 

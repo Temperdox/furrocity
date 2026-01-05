@@ -1595,20 +1595,117 @@ Type affects base stats, resistances, and rewards:
 | `dragon` | 1.8x | 1.5x | 1.4x | 1.0x | High | 2.0x |
 | `boss` | 2.5x | 1.4x | 1.3x | 0.9x | Very High | 3.0x |
 
-### Creating Enemy Variants
+### Elite Chance in Encounters (JSON)
 
-Programmatically create scaled versions:
+Define encounters with a chance to spawn elite enemies:
 
-```javascript
-const system = new EnemyScalingSystem();
-const context = { player, location };
-
-// Create an elite version
-const eliteWolf = system.createVariant(wolfDef, 'elite', context);
-// Results in: "Elite Forest Wolf" with +3 level, 1.5x stats, 1.8x rewards
-
-// Available variants: weak, normal, strong, elite, champion, boss
+```json
+{
+  "id": "forest_encounter",
+  "enemies": ["forest_wolf", "forest_wolf"],
+  "eliteChance": 15,
+  "strongChance": 25
+}
 ```
+
+| Property | Description |
+|----------|-------------|
+| `eliteChance` | % chance each enemy becomes Elite (+3 level, 1.5x stats) |
+| `strongChance` | % chance each enemy becomes Strong (+2 level, 1.3x stats) |
+| `championChance` | % chance for Champion variant (+5 level, 1.8x stats) |
+| `forceVariant` | Force all enemies to a specific variant |
+
+#### In Scene Combat Nodes
+
+```json
+{
+  "type": "combat",
+  "enemies": ["forest_wolf", "forest_wolf"],
+  "eliteChance": 20,
+  "onVictory": { "goto": "victory_node" },
+  "onDefeat": { "goto": "defeat_node" }
+}
+```
+
+#### In Encounter Tables
+
+```json
+{
+  "id": "forest_combat_table",
+  "entries": [
+    {
+      "weight": 50,
+      "enemies": ["forest_wolf"],
+      "eliteChance": 10
+    },
+    {
+      "weight": 30,
+      "enemies": ["forest_wolf", "forest_wolf"],
+      "eliteChance": 5,
+      "strongChance": 15
+    }
+  ]
+}
+```
+
+### Bosses and Minibosses
+
+**Important:** Bosses and minibosses should be unique enemy files, not auto-generated variants.
+
+```json
+{
+  "id": "alpha_wolf",
+  "name": "Alpha Wolf",
+  "type": "beast",
+  "tags": ["beast", "wolf", "boss", "forest"],
+
+  "level": 8,
+  "stats": {
+    "maxHp": 200,
+    "attack": 25,
+    "defense": 15,
+    "speed": 18
+  },
+
+  "skills": [
+    { "id": "savage_bite", "weight": 40 },
+    { "id": "howl", "weight": 20 },
+    { "id": "pack_tactics", "weight": 40 }
+  ],
+
+  "experienceReward": 150,
+  "goldDrop": { "min": 20, "max": 50 },
+  "lootTable": "alpha_wolf_loot",
+
+  "bossConfig": {
+    "phases": 2,
+    "phaseThresholds": [0.5],
+    "enrageAt": 0.25
+  }
+}
+```
+
+Reference bosses directly in scenes:
+
+```json
+{
+  "type": "combat",
+  "enemies": ["alpha_wolf"],
+  "isBossFight": true,
+  "music": "boss_battle",
+  "onVictory": { "goto": "boss_defeated" }
+}
+```
+
+### Variant Reference
+
+| Variant | Level Mod | Stat Mult | Reward Mult | Prefix |
+|---------|-----------|-----------|-------------|--------|
+| `weak` | -2 | 0.7x | 0.6x | - |
+| `normal` | 0 | 1.0x | 1.0x | - |
+| `strong` | +2 | 1.3x | 1.3x | - |
+| `elite` | +3 | 1.5x | 1.8x | "Elite" |
+| `champion` | +5 | 1.8x | 2.5x | "Champion" |
 
 ### Player Modifiers Affecting Enemies
 

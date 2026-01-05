@@ -1,0 +1,286 @@
+{
+  "version": "1.0.0",
+  "description": "Enemy name pools and generation rules by species and variant",
+
+  "species": {
+    "demon": {
+      "names": [
+        "Zelatroz", "Mal'keth", "Vexira", "Asmodrix", "Lilithia",
+        "Belphagor", "Nyx'ara", "Zarthul", "Morrigan", "Abraxas",
+        "Nethros", "Kira'vel", "Xandrus", "Seraphix", "Dravos"
+      ],
+      "titles": ["the Imp", "the Seducer", "the Corruptor", "the Tempter", "the Deceiver"],
+      "titleTemplate": "{name} {title}",
+      "variants": {
+        "weak": {
+          "names": ["Impix", "Skrix", "Drib", "Mezz", "Grix"],
+          "titleTemplate": "{name} the Lesser"
+        },
+        "normal": {
+          "names": ["Zelatroz", "Mal'keth", "Imp'lix", "Skrix", "Vexor"],
+          "titleTemplate": "{name} the Imp"
+        },
+        "strong": {
+          "names": ["Vexian", "Korthax", "Dravos", "Nethrix"],
+          "titleTemplate": "{name} the Corruptor"
+        },
+        "elite": {
+          "names": ["Tryax", "Vexian", "Mal'gothir", "Xendrath", "Asmodrix"],
+          "titleTemplate": "Count {name} of {region}"
+        },
+        "champion": {
+          "names": ["Baal'zephon", "Mephix", "Lucifex", "Belial"],
+          "titleTemplate": "Archduke {name}, Lord of {region}"
+        }
+      }
+    },
+
+    "succubus": {
+      "names": [
+        "Syrena", "Malice", "Desire", "Velvet", "Crimson",
+        "Ecstasy", "Whisper", "Temptation", "Allure", "Sin",
+        "Lust", "Seduction", "Passion", "Bliss", "Rapture"
+      ],
+      "titles": ["the Temptress", "the Seductress", "the Dream-Eater", "the Heart-Stealer"],
+      "titleTemplate": "{name} the Temptress",
+      "variants": {
+        "elite": {
+          "names": ["Lilith", "Morgana", "Circe", "Lamia"],
+          "titleTemplate": "Lady {name}, Mistress of {region}"
+        },
+        "champion": {
+          "names": ["Asmodea", "Luxuria", "Voluptia"],
+          "titleTemplate": "Queen {name}, Sovereign of Desire"
+        }
+      }
+    },
+
+    "incubus": {
+      "names": [
+        "Zander", "Kael", "Daemon", "Raven", "Shadow",
+        "Obsidian", "Onyx", "Jet", "Ebony", "Nightshade"
+      ],
+      "titles": ["the Seducer", "the Corruptor", "the Dream-Walker", "the Soul-Thief"],
+      "titleTemplate": "{name} the Seducer",
+      "variants": {
+        "elite": {
+          "names": ["Asmodeus", "Incubar", "Luxor"],
+          "titleTemplate": "Lord {name} of {region}"
+        }
+      }
+    },
+
+    "wolf": {
+      "useArticle": true,
+      "displayName": "wolf",
+      "variants": {
+        "alpha": {
+          "names": ["Fenrir", "Shadow", "Bloodfang", "Storm", "Thunder", "Fang"],
+          "titleTemplate": "{name}, Alpha of the Pack"
+        }
+      }
+    },
+
+    "forest_wolf": {
+      "useArticle": true,
+      "displayName": "forest wolf"
+    },
+
+    "dire_wolf": {
+      "useArticle": true,
+      "displayName": "dire wolf",
+      "variants": {
+        "alpha": {
+          "names": ["Ragnar", "Fenris", "Skoll", "Hati"],
+          "titleTemplate": "{name} the Dire"
+        }
+      }
+    },
+
+    "goblin": {
+      "names": [
+        "Grik", "Snix", "Mog", "Blix", "Krex",
+        "Zik", "Nix", "Gob", "Drix", "Skab",
+        "Rik", "Tik", "Plix", "Grix", "Zog"
+      ],
+      "titleTemplate": "{name}",
+      "variants": {
+        "elite": {
+          "names": ["Gruk'nar", "Skullsmasher", "Bonegnaw"],
+          "titleTemplate": "Chief {name}"
+        },
+        "champion": {
+          "names": ["Grishnak", "Uruk'zog", "Mog'thrak"],
+          "titleTemplate": "Warlord {name} the Destroyer"
+        }
+      }
+    },
+
+    "orc": {
+      "names": [
+        "Grom", "Thrak", "Urguk", "Mog'dar", "Krunk",
+        "Gorlag", "Brutusk", "Zugor", "Krag", "Durg"
+      ],
+      "titles": ["the Brutal", "Skullcrusher", "the Savage", "Boneripper"],
+      "titleTemplate": "{name} {title}",
+      "variants": {
+        "elite": {
+          "names": ["Warchief Grommash", "Bloodfist", "Hellscream"],
+          "titleTemplate": "Warlord {name}"
+        }
+      }
+    },
+
+    "bandit": {
+      "names": [
+        "Scarface", "Grim", "Ripper", "Snake", "Blade",
+        "Viper", "Slash", "Brutus", "Fang", "Cutthroat",
+        "Red", "Black Jack", "One-Eye", "Scar", "Ghost"
+      ],
+      "titleTemplate": "{name}",
+      "variants": {
+        "elite": {
+          "names": ["The Crimson Blade", "Shadowhand", "Blackheart"],
+          "titleTemplate": "{name}, Bandit Lord"
+        }
+      }
+    },
+
+    "slime": {
+      "useArticle": true,
+      "displayName": "slime"
+    },
+
+    "tentacle_plant": {
+      "useArticle": true,
+      "displayName": "tentacle plant"
+    },
+
+    "tentacle_beast": {
+      "useArticle": true,
+      "displayName": "tentacle beast"
+    },
+
+    "mimic": {
+      "useArticle": true,
+      "displayName": "mimic"
+    },
+
+    "skeleton": {
+      "useArticle": true,
+      "displayName": "skeleton",
+      "variants": {
+        "champion": {
+          "names": ["Bone Lord", "The Eternal", "Death's Herald"],
+          "titleTemplate": "{name}"
+        }
+      }
+    },
+
+    "zombie": {
+      "useArticle": true,
+      "displayName": "zombie"
+    },
+
+    "ghost": {
+      "useArticle": true,
+      "displayName": "ghost",
+      "names": ["Mira", "Elena", "Cecilia", "Rose", "Lily"],
+      "titleTemplate": "{name}'s Spirit"
+    },
+
+    "vampire": {
+      "names": [
+        "Vladislav", "Carmilla", "Dracul", "Nosferatu", "Vlad",
+        "Countess Bathory", "Lord Ruthven", "Varney"
+      ],
+      "titles": ["the Eternal", "the Blood Drinker", "the Night Lord"],
+      "titleTemplate": "{name}",
+      "variants": {
+        "elite": {
+          "names": ["Count Orlok", "Lady Dimitrescu", "Lord Dracula"],
+          "titleTemplate": "{name} of {region}"
+        }
+      }
+    },
+
+    "werewolf": {
+      "useArticle": true,
+      "displayName": "werewolf",
+      "variants": {
+        "alpha": {
+          "names": ["Fenrir", "Lycaon", "Romulus"],
+          "titleTemplate": "{name}, Alpha of the Pack"
+        }
+      }
+    },
+
+    "dragon": {
+      "names": [
+        "Smaug", "Alduin", "Bahamut", "Tiamat", "Fafnir",
+        "Nidhogg", "Glaurung", "Ancalagon"
+      ],
+      "titles": ["the Terrible", "World-Ender", "the Ancient", "Flamebringer"],
+      "titleTemplate": "{name} {title}"
+    },
+
+    "elemental": {
+      "useArticle": true,
+      "displayName": "elemental"
+    },
+
+    "golem": {
+      "useArticle": true,
+      "displayName": "golem"
+    }
+  },
+
+  "types": {
+    "humanoid": {
+      "names": ["stranger", "figure", "assailant"],
+      "useArticle": true
+    },
+    "beast": {
+      "useArticle": true
+    },
+    "undead": {
+      "useArticle": true
+    },
+    "demon": {
+      "names": ["fiend", "demon", "hellspawn"]
+    },
+    "elemental": {
+      "useArticle": true
+    },
+    "construct": {
+      "useArticle": true
+    },
+    "plant": {
+      "useArticle": true
+    },
+    "slime": {
+      "useArticle": true
+    },
+    "dragon": {
+      "names": ["wyrm", "drake", "serpent"]
+    }
+  },
+
+  "regions": [
+    "the Shadowlands",
+    "the Burning Wastes",
+    "the Frozen North",
+    "the Emerald Depths",
+    "the Crimson Peaks",
+    "the Void Between",
+    "the Sunken City",
+    "the Blighted Marshes",
+    "the Abyssal Plane",
+    "the Nine Hells",
+    "the Chaos Realm",
+    "the Dark Below",
+    "the Endless Night",
+    "the Scarlet Domain",
+    "the Corruption's Heart"
+  ]
+}

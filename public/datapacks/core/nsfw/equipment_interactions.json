@@ -1,0 +1,353 @@
+{
+  "version": "1.0.0",
+  "description": "Equipment interactions during NSFW combat actions",
+
+  "actions": {
+    "grope": {
+      "stripChance": {
+        "chest": 0.2
+      },
+      "targetToys": ["nipple_left", "nipple_right"],
+      "targetPiercings": ["nipple_left", "nipple_right"],
+      "piercingBonus": {
+        "arousalMultiplier": 1.3,
+        "description": "tugging on the piercings"
+      }
+    },
+
+    "strip": {
+      "stripChance": {
+        "chest": 0.8,
+        "legs": 0.5
+      },
+      "forceExpose": true
+    },
+
+    "fondle": {
+      "targetToys": ["genital", "nipple_left", "nipple_right"],
+      "stripChance": {
+        "legs": 0.15
+      }
+    },
+
+    "probe": {
+      "pressOnToy": true,
+      "targetSlots": ["plug", "genital"],
+      "toyActivation": {
+        "vibrator": {
+          "arousalBonus": 8,
+          "description": "The vibrator inside you buzzes to life!"
+        },
+        "plug": {
+          "arousalBonus": 5,
+          "description": "The plug shifts deeper inside you!"
+        },
+        "anal_beads": {
+          "arousalBonus": 6,
+          "description": "The beads roll and shift inside you!"
+        }
+      }
+    },
+
+    "tentacle_probe": {
+      "pressOnToy": true,
+      "stripChance": {
+        "chest": 0.3,
+        "legs": 0.4
+      },
+      "targetSlots": ["plug", "genital"],
+      "toyActivation": {
+        "vibrator": {
+          "arousalBonus": 10,
+          "description": "Tentacles activate your vibrator to maximum!"
+        },
+        "plug": {
+          "arousalBonus": 7,
+          "description": "A tentacle presses firmly against your plug!"
+        }
+      }
+    },
+
+    "seduce": {
+      "cursedItemChance": {
+        "chance": 0.15,
+        "items": [
+          { "id": "cursed_collar" },
+          { "id": "cursed_ring" }
+        ]
+      }
+    },
+
+    "corrupt": {
+      "drugChance": {
+        "chance": 0.25,
+        "substanceId": "demon_essence",
+        "amount": 1
+      },
+      "cursedItemChance": {
+        "chance": 0.1,
+        "items": [
+          { "id": "mark_of_corruption" }
+        ]
+      }
+    },
+
+    "dominate": {
+      "cursedItemChance": {
+        "chance": 0.3,
+        "items": [
+          { "id": "collar_of_submission" },
+          { "id": "brand_of_ownership" }
+        ]
+      }
+    },
+
+    "deep_penetration": {
+      "pressOnToy": true,
+      "forceRemove": ["plug"],
+      "stretchEffect": {
+        "orifice": "rear",
+        "amount": 1
+      }
+    },
+
+    "dissolve_clothing": {
+      "stripChance": {
+        "chest": 0.9,
+        "legs": 0.9,
+        "feet": 0.5
+      },
+      "damageType": "acid"
+    },
+
+    "slime_fill": {
+      "drugChance": {
+        "chance": 0.5,
+        "substanceId": "slime_aphrodisiac",
+        "amount": 2
+      },
+      "orificeEffect": {
+        "type": "filled",
+        "orifices": ["mouth", "rear", "vagina"]
+      }
+    },
+
+    "inject": {
+      "drugChance": {
+        "chance": 0.8,
+        "substanceId": "demon_essence",
+        "amount": 1
+      }
+    },
+
+    "feminize": {
+      "drugChance": {
+        "chance": 0.6,
+        "substanceId": "estrogen_compound",
+        "amount": 1
+      }
+    },
+
+    "milk": {
+      "targetToys": ["nipple_left", "nipple_right"],
+      "piercingBonus": {
+        "arousalMultiplier": 1.5
+      },
+      "toyActivation": {
+        "nipple_clamps": {
+          "arousalBonus": 8,
+          "description": "The clamps tug painfully as you're milked!"
+        },
+        "nipple_pump": {
+          "arousalBonus": 10,
+          "description": "The pumps intensify the suction!"
+        }
+      }
+    },
+
+    "tease": {
+      "targetToys": ["genital", "plug", "nipple_left", "nipple_right"],
+      "stripChance": {
+        "legs": 0.1
+      }
+    },
+
+    "hypnotize": {
+      "cursedItemChance": {
+        "chance": 0.2,
+        "items": [
+          { "id": "mind_control_earring" },
+          { "id": "obedience_collar" }
+        ]
+      }
+    }
+  },
+
+  "cursedItems": {
+    "cursed_collar": {
+      "name": "Collar of Servitude",
+      "slot": "neck",
+      "cannotRemove": true,
+      "removeCondition": "holy_cleansing",
+      "effects": {
+        "dominanceShift": -5,
+        "willpower": -2,
+        "submissionGain": 5
+      },
+      "description": "A black leather collar snaps around your neck. It won't come off!"
+    },
+
+    "cursed_ring": {
+      "name": "Ring of Arousal",
+      "slot": "genital",
+      "cannotRemove": true,
+      "removeCondition": "holy_cleansing",
+      "effects": {
+        "arousalMinimum": 20,
+        "arousalDecayReduction": 0.5
+      },
+      "description": "A glowing ring materializes around your genitals, pulsing with warmth!"
+    },
+
+    "collar_of_submission": {
+      "name": "Collar of Submission",
+      "slot": "neck",
+      "cannotRemove": true,
+      "effects": {
+        "dominanceShift": -10,
+        "submissionGain": 10,
+        "arousalSensitivity": 1.5
+      },
+      "description": "A collar of pure submission energy binds itself to your neck!"
+    },
+
+    "mark_of_corruption": {
+      "name": "Mark of Corruption",
+      "slot": "brand",
+      "permanent": true,
+      "effects": {
+        "corruptionMinimum": 25,
+        "demonAttraction": true
+      },
+      "description": "Dark energy sears a mark into your skin - the Mark of Corruption!"
+    },
+
+    "brand_of_ownership": {
+      "name": "Brand of Ownership",
+      "slot": "brand",
+      "permanent": true,
+      "effects": {
+        "submissionGain": 15,
+        "ownerLink": true
+      },
+      "description": "A burning brand marks you as property!"
+    },
+
+    "mind_control_earring": {
+      "name": "Earring of Obedience",
+      "slot": "ear_left",
+      "cannotRemove": true,
+      "effects": {
+        "willpower": -5,
+        "hypnosisVulnerability": 1.5
+      },
+      "description": "An earring pierces your ear, whispering commands into your mind!"
+    },
+
+    "obedience_collar": {
+      "name": "Obedience Collar",
+      "slot": "neck",
+      "cannotRemove": true,
+      "effects": {
+        "willpower": -3,
+        "submissionGain": 8,
+        "commandVulnerability": true
+      },
+      "description": "A collar with glowing runes clasps around your throat!"
+    },
+
+    "chastity_cage": {
+      "name": "Cursed Chastity Cage",
+      "slot": "chastity",
+      "cannotRemove": true,
+      "effects": {
+        "arousalDecayBlocked": true,
+        "orgasmDenied": true
+      },
+      "description": "A cage of dark metal locks around your genitals, denying release!"
+    },
+
+    "cursed_plug": {
+      "name": "Plug of Eternal Fullness",
+      "slot": "plug",
+      "cannotRemove": true,
+      "effects": {
+        "arousalMinimum": 15,
+        "movementPenalty": true
+      },
+      "description": "A plug forces itself inside you, refusing to budge!"
+    }
+  },
+
+  "drugEffects": {
+    "demon_essence": {
+      "corruptionGain": 5,
+      "lustGain": 10,
+      "masculinityShift": -2,
+      "duration": 600,
+      "description": "Dark energy seeps into your body, corrupting your very essence."
+    },
+
+    "slime_aphrodisiac": {
+      "arousalGain": 15,
+      "lustGain": 20,
+      "duration": 300,
+      "sensitivityBonus": 1.3,
+      "description": "The slime's secretions flood your system with unnatural arousal."
+    },
+
+    "estrogen_compound": {
+      "masculinityShift": -5,
+      "bustGrowth": 0.5,
+      "hipGrowth": 0.3,
+      "duration": 1200,
+      "description": "You feel your body changing, becoming softer and more feminine."
+    },
+
+    "testosterone_compound": {
+      "masculinityShift": 5,
+      "muscleMassGain": 0.3,
+      "duration": 1200,
+      "description": "Raw masculine energy surges through your body."
+    },
+
+    "lust_poison": {
+      "arousalGain": 30,
+      "lustGain": 40,
+      "willpower": -3,
+      "duration": 450,
+      "description": "Burning lust floods through your veins, overwhelming your senses."
+    },
+
+    "mind_fog": {
+      "willpower": -5,
+      "intelligence": -3,
+      "suggestibilityGain": 20,
+      "duration": 300,
+      "description": "Your thoughts become hazy and unfocused..."
+    },
+
+    "obedience_serum": {
+      "willpower": -8,
+      "submissionGain": 15,
+      "duration": 600,
+      "description": "An urge to obey washes over you, weakening your will."
+    },
+
+    "transformation_catalyst": {
+      "transformationVulnerability": 2.0,
+      "duration": 900,
+      "description": "Your body becomes malleable, ready to be reshaped..."
+    }
+  }
+}

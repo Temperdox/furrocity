@@ -1,0 +1,99 @@
+{
+  "version": "1.0.0",
+  "description": "Generic fallback NSFW scene templates",
+
+  "grope_0": [
+    "{enemy_name} gropes {player_possessive} {chest_descriptor}.",
+    "Rough hands claim {player_possessive} {chest_descriptor}.",
+    "{enemy_name} squeezes {player_possessive} {chest_descriptor} possessively."
+  ],
+
+  "strip_0": [
+    "{enemy_name} tears away {player_possessive} clothing.",
+    "Your clothes are ripped off, leaving you exposed.",
+    "{enemy_name} strips {player_name} bare."
+  ],
+
+  "fondle_0": [
+    "{if has_dick}{enemy_name} strokes {player_possessive} {dick_descriptor}.{/if}{if has_pussy}{enemy_name} fingers {player_possessive} {pussy_descriptor}.{/if}",
+    "{enemy_name} touches {player_name} intimately."
+  ],
+
+  "tease_0": [
+    "{enemy_name} teases {player_name} mercilessly.",
+    "Skilled touches draw shameful reactions from {player_name}.",
+    "{enemy_name} toys with {player_possessive} body."
+  ],
+
+  "dominate_0": [
+    "{enemy_name} asserts dominance over {player_name}.",
+    "You're forced into submission by {enemy_name_mid}.",
+    "{enemy_name} claims {player_name} as {pronoun_possessive} property."
+  ],
+
+  "penetrate_0": [
+    "{enemy_name} takes {player_name} forcefully.",
+    "You're claimed by {enemy_name_mid}.",
+    "{enemy_name} fills {player_name} completely."
+  ],
+
+  "oral_0": [
+    "{enemy_name} uses {player_possessive} {mouth_descriptor}.",
+    "Your mouth is claimed by {enemy_name_mid}.",
+    "{enemy_name} thrusts into {player_possessive} {mouth_descriptor}."
+  ],
+
+  "corrupt_0": [
+    "Corruption flows into {player_name} from {enemy_possessive} touch.",
+    "Dark energy taints your soul.",
+    "{enemy_name} corrupts {player_name}'s essence."
+  ],
+
+  "seduce_0": [
+    "{enemy_name} seduces {player_name} with supernatural allure.",
+    "Resistance crumbles under {enemy_possessive} seduction.",
+    "You find yourself wanting {enemy_name_mid}."
+  ],
+
+  "probe_0": [
+    "{enemy_name} probes {player_name}'s body.",
+    "You feel {enemy_name_mid} pushing into you.",
+    "{enemy_name} explores {player_name}'s depths."
+  ],
+
+  "lick_0": [
+    "{enemy_name} licks {player_name} eagerly.",
+    "A wet tongue drags across {player_possessive} skin.",
+    "{enemy_name} tastes {player_name}."
+  ],
+
+  "milk_0": [
+    "{enemy_name} milks {player_name}'s body.",
+    "Pleasure is extracted from {player_name}.",
+    "{enemy_name} drains {player_name}'s fluids."
+  ],
+
+  "inject_0": [
+    "{enemy_name} injects something into {player_name}.",
+    "Strange fluids enter your body.",
+    "You feel {enemy_name_mid}'s essence filling you."
+  ],
+
+  "hypnotize_0": [
+    "{enemy_name} captures {player_possessive} mind.",
+    "Your will weakens under {enemy_possessive} gaze.",
+    "{enemy_name} implants commands in your psyche."
+  ],
+
+  "bite_0": [
+    "{enemy_name} bites {player_name}.",
+    "Sharp teeth pierce your flesh.",
+    "{enemy_name} marks {player_name} with {pronoun_possessive} teeth."
+  ],
+
+  "generic_action": [
+    "{enemy_name} does something to {player_name}.",
+    "You feel {enemy_name_mid}'s touch.",
+    "{enemy_name} acts on {player_name}."
+  ]
+}

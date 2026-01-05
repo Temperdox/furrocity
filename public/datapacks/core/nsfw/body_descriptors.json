@@ -1,0 +1,274 @@
+{
+  "version": "1.0.0",
+  "description": "Body part descriptors varying by size, arousal, and corruption",
+
+  "chest": {
+    "sizes": {
+      "tiny": ["flat chest", "smooth chest", "barely-there breasts", "boyish chest"],
+      "small": ["modest breasts", "small breasts", "perky A-cups", "petite breasts"],
+      "average": ["breasts", "ample breasts", "soft B-cups", "shapely breasts"],
+      "large": ["large breasts", "generous C-cups", "heavy breasts", "full breasts"],
+      "huge": ["huge breasts", "massive D-cups", "heavy bouncing tits", "enormous breasts"],
+      "massive": ["impossibly large breasts", "gigantic udders", "planet-sized tits", "mountainous breasts"]
+    },
+    "arousal": {
+      "none": [],
+      "slight": ["with slightly stiff nipples", "nipples beginning to stiffen"],
+      "moderate": ["with erect nipples", "nipples visibly hard", "with perky nipples"],
+      "high": ["with achingly hard nipples", "nipples straining and sensitive", "with throbbing nipples"],
+      "extreme": ["with painfully erect nipples", "hypersensitive peaks aching for touch", "nipples so hard they hurt"]
+    },
+    "corruption": {
+      "pure": [],
+      "touched": ["with slightly darkened areolae"],
+      "tainted": ["unnaturally sensitive to touch", "with a faint demonic warmth"],
+      "corrupted": ["marked with demonic symbols", "pulsing with dark energy", "radiating unholy heat"]
+    },
+    "default": ["chest"]
+  },
+
+  "dick": {
+    "sizes": {
+      "tiny": ["tiny cock", "small penis", "little member", "modest package"],
+      "small": ["modest cock", "average-looking penis", "unassuming member"],
+      "average": ["cock", "member", "manhood", "shaft"],
+      "large": ["large cock", "impressive member", "thick shaft", "sizeable manhood"],
+      "huge": ["huge cock", "massive member", "enormous shaft", "impressive length"],
+      "massive": ["monstrous cock", "impossibly large member", "arm-thick shaft", "inhuman length"]
+    },
+    "arousal": {
+      "none": ["soft", "flaccid", "at rest"],
+      "slight": ["twitching slightly", "beginning to stir", "showing signs of interest"],
+      "moderate": ["half-hard", "thickening visibly", "rising with arousal"],
+      "high": ["fully erect", "throbbing hard", "standing at attention", "straining with need"],
+      "extreme": ["painfully hard", "leaking pre", "twitching with need", "dripping with pre-cum", "throbbing desperately"]
+    },
+    "corruption": {
+      "pure": [],
+      "touched": ["with a darker hue"],
+      "tainted": ["with veins pulsing unnaturally"],
+      "corrupted": ["marked with demonic runes", "radiating dark heat"]
+    },
+    "default": ["member"]
+  },
+
+  "pussy": {
+    "sizes": {
+      "tiny": ["tight slit", "virgin-tight pussy", "untouched flower"],
+      "small": ["neat slit", "tight pussy", "delicate folds"],
+      "average": ["pussy", "sex", "womanhood", "feminine folds"],
+      "large": ["puffy pussy", "well-trained sex", "plush folds"],
+      "huge": ["loose pussy", "well-used sex", "gaping folds"],
+      "massive": ["ruined hole", "permanently stretched pussy", "cavernous opening"]
+    },
+    "arousal": {
+      "none": [],
+      "slight": ["slightly moist", "with a hint of wetness"],
+      "moderate": ["glistening with arousal", "visibly wet", "dampening with need"],
+      "high": ["dripping wet", "soaking with fem juices", "slick with arousal"],
+      "extreme": ["absolutely drenched", "juices running down thighs", "practically gushing", "overflowing with need"]
+    },
+    "corruption": {
+      "pure": [],
+      "touched": ["with a faint heat radiating from within"],
+      "tainted": ["pulsing with unnatural sensitivity"],
+      "corrupted": ["marked with demonic sigils", "burning with unholy desire"]
+    },
+    "default": ["sex"]
+  },
+
+  "ass": {
+    "sizes": {
+      "tiny": ["flat rear", "nearly non-existent butt", "slim backside"],
+      "small": ["modest rear", "small butt", "petite backside"],
+      "average": ["rear", "butt", "ass", "backside"],
+      "large": ["plump rear", "generous butt", "thick ass", "curvy backside"],
+      "huge": ["huge ass", "massive rear", "enormous butt", "pillow-soft cheeks"],
+      "massive": ["impossibly huge ass", "planet-sized rear", "thunderous cheeks"]
+    },
+    "arousal": {
+      "none": [],
+      "slight": [],
+      "moderate": ["clenching slightly", "shifting with anticipation"],
+      "high": ["twitching with anticipation", "squirming with need"],
+      "extreme": ["desperately clenching", "aching to be filled", "quivering with need"]
+    },
+    "corruption": {
+      "pure": [],
+      "touched": [],
+      "tainted": ["unnaturally sensitive"],
+      "corrupted": ["marked with ownership brands"]
+    },
+    "default": ["rear"]
+  },
+
+  "balls": {
+    "sizes": {
+      "tiny": ["small balls", "tiny testicles", "modest orbs"],
+      "small": ["modest balls", "average testicles"],
+      "average": ["balls", "testicles", "orbs"],
+      "large": ["heavy balls", "large testicles", "weighty orbs"],
+      "huge": ["huge balls", "melon-sized testicles", "enormous orbs"],
+      "massive": ["impossibly huge balls", "breeding tanks", "cum-factories"]
+    },
+    "arousal": {
+      "none": [],
+      "slight": ["slightly tightened"],
+      "moderate": ["drawn up tight", "tensing with arousal"],
+      "high": ["churning with need", "heavy with seed"],
+      "extreme": ["painfully full", "desperate for release", "aching to empty"]
+    },
+    "corruption": {
+      "pure": [],
+      "touched": [],
+      "tainted": ["churning with corrupt seed"],
+      "corrupted": ["producing tainted essence"]
+    },
+    "default": ["balls"]
+  },
+
+  "mouth": {
+    "sizes": {
+      "tiny": ["small mouth", "petite lips"],
+      "small": ["modest lips"],
+      "average": ["mouth", "lips"],
+      "large": ["full lips", "plush mouth"],
+      "huge": ["pouty lips", "pillowy mouth"],
+      "massive": ["impossibly plush lips"]
+    },
+    "arousal": {
+      "none": [],
+      "slight": ["slightly parted"],
+      "moderate": ["parted and breathing heavily", "panting softly"],
+      "high": ["open and panting", "gasping for breath"],
+      "extreme": ["drooling with need", "tongue lolling out", "moaning uncontrollably"]
+    },
+    "corruption": {
+      "pure": [],
+      "touched": [],
+      "tainted": ["with a dark tinge to the lips"],
+      "corrupted": ["with forked tongue", "with unnatural warmth"]
+    },
+    "default": ["mouth"]
+  },
+
+  "thighs": {
+    "sizes": {
+      "tiny": ["thin thighs", "slender legs", "skinny thighs"],
+      "small": ["slim thighs", "lean legs"],
+      "average": ["thighs", "legs"],
+      "large": ["thick thighs", "meaty legs", "curvy thighs"],
+      "huge": ["massive thighs", "pillar-like legs", "thunder thighs"],
+      "massive": ["impossibly thick thighs", "tree-trunk legs"]
+    },
+    "arousal": {
+      "none": [],
+      "slight": [],
+      "moderate": ["trembling slightly"],
+      "high": ["quivering with need", "pressed together"],
+      "extreme": ["shaking uncontrollably", "slick with arousal"]
+    },
+    "corruption": {
+      "pure": [],
+      "touched": [],
+      "tainted": [],
+      "corrupted": ["marked with corruption brands"]
+    },
+    "default": ["thighs"]
+  },
+
+  "ears": {
+    "sizes": {
+      "tiny": ["small ears"],
+      "small": ["petite ears"],
+      "average": ["ears"],
+      "large": ["large ears"],
+      "huge": ["long ears"],
+      "massive": ["enormous ears"]
+    },
+    "arousal": {
+      "none": [],
+      "slight": [],
+      "moderate": ["twitching slightly"],
+      "high": ["flushed and sensitive", "perked with attention"],
+      "extreme": ["burning hot and hypersensitive", "twitching uncontrollably"]
+    },
+    "corruption": {
+      "pure": [],
+      "touched": [],
+      "tainted": ["with darkened tips"],
+      "corrupted": ["elongated and demonic"]
+    },
+    "default": ["ears"]
+  },
+
+  "brain": {
+    "sizes": {
+      "average": ["mind", "thoughts", "consciousness"]
+    },
+    "arousal": {
+      "none": [],
+      "slight": ["slightly foggy"],
+      "moderate": ["clouded with arousal", "hazy with desire"],
+      "high": ["swimming with lust", "barely able to think"],
+      "extreme": ["overwhelmed with pleasure", "lost in ecstasy", "completely blank with need"]
+    },
+    "corruption": {
+      "pure": [],
+      "touched": ["with intrusive thoughts"],
+      "tainted": ["corrupted thoughts surfacing", "dark urges emerging"],
+      "corrupted": ["completely corrupted", "enslaved to dark desires", "broken and obedient"]
+    },
+    "default": ["mind"]
+  },
+
+  "nipples": {
+    "sizes": {
+      "tiny": ["tiny nipples", "small nubs"],
+      "small": ["modest nipples", "small peaks"],
+      "average": ["nipples", "peaks"],
+      "large": ["large nipples", "prominent peaks"],
+      "huge": ["huge nipples", "massive peaks"],
+      "massive": ["enormous nipples", "thumb-sized peaks"]
+    },
+    "arousal": {
+      "none": [],
+      "slight": ["slightly stiff"],
+      "moderate": ["erect", "standing at attention"],
+      "high": ["achingly hard", "straining with sensitivity"],
+      "extreme": ["painfully erect", "throbbing with need", "leaking slightly"]
+    },
+    "corruption": {
+      "pure": [],
+      "touched": ["slightly darkened"],
+      "tainted": ["unnaturally sensitive"],
+      "corrupted": ["marked with demonic piercings", "pulsing with dark energy"]
+    },
+    "default": ["nipples"]
+  },
+
+  "anus": {
+    "sizes": {
+      "tiny": ["tight pucker", "virgin hole", "untouched entrance"],
+      "small": ["tight hole", "snug entrance"],
+      "average": ["rear entrance", "hole"],
+      "large": ["loosened hole", "trained entrance"],
+      "huge": ["gaping hole", "well-used entrance"],
+      "massive": ["ruined hole", "permanently stretched entrance"]
+    },
+    "arousal": {
+      "none": [],
+      "slight": ["twitching slightly"],
+      "moderate": ["clenching with anticipation"],
+      "high": ["winking with need", "desperate to be filled"],
+      "extreme": ["gaping hungrily", "desperate and twitching"]
+    },
+    "corruption": {
+      "pure": [],
+      "touched": [],
+      "tainted": ["unnaturally receptive"],
+      "corrupted": ["marked as property", "forever eager"]
+    },
+    "default": ["rear entrance"]
+  }
+}

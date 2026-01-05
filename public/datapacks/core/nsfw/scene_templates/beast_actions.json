@@ -1,0 +1,63 @@
+{
+  "version": "1.0.0",
+  "description": "NSFW scene templates for beast enemy types",
+
+  "beast_grope_0": [
+    "{enemy_name} nuzzles against {player_possessive} {chest_descriptor}, hot breath washing over sensitive skin.",
+    "A rough tongue laps at {player_possessive} {chest_descriptor}, leaving wet trails.",
+    "{enemy_name} presses its snout against {player_possessive} {chest_descriptor}, sniffing and licking."
+  ],
+
+  "beast_sniff_0": [
+    "{enemy_name} shoves its nose between {player_possessive} legs, inhaling deeply.",
+    "The beast's cold nose presses against your sensitive areas, investigating.",
+    "{enemy_name} sniffs at {player_name}'s scent, tail wagging with interest."
+  ],
+
+  "beast_lick_0": [
+    "{enemy_name}'s rough tongue drags across {player_possessive} exposed skin.",
+    "A long, wet tongue laps at {player_possessive} body, leaving you shivering.",
+    "{enemy_name} licks at {player_name} eagerly, coating {pronoun_object} in drool."
+  ],
+
+  "beast_lick_1": [
+    "{if has_dick}The beast's tongue wraps around {player_possessive} {dick_descriptor}, stroking wetly.{/if}{if has_pussy}A rough tongue parts {player_possessive} {pussy_descriptor}, lapping hungrily.{/if}",
+    "{enemy_name} licks between {player_possessive} legs with single-minded focus."
+  ],
+
+  "beast_mount_0": [
+    "{enemy_name} mounts {player_name}, powerful forelegs gripping {pronoun_possessive} hips.",
+    "The beast positions itself behind you, its weight pressing down.",
+    "{enemy_name} climbs atop {player_name}, instinct taking over."
+  ],
+
+  "beast_bite_0": [
+    "{enemy_name} nips at {player_possessive} exposed flesh, leaving red marks.",
+    "Sharp teeth graze {player_possessive} skin as {enemy_name_mid} asserts dominance.",
+    "A warning bite from {enemy_name_mid} reminds you who's in control."
+  ],
+
+  "beast_pin_0": [
+    "{enemy_name} pins {player_name} beneath its weight, paws on {pronoun_possessive} chest.",
+    "You're trapped beneath the beast, unable to move as it looms over you.",
+    "{enemy_name} holds you down with predatory intensity."
+  ],
+
+  "beast_knot_0": [
+    "You feel {enemy_name_mid}'s knot swelling inside you, locking you together.",
+    "The base of {enemy_possessive} shaft expands, trapping you.",
+    "{enemy_name}'s knot ties you together, ensuring you take everything."
+  ],
+
+  "beast_fondle_0": [
+    "{enemy_name}'s paw presses against {player_possessive} groin, claws carefully retracted.",
+    "A rough paw pad rubs against your sensitive areas.",
+    "{enemy_name} investigates {player_name}'s body with curious paws."
+  ],
+
+  "beast_hump_0": [
+    "{enemy_name} grinds against {player_name}, seeking relief.",
+    "The beast ruts against your body desperately.",
+    "{enemy_name} humps at {player_name} with animal urgency."
+  ]
+}

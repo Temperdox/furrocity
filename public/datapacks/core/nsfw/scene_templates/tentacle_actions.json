@@ -1,0 +1,88 @@
+{
+  "version": "1.0.0",
+  "description": "NSFW scene templates for tentacle/plant enemy types",
+
+  "plant_grope_0": [
+    "Slimy tentacles coil around {player_possessive} {chest_descriptor}, squeezing rhythmically.",
+    "Multiple tendrils wrap around {player_name}, exploring every curve.",
+    "{enemy_name}'s appendages claim {player_possessive} {chest_descriptor}, sucking and kneading."
+  ],
+
+  "plant_probe_0": [
+    "A thick tentacle presses against your entrance, probing insistently.",
+    "{enemy_name}'s tendrils seek out every opening, slick and eager.",
+    "Wriggling appendages push into {player_name} from multiple angles.",
+    "Tentacles fill every available hole, stretching you open."
+  ],
+
+  "plant_wrap_0": [
+    "Countless tentacles bind {player_name} in an inescapable embrace.",
+    "{enemy_name} wraps {player_name} completely, tendrils touching everywhere.",
+    "You're cocooned in writhing tentacles, helpless and exposed."
+  ],
+
+  "plant_milk_0": [
+    "Suction cups latch onto {player_possessive} {chest_descriptor}, beginning to milk.",
+    "Tentacles with hollow tips attach to your nipples, sucking rhythmically.",
+    "{enemy_name} milks {player_name}'s body, drawing out fluids."
+  ],
+
+  "plant_inject_0": [
+    "A tentacle injects its aphrodisiac sap directly into {player_name}.",
+    "You feel the plant's chemicals flooding your system.",
+    "Warm fluid pumps from the tentacle into your body."
+  ],
+
+  "plant_fondle_0": [
+    "{if has_dick}A tentacle coils around {player_possessive} {dick_descriptor}, stroking with undulating motions.{/if}{if has_pussy}Thin tendrils part {player_possessive} {pussy_descriptor}, while a thicker one prepares to enter.{/if}",
+    "Countless appendages stroke and probe {player_name}'s sensitive areas."
+  ],
+
+  "plant_fill_0": [
+    "Thick tentacles push into every opening, filling {player_name} completely.",
+    "The plant stuffs {player_name} full, tendrils pumping in unison.",
+    "You're stretched wide as multiple tentacles thrust into you."
+  ],
+
+  "tentacle_grope_0": [
+    "Slimy appendages wrap around {player_possessive} {chest_descriptor}, squeezing and kneading.",
+    "{enemy_name}'s tentacles claim every part of {player_name}'s body.",
+    "Writhing limbs explore {player_possessive} {chest_descriptor} with alien curiosity."
+  ],
+
+  "tentacle_probe_0": [
+    "A thick tentacle pushes against {player_name}'s entrance, slick with strange fluids.",
+    "{enemy_name}'s appendages probe every opening they can find.",
+    "You feel tentacles pressing into you from all directions."
+  ],
+
+  "tentacle_wrap_0": [
+    "Countless tentacles bind {player_name} in their coils.",
+    "{enemy_name} wraps {player_name} in a tight embrace of writhing limbs.",
+    "Tentacles ensnare you completely, leaving no escape."
+  ],
+
+  "tentacle_fill_0": [
+    "The tentacles fill every hole, pumping in rhythm.",
+    "You're stuffed full of writhing appendages.",
+    "{enemy_name} claims all of {player_name}'s openings at once."
+  ],
+
+  "slime_grope_0": [
+    "{enemy_name} engulfs {player_possessive} {chest_descriptor} in its gelatinous body.",
+    "The slime molds itself around {player_name}'s curves, touching everywhere.",
+    "Cool gel surrounds {player_possessive} {chest_descriptor}, vibrating pleasantly."
+  ],
+
+  "slime_absorb_0": [
+    "{enemy_name} begins absorbing {player_name} into its body.",
+    "You sink into the slime, engulfed by tingling gel.",
+    "The slime pulls you deeper, stimulating every inch of skin."
+  ],
+
+  "slime_fill_0": [
+    "{enemy_name} forces its way into {player_name}'s every opening.",
+    "Gel pours into your body, filling you completely.",
+    "The slime fills you from within, stretching and stimulating."
+  ]
+}

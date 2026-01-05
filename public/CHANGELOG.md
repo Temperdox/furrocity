@@ -49,8 +49,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Player stats affect rewards: luck → gold drops, intelligence → XP
   - Equipment and effect bonuses (goldFind, xpBoost) apply to rewards
   - 10 enemy types with unique stat profiles (beast, humanoid, undead, demon, etc.)
-  - Variant creation: weak, strong, elite, champion, boss versions
+  - Variant creation: weak, strong, elite, champion versions
   - Partial stat definitions supported (specify only what you want fixed)
+  - JSON-based elite chance: `eliteChance`, `strongChance`, `championChance` in encounters
+  - Bosses/minibosses should be defined as separate unique enemy files
+- **NSFW Combat Scene System**: Madlib-style dynamic text generation for combat
+  - **Body Descriptor System**: Contextual body part descriptors
+    - Size tiers: tiny, small, average, large, huge, massive
+    - Arousal modifiers: changes based on lust/arousal level (0-100%)
+    - Corruption modifiers: pure, touched, tainted, corrupted
+    - Equipment-aware: detects piercings, toys for modified descriptions
+  - **Enemy Naming System**: Grammar-aware enemy name handling
+    - Named enemies: use specific names without articles ("Zander gropes...")
+    - Unnamed enemies: proper articles based on sentence position ("The wolf" vs "the wolf")
+    - Random name generation from species/variant pools
+    - Title templates: "{name} the Imp", "Count {name} of {region}"
+  - **NSFW Text Interpolator**: Template placeholder system
+    - Body descriptors: `{chest_descriptor}`, `{dick_descriptor}`, `{pussy_descriptor}`, etc.
+    - Enemy names: `{enemy_name}`, `{enemy_name_mid}`, `{enemy_possessive}`
+    - Player names: `{player_name}`, `{player_possessive}`
+    - Pronouns: `{pronoun_subject}`, `{pronoun_object}`, `{pronoun_possessive}`
+    - Equipment checks: `{has_plug}`, `{plug_name}`, `{has_nipple_toys}`
+    - Conditionals: `{if has_dick}...{else}...{/if}`
+  - **Equipment Interactions**: Combat equipment effects
+    - Strip chance per clothing slot
+    - Toy activation (vibrators, plugs)
+    - Piercing bonus multipliers
+    - Drug application chance
+    - Cursed item equipping
 
 ### Changed
 - `handleSleep` now checks action requirements before allowing sleep
@@ -64,12 +90,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `engine/LodgingSystem.js` - Inn room and rental property management
 - `engine/ActionRequirementSystem.js` - Action requirement checking
 - `engine/EnemyScalingSystem.js` - Dynamic enemy stat generation
+- `engine/BodyDescriptorSystem.js` - Body part descriptor generation
+- `engine/EnemyNamingSystem.js` - Enemy name generation and grammar
+- `engine/NSFWTextInterpolator.js` - NSFW template interpolation
+- `engine/NSFWCombatSceneSystem.js` - NSFW combat scene orchestration
 - `src/components/ui/SceneInputs.jsx` - React components for scene inputs
 - `src/components/ui/SceneInputs.css` - Styling for input components
 - `src/components/ui/SceneDisplay.jsx` - Comprehensive scene rendering component
 - `src/components/ui/SceneDisplay.css` - Scene display styling
 - `public/datapacks/core/lodging/lodging_config.json` - Lodging definitions
 - `public/datapacks/core/scenes/inn_rental_scenes.json` - Example inn scenes
+- `public/datapacks/core/nsfw/body_descriptors.json` - Body part descriptors by size/arousal/corruption
+- `public/datapacks/core/nsfw/enemy_names.json` - Enemy name pools by species/variant
+- `public/datapacks/core/nsfw/equipment_interactions.json` - Equipment interaction definitions
+- `public/datapacks/core/nsfw/scene_templates/*.json` - NSFW scene templates by enemy type
 
 ---
 
