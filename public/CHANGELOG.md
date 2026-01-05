@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] - 2026-01-05
+
+### Added
+- **Expedition System**: Region-to-region travel with dedicated travel mechanics
+  - Travel stamina separate from combat stamina (affected by player stats)
+  - Progress bar with animated icon showing journey completion
+  - Day/night cycle integration affects encounter chances
+  - Torch mechanics: light reduces night encounter penalty
+  - Camp system: basic camp, tent, or pavilion reduce encounter chance
+  - Scavenging: find food, water, loot, hidden locations, or trigger encounters
+  - Rest mechanics with camp bonuses for stamina recovery
+  - Character paperdoll display with fade effect during progress
+  - Terrain-specific backgrounds and danger level indicators
+- **Region Distance Data**: Regions now define distances to neighbors
+  - `neighborDistances` with distance, terrain type, and danger level
+  - Terrain types: `road`, `forest_edge`, `mountain_trail`, `corrupted_path`, `desert_edge`
+  - Danger levels 1-5 affect encounter frequency
+- **Expedition Statistics**: Track travel history and achievements
+  - Total distance traveled, expeditions completed/abandoned
+  - Hours on road, locations discovered during travel
+  - Expedition history with full journey details
+- **Travel Perks**: Unlockable perks for experienced travelers
+  - `efficient_traveler`: 10% less stamina use
+  - `night_owl`: reduced night encounter penalty
+  - `scavenger`: +10% scavenge success
+  - `pathfinder`: +5% hidden location discovery
+
+### Changed
+- World map "View Region" button now shows "Travel" for unlocked regions
+- TravelModal accepts `onTravelToRegion` callback for region travel
+- Player state includes `expedition` object for travel tracking
+
+---
+
 ## [0.4.0] - 2026-01-05
 
 ### Added

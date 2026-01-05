@@ -30,6 +30,7 @@ const TravelModal = ({
   gameState = {},
   locationSystem,
   onTravel,
+  onTravelToRegion,
   mapView = 'local',
   onMapViewChange
 }) => {
@@ -66,16 +67,22 @@ const TravelModal = ({
   const handleTravel = useCallback(() => {
     if (selectedLocation) {
       if (mapView === 'world') {
-        // If selecting a region, switch to local view for that region
-        onMapViewChange?.('local');
-        // Could also set currentRegion if implementing region travel
+        // Region travel - trigger expedition
+        if (selectedLocation.unlockStatus?.unlocked) {
+          onTravelToRegion?.(selectedLocation.id, selectedLocation);
+          onClose?.();
+        } else {
+          // Locked region - could show investigate scene
+          onTravelToRegion?.(selectedLocation.id, selectedLocation);
+          onClose?.();
+        }
       } else {
         // Let the parent handle locked locations (will show requirement scene)
         onTravel(selectedLocation.id);
       }
       setSelectedLocation(null);
     }
-  }, [selectedLocation, mapView, onTravel, onMapViewChange]);
+  }, [selectedLocation, mapView, onTravel, onTravelToRegion, onClose]);
 
   // Handle hover for tooltip positioning
   const handleMouseMove = useCallback((e, item) => {
@@ -227,11 +234,11 @@ const TravelModal = ({
             </button>
             <button
               className={`travel-btn ${selectedLocation?.unlockStatus?.unlocked ? 'travel-btn--confirm' : 'travel-btn--locked'}`}
-              disabled={!selectedLocation || selectedLocation.id === currentLocation}
+              disabled={!selectedLocation || (mapView === 'local' && selectedLocation.id === currentLocation) || (mapView === 'world' && selectedLocation.id === currentRegion)}
               onClick={handleTravel}
             >
               {mapView === 'world'
-                ? 'View Region'
+                ? (selectedLocation?.unlockStatus?.unlocked ? 'Travel' : 'Investigate')
                 : selectedLocation?.unlockStatus?.unlocked
                   ? 'Travel'
                   : 'Investigate'}

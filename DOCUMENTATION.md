@@ -1,6 +1,6 @@
 # Furrocity Engine - Complete Documentation
 
-> **Version:** 0.4.0
+> **Version:** 0.5.0
 > **Engine:** Furrocity Engine
 > **Authors:** Cotton Le Sergal & Shluggo
 
@@ -15,25 +15,26 @@
 5. [Creating Scenes](#5-creating-scenes)
 6. [Creating Locations](#6-creating-locations)
 7. [Travel System](#7-travel-system)
-8. [Creating Enemies](#8-creating-enemies)
-9. [Creating NPCs & Merchants](#9-creating-npcs--merchants)
-10. [Merchant System](#10-merchant-system)
-11. [Fame, Titles & Infamy](#11-fame-titles--infamy)
-12. [Local/Global Reputation & Rumor System](#12-localglobal-reputation--rumor-system)
-13. [Location Services (Church, Clinic, Nursery)](#13-location-services-church-clinic-nursery)
-14. [Public Events, Discovery & Barring System](#14-public-events-discovery--barring-system)
-15. [Creating Items](#15-creating-items)
-16. [Inventory System](#16-inventory-system)
-17. [Loot Tables](#17-loot-tables)
-18. [Effects & Status System](#18-effects--status-system)
-19. [Substance System](#19-substance-system)
-20. [Encounter System](#20-encounter-system)
-21. [Paperdoll System](#21-paperdoll-system)
-22. [Player State Schema](#22-player-state-schema)
-23. [Condition Reference](#23-condition-reference)
-24. [Effect Actions Reference](#24-effect-actions-reference)
-25. [Adding New Content](#25-adding-new-content)
-26. [Performance & Optimization](#26-performance--optimization)
+8. [Expedition System](#8-expedition-system)
+9. [Creating Enemies](#9-creating-enemies)
+10. [Creating NPCs & Merchants](#10-creating-npcs--merchants)
+11. [Merchant System](#11-merchant-system)
+12. [Fame, Titles & Infamy](#12-fame-titles--infamy)
+13. [Local/Global Reputation & Rumor System](#13-localglobal-reputation--rumor-system)
+14. [Location Services (Church, Clinic, Nursery)](#14-location-services-church-clinic-nursery)
+15. [Public Events, Discovery & Barring System](#15-public-events-discovery--barring-system)
+16. [Creating Items](#16-creating-items)
+17. [Inventory System](#17-inventory-system)
+18. [Loot Tables](#18-loot-tables)
+19. [Effects & Status System](#19-effects--status-system)
+20. [Substance System](#20-substance-system)
+21. [Encounter System](#21-encounter-system)
+22. [Paperdoll System](#22-paperdoll-system)
+23. [Player State Schema](#23-player-state-schema)
+24. [Condition Reference](#24-condition-reference)
+25. [Effect Actions Reference](#25-effect-actions-reference)
+26. [Adding New Content](#26-adding-new-content)
+27. [Performance & Optimization](#27-performance--optimization)
 
 ---
 
@@ -78,6 +79,8 @@ furrocity/
 │       ├── travel/
 │       │   ├── TravelModal.jsx          # Map-based travel UI
 │       │   ├── TravelModal.css          # Travel modal styles
+│       │   ├── ExpeditionScene.jsx      # Region-to-region travel UI
+│       │   ├── ExpeditionScene.css      # Expedition scene styles
 │       │   ├── MapView.jsx              # Local/World map renderer
 │       │   ├── LocationMarker.jsx       # Clickable map markers
 │       │   └── RegionOverlay.jsx        # World map regions
@@ -104,6 +107,7 @@ furrocity/
 │   ├── ConditionEvaluator.js # Condition checking
 │   ├── UnlockSystem.js       # Location/content unlocking
 │   ├── LocationSystem.js     # Travel & region management
+│   ├── ExpeditionSystem.js   # Region-to-region travel
 │   └── SaveSystem.js         # Save/load
 │
 ├── public/
@@ -895,7 +899,196 @@ class LocationSystem {
 
 ---
 
-## 8. Creating Enemies
+## 8. Expedition System
+
+The expedition system handles region-to-region travel with dedicated travel mechanics, stamina management, and random events.
+
+### Overview
+
+When traveling between regions on the world map, players enter an **expedition** - a journey that takes time, consumes travel stamina, and may trigger encounters or discoveries.
+
+### Region Distance Data
+
+Regions must define distances to their neighbors in `neighborDistances`:
+
+**File: `locations/regions.json`**
+
+```json
+{
+  "id": "crossroads",
+  "name": "Crossroads Region",
+  "neighborRegions": ["darkwood", "mountain_pass", "plains"],
+  "neighborDistances": {
+    "darkwood": {
+      "distance": 50,
+      "terrain": "forest_edge",
+      "dangerLevel": 2
+    },
+    "mountain_pass": {
+      "distance": 80,
+      "terrain": "mountain_trail",
+      "dangerLevel": 3
+    },
+    "plains": {
+      "distance": 40,
+      "terrain": "road",
+      "dangerLevel": 1
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `distance` | number | Distance in miles (affects travel time) |
+| `terrain` | string | Terrain type (affects loot tables, backgrounds) |
+| `dangerLevel` | number | 1-5, affects encounter frequency |
+
+### Terrain Types
+
+| Terrain | Description | Scavenge Loot |
+|---------|-------------|---------------|
+| `road` | Safe traveled path | coins, cloth, rope |
+| `forest_edge` | Forest boundary | healing herbs, branches, mushrooms |
+| `mountain_trail` | Mountain path | ore chunks, gemstones, climbing gear |
+| `corrupted_path` | Dark magic area | dark essence, corrupted herbs, demon teeth |
+| `desert_edge` | Desert boundary | cactus water, sand gems |
+
+### Travel Stamina
+
+Travel stamina is separate from combat stamina and determines how far you can travel before resting.
+
+| Stat | Base Value | Description |
+|------|------------|-------------|
+| `travelStamina` | 100 | Current stamina |
+| `maxTravelStamina` | 100 + (player.stats.stamina × 5) | Maximum stamina |
+| `staminaPerProgress` | 15 | Stamina cost per progress action |
+| `minStaminaToProgress` | 10 | Minimum required to continue |
+
+### Expedition Actions
+
+| Action | Stamina Cost | Time | Description |
+|--------|--------------|------|-------------|
+| **Progress** | 15 | 2 hours | Move toward destination |
+| **Rest** | +30 to +70 | 4 hours | Recover stamina (bonus with camp) |
+| **Scavenge** | 0 | 1 hour | Search for resources |
+| **Set Camp** | 0 | 0 | Set up camp to reduce encounters |
+| **Toggle Torch** | 0 | 0 | Light/extinguish torch |
+
+### Progress Calculation
+
+Progress distance is calculated based on current stamina:
+
+```javascript
+staminaRatio = travelStamina / maxTravelStamina;
+multiplier = 0.3 + (staminaRatio * 1.2);  // 0.3 to 1.5
+distance = 10 * multiplier;  // 3 to 15 miles per progress
+```
+
+### Camp Types
+
+| Camp Type | Stamina Recovery | Encounter Reduction |
+|-----------|------------------|---------------------|
+| None | +30 | 0% |
+| `basic` | +50 | 30% |
+| `tent` | +70 | 50% |
+| `pavilion` | +80 | 70% |
+
+### Encounter Chance Modifiers
+
+Base encounter chance is 15%, modified by:
+
+| Condition | Modifier |
+|-----------|----------|
+| Night without torch | ×2.0 |
+| Torch lit | ×0.5 |
+| Basic camp | ×0.7 |
+| Tent | ×0.5 |
+| Pavilion | ×0.3 |
+| Torch + camp combined | ×0.8 (additional) |
+| Danger level | ×(1 + (dangerLevel - 1) × 0.2) |
+
+### Scavenging Results
+
+| Outcome | Chance | Result |
+|---------|--------|--------|
+| Nothing | 30% | No items found |
+| Food | 25% | Foraged berries (1-3) |
+| Water | 15% | Fresh water flask |
+| Loot | 15% | Terrain-specific items |
+| Encounter | 10% | Combat encounter triggered |
+| Hidden Location | 5% | Discover secret area |
+
+### Day/Night Cycle
+
+Time progresses during expeditions:
+
+| Time Period | Hours | Icon | Night? |
+|-------------|-------|------|--------|
+| Morning | 6-11 | 🌅 | No |
+| Afternoon | 12-17 | ☀️ | No |
+| Evening | 18-20 | 🌆 | No |
+| Night | 21-5 | 🌙 | Yes |
+
+### Player State: Expedition
+
+```javascript
+expedition: {
+  current: null,           // Active expedition object
+  baseTravelStamina: 100,
+  history: [],             // Past expeditions
+  perks: [],               // Unlocked travel perks
+  stats: {
+    totalDistance: 0,
+    totalExpeditions: 0,
+    completedExpeditions: 0,
+    abandonedExpeditions: 0,
+    encountersWhileTraveling: 0,
+    locationsDiscovered: 0,
+    totalHoursOnRoad: 0
+  }
+}
+```
+
+### Travel Perks
+
+Unlockable perks for experienced travelers:
+
+| Perk | Effect |
+|------|--------|
+| `efficient_traveler` | 10% less stamina use |
+| `night_owl` | Reduced night encounter penalty |
+| `scavenger` | +10% scavenge success |
+| `pathfinder` | +5% hidden location discovery |
+| `pack_mule` | Can carry items found during travel |
+
+### ExpeditionSystem API
+
+```javascript
+const expeditionSystem = new ExpeditionSystem({
+  gameTimeProvider: () => ({ currentDay, currentHour, isNight }),
+  getRegion: (regionId) => locationSystem.getRegion(regionId),
+  encounterTables: {}
+});
+
+// Start expedition
+const expedition = expeditionSystem.startExpedition(fromRegionId, toRegionId, playerState);
+
+// Actions
+const progressResult = expeditionSystem.progress(expedition, playerState);
+const restResult = expeditionSystem.rest(expedition, playerState);
+const scavengeResult = expeditionSystem.scavenge(expedition, playerState);
+expeditionSystem.setCamp(expedition, 'tent');
+expeditionSystem.toggleTorch(expedition, true);
+
+// Get summary
+const summary = expeditionSystem.getExpeditionSummary(expedition);
+// { progress, distanceTraveled, distanceRemaining, stamina, staminaPercent, ... }
+```
+
+---
+
+## 9. Creating Enemies
 
 ### Basic Enemy
 
@@ -966,7 +1159,7 @@ class LocationSystem {
 
 ---
 
-## 9. Creating NPCs & Merchants
+## 10. Creating NPCs & Merchants
 
 ### Basic NPC
 
@@ -998,7 +1191,7 @@ class LocationSystem {
 
 ---
 
-## 10. Merchant System
+## 11. Merchant System
 
 The merchant system supports tag-based filtering and dynamic pricing.
 
@@ -1092,7 +1285,7 @@ class MerchantSystem {
 
 ---
 
-## 11. Fame, Titles & Infamy
+## 12. Fame, Titles & Infamy
 
 ### Player State Extensions
 
@@ -1177,7 +1370,7 @@ class FameSystem {
 
 ---
 
-## 12. Local/Global Reputation & Rumor System
+## 13. Local/Global Reputation & Rumor System
 
 The reputation system tracks fame and infamy both locally (per-location) and globally. Rumors about the player can spread between locations, and NPCs may confront the player about them.
 
@@ -1463,7 +1656,7 @@ config: {
 
 ---
 
-## 13. Location Services (Church, Clinic, Nursery)
+## 14. Location Services (Church, Clinic, Nursery)
 
 The Location Services system provides specialized healing and treatment options at specific location types. Each service type handles different conditions.
 
@@ -1666,7 +1859,7 @@ Add service triggers through scene effects:
 
 ---
 
-## 14. Public Events, Discovery & Barring System
+## 15. Public Events, Discovery & Barring System
 
 This system handles what happens when NSFW events occur in public, hidden location tags, and location access restrictions.
 
@@ -1909,7 +2102,7 @@ discoveryProgress: {
 
 ---
 
-## 15. Creating Items
+## 16. Creating Items
 
 ### Item Types
 
@@ -2018,7 +2211,7 @@ discoveryProgress: {
 
 ---
 
-## 16. Inventory System
+## 17. Inventory System
 
 ### Item User Flags
 
@@ -2069,7 +2262,7 @@ class InventorySystem {
 
 ---
 
-## 17. Loot Tables
+## 18. Loot Tables
 
 ### Basic Loot Table
 
@@ -2129,7 +2322,7 @@ class InventorySystem {
 
 ---
 
-## 18. Effects & Status System
+## 19. Effects & Status System
 
 All effects use turn-based or action-based durations (no real-time).
 
@@ -2237,7 +2430,7 @@ All effects use turn-based or action-based durations (no real-time).
 
 ---
 
-## 19. Substance System
+## 20. Substance System
 
 All substance timing uses turn-based durations (actions, turns, days) rather than real-time milliseconds.
 
@@ -2322,7 +2515,7 @@ All substance timing uses turn-based durations (actions, turns, days) rather tha
 
 ---
 
-## 20. Encounter System
+## 21. Encounter System
 
 ### Encounter Types
 
@@ -2368,7 +2561,7 @@ All substance timing uses turn-based durations (actions, turns, days) rather tha
 
 ---
 
-## 21. Paperdoll System
+## 22. Paperdoll System
 
 ### Body Regions
 
@@ -2412,7 +2605,7 @@ All substance timing uses turn-based durations (actions, turns, days) rather tha
 
 ---
 
-## 22. Player State Schema
+## 23. Player State Schema
 
 ```javascript
 const playerState = {
@@ -2465,7 +2658,7 @@ const playerState = {
 
 ---
 
-## 23. Condition Reference
+## 24. Condition Reference
 
 ### Stat Conditions
 ```json
@@ -2515,7 +2708,7 @@ const playerState = {
 
 ---
 
-## 24. Effect Actions Reference
+## 25. Effect Actions Reference
 
 ### Stat Modifications
 ```json
@@ -2556,7 +2749,7 @@ const playerState = {
 
 ---
 
-## 25. Adding New Content
+## 26. Adding New Content
 
 ### Step-by-Step: Adding a New Merchant
 
@@ -2632,7 +2825,7 @@ const playerState = {
 
 ---
 
-## 26. Performance & Optimization
+## 27. Performance & Optimization
 
 ### Best Practices
 

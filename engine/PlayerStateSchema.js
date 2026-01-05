@@ -572,6 +572,66 @@ export const comprehensivePlayerState = {
   unlockedFastTravel: [],
 
   // ============================================================================
+  // EXPEDITION / REGION TRAVEL STATE
+  // ============================================================================
+  expedition: {
+    // Current expedition (null when not traveling between regions)
+    current: null,
+    // {
+    //   fromRegion: "region_id",
+    //   toRegion: "region_id",
+    //   fromRegionName: "Region Name",
+    //   toRegionName: "Destination Name",
+    //   totalDistance: 100,
+    //   distanceTraveled: 0,
+    //   terrain: "forest_edge",
+    //   dangerLevel: 2,
+    //   travelStamina: 100,
+    //   maxTravelStamina: 100,
+    //   hasTorch: false,
+    //   campType: null,      // 'basic' | 'tent' | 'pavilion' | null
+    //   hoursElapsed: 0,
+    //   discoveries: [],
+    //   encounters: [],
+    //   scavengeResults: [],
+    //   isComplete: false
+    // }
+
+    // Base travel stamina (modified by stats)
+    baseTravelStamina: 100,
+
+    // Expedition history
+    history: [
+      // {
+      //   fromRegion, toRegion,
+      //   startTime, endTime,
+      //   totalDistance, hoursElapsed,
+      //   encounters: 0, discoveries: [],
+      //   completed: true
+      // }
+    ],
+
+    // Unlocked travel perks
+    perks: [],
+    // 'efficient_traveler' - 10% less stamina use
+    // 'night_owl' - reduced night encounter penalty
+    // 'scavenger' - +10% scavenge success
+    // 'pathfinder' - +5% hidden location discovery
+    // 'pack_mule' - carry items found during travel
+
+    // Statistics
+    stats: {
+      totalDistance: 0,
+      totalExpeditions: 0,
+      completedExpeditions: 0,
+      abandonedExpeditions: 0,
+      encountersWhileTraveling: 0,
+      locationsDiscovered: 0,
+      totalHoursOnRoad: 0
+    }
+  },
+
+  // ============================================================================
   // LOCATION DISCOVERY & TRACKING
   // ============================================================================
 

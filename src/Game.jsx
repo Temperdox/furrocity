@@ -3,7 +3,9 @@ import GameConfig from './GameConfig.js';
 import MerchantView from './components/inventory/MerchantView.jsx';
 import UniversalInventory from './components/inventory/UniversalInventory.jsx';
 import TravelModal from './components/travel/TravelModal.jsx';
+import ExpeditionScene from './components/travel/ExpeditionScene.jsx';
 import LocationTitle from './components/ui/LocationTitle.jsx';
+import { ExpeditionSystem } from '../engine/ExpeditionSystem.js';
 import { MerchantSystem } from '../engine/MerchantSystem.js';
 import { InventorySystem } from '../engine/InventorySystem.js';
 import { FameSystem } from '../engine/FameSystem.js';
@@ -5742,7 +5744,11 @@ const Game = () => {
   const [mapView, setMapView] = useState('local');
   const [showLocationTitle, setShowLocationTitle] = useState(false);
   const [locationTitleData, setLocationTitleData] = useState(null);
-  
+
+  // Expedition state (region-to-region travel)
+  const [currentExpedition, setCurrentExpedition] = useState(null);
+  const [showExpedition, setShowExpedition] = useState(false);
+
   // Combat state
   const [combatEnemies, setCombatEnemies] = useState([]);
 
@@ -5778,6 +5784,7 @@ const Game = () => {
   const discoverySystemRef = useRef(null);
   const publicEventSystemRef = useRef(null);
   const barringSystemRef = useRef(null);
+  const expeditionSystemRef = useRef(null);
   const systemsInitializedRef = useRef(false);
 
   // Initialize engine systems
@@ -5878,6 +5885,17 @@ const Game = () => {
         rumorSystemRef.current,
         discoverySystemRef.current
       );
+
+      // Initialize expedition system for region-to-region travel
+      expeditionSystemRef.current = new ExpeditionSystem({
+        gameTimeProvider: () => ({
+          currentDay: player?.currentTime?.day || 1,
+          currentHour: player?.currentTime?.hour || 12,
+          isNight: (player?.currentTime?.hour || 12) < 6 || (player?.currentTime?.hour || 12) >= 20
+        }),
+        getRegion: (regionId) => locationSystemRef.current?.getRegion(regionId),
+        encounterTables: {}  // Will be loaded from datapacks
+      });
 
       // Initialize merchant data from GameData merchants
       // Since we don't have full DataRegistry integration, we'll manually populate merchants
@@ -6441,6 +6459,221 @@ const Game = () => {
     }
   };
 
+  // ============================================================================
+  // EXPEDITION HANDLERS (Region-to-Region Travel)
+  // ============================================================================
+
+  // Handle travel to a different region (triggers expedition)
+  const handleTravelToRegion = useCallback((regionId, regionData) => {
+    if (!expeditionSystemRef.current || !locationSystemRef.current) return;
+
+    // Check if region is unlocked
+    const unlockStatus = regionData?.unlockStatus;
+    if (!unlockStatus?.unlocked) {
+      toast.warning('Cannot travel to ' + (regionData?.name || regionId), 'Region is locked');
+      return;
+    }
+
+    // Start expedition
+    const expedition = expeditionSystemRef.current.startExpedition(
+      player.currentRegion,
+      regionId,
+      player
+    );
+
+    if (!expedition) {
+      toast.error('Cannot start expedition', 'No route available');
+      return;
+    }
+
+    // Set expedition state and show expedition screen
+    setCurrentExpedition(expedition);
+    setShowExpedition(true);
+    setShowTravelModal(false);
+    toast.info(`Expedition to ${expedition.toRegionName}`, `Distance: ${expedition.totalDistance} miles`);
+  }, [player, toast]);
+
+  // Handle expedition progress action
+  const handleExpeditionProgress = useCallback(() => {
+    if (!currentExpedition || !expeditionSystemRef.current) return null;
+
+    const result = expeditionSystemRef.current.progress(currentExpedition, player);
+
+    // Update expedition state
+    setCurrentExpedition({ ...currentExpedition });
+
+    // Update game time
+    setPlayer(prev => ({
+      ...prev,
+      currentTime: {
+        ...prev.currentTime,
+        hour: ((prev.currentTime?.hour || 0) + result.hoursElapsed) % 24,
+        day: (prev.currentTime?.day || 1) + Math.floor(((prev.currentTime?.hour || 0) + result.hoursElapsed) / 24)
+      }
+    }));
+
+    return result;
+  }, [currentExpedition, player]);
+
+  // Handle expedition rest action
+  const handleExpeditionRest = useCallback(() => {
+    if (!currentExpedition || !expeditionSystemRef.current) return null;
+
+    const result = expeditionSystemRef.current.rest(currentExpedition, player);
+
+    // Update expedition state
+    setCurrentExpedition({ ...currentExpedition });
+
+    // Update game time
+    setPlayer(prev => ({
+      ...prev,
+      currentTime: {
+        ...prev.currentTime,
+        hour: ((prev.currentTime?.hour || 0) + result.hoursElapsed) % 24,
+        day: (prev.currentTime?.day || 1) + Math.floor(((prev.currentTime?.hour || 0) + result.hoursElapsed) / 24)
+      }
+    }));
+
+    return result;
+  }, [currentExpedition, player]);
+
+  // Handle expedition scavenge action
+  const handleExpeditionScavenge = useCallback(() => {
+    if (!currentExpedition || !expeditionSystemRef.current) return null;
+
+    const result = expeditionSystemRef.current.scavenge(currentExpedition, player);
+
+    // Update expedition state
+    setCurrentExpedition({ ...currentExpedition });
+
+    // Add found items to inventory
+    if (result.items?.length > 0 && inventorySystemRef.current) {
+      result.items.forEach(item => {
+        // Add items to player inventory
+        toast.success(`Found: ${item.name}`, `x${item.count}`);
+      });
+    }
+
+    // Update game time
+    setPlayer(prev => ({
+      ...prev,
+      currentTime: {
+        ...prev.currentTime,
+        hour: ((prev.currentTime?.hour || 0) + result.hoursElapsed) % 24,
+        day: (prev.currentTime?.day || 1) + Math.floor(((prev.currentTime?.hour || 0) + result.hoursElapsed) / 24)
+      }
+    }));
+
+    return result;
+  }, [currentExpedition, player, toast]);
+
+  // Handle setting up camp
+  const handleSetCamp = useCallback((campType) => {
+    if (!currentExpedition || !expeditionSystemRef.current) return;
+
+    expeditionSystemRef.current.setCamp(currentExpedition, campType);
+    setCurrentExpedition({ ...currentExpedition });
+  }, [currentExpedition]);
+
+  // Handle toggling torch
+  const handleToggleTorch = useCallback((lit) => {
+    if (!currentExpedition || !expeditionSystemRef.current) return;
+
+    expeditionSystemRef.current.toggleTorch(currentExpedition, lit);
+    setCurrentExpedition({ ...currentExpedition });
+  }, [currentExpedition]);
+
+  // Handle expedition completion
+  const handleExpeditionComplete = useCallback(() => {
+    if (!currentExpedition) return;
+
+    // Move player to new region
+    const destinationRegion = currentExpedition.toRegion;
+    const regionData = locationSystemRef.current?.getRegion(destinationRegion);
+
+    // Get first location in the region
+    const firstLocation = regionData?.childLocations?.[0] || destinationRegion;
+
+    setPlayer(prev => ({
+      ...prev,
+      currentRegion: destinationRegion,
+      currentLocation: firstLocation,
+      visitedRegions: prev.visitedRegions?.includes(destinationRegion)
+        ? prev.visitedRegions
+        : [...(prev.visitedRegions || []), destinationRegion],
+      expedition: {
+        ...prev.expedition,
+        current: null,
+        stats: {
+          ...prev.expedition?.stats,
+          totalDistance: (prev.expedition?.stats?.totalDistance || 0) + currentExpedition.totalDistance,
+          totalExpeditions: (prev.expedition?.stats?.totalExpeditions || 0) + 1,
+          completedExpeditions: (prev.expedition?.stats?.completedExpeditions || 0) + 1,
+          totalHoursOnRoad: (prev.expedition?.stats?.totalHoursOnRoad || 0) + currentExpedition.hoursElapsed,
+          locationsDiscovered: (prev.expedition?.stats?.locationsDiscovered || 0) + currentExpedition.discoveries.length
+        },
+        history: [
+          ...(prev.expedition?.history || []),
+          {
+            fromRegion: currentExpedition.fromRegion,
+            toRegion: currentExpedition.toRegion,
+            totalDistance: currentExpedition.totalDistance,
+            hoursElapsed: currentExpedition.hoursElapsed,
+            encounters: currentExpedition.encounters?.length || 0,
+            discoveries: currentExpedition.discoveries,
+            completed: true
+          }
+        ]
+      }
+    }));
+
+    // Show arrival title
+    if (regionData) {
+      const titleData = locationSystemRef.current.getTitleDisplayData(regionData, player);
+      setLocationTitleData(titleData);
+      setShowLocationTitle(true);
+    }
+
+    toast.success(`Arrived at ${currentExpedition.toRegionName}!`, 'Expedition complete');
+    setCurrentExpedition(null);
+    setShowExpedition(false);
+  }, [currentExpedition, player, toast]);
+
+  // Handle expedition encounter
+  const handleExpeditionEncounter = useCallback((encounter) => {
+    if (!encounter) return;
+
+    // Generate combat enemies
+    const enemies = CombatSystem.generateEnemiesFromIds(encounter.enemies, player.level, gameState.difficulty);
+    if (enemies && enemies.length > 0) {
+      setCombatEnemies(enemies);
+      setShowExpedition(false);
+      setScreen('combat');
+    }
+  }, [player, gameState]);
+
+  // Handle abandoning expedition
+  const handleExpeditionCancel = useCallback(() => {
+    if (!currentExpedition) return;
+
+    // Update stats for abandoned expedition
+    setPlayer(prev => ({
+      ...prev,
+      expedition: {
+        ...prev.expedition,
+        current: null,
+        stats: {
+          ...prev.expedition?.stats,
+          abandonedExpeditions: (prev.expedition?.stats?.abandonedExpeditions || 0) + 1
+        }
+      }
+    }));
+
+    toast.warning('Expedition abandoned', 'Returning to starting region');
+    setCurrentExpedition(null);
+    setShowExpedition(false);
+  }, [currentExpedition, toast]);
+
   // Rumor confrontation handlers
   const handleRumorResponse = useCallback((responseId) => {
     if (!rumorConfrontationData || !rumorSystemRef.current) return;
@@ -6887,9 +7120,28 @@ const Game = () => {
               gameState={gameState}
               locationSystem={locationSystemRef.current}
               onTravel={handleTravel}
+              onTravelToRegion={handleTravelToRegion}
               mapView={mapView}
               onMapViewChange={setMapView}
             />
+            {showExpedition && currentExpedition && (
+              <ExpeditionScene
+                expedition={currentExpedition}
+                expeditionSystem={expeditionSystemRef.current}
+                playerState={player}
+                gameTime={player.currentTime}
+                FullBodyPaperdoll={FullBodyPaperdoll}
+                onProgress={handleExpeditionProgress}
+                onRest={handleExpeditionRest}
+                onScavenge={handleExpeditionScavenge}
+                onOpenInventory={() => setShowMerchantView(false) || setScreen('inventory')}
+                onSetCamp={handleSetCamp}
+                onToggleTorch={handleToggleTorch}
+                onComplete={handleExpeditionComplete}
+                onEncounter={handleExpeditionEncounter}
+                onCancel={handleExpeditionCancel}
+              />
+            )}
             {showLocationTitle && locationTitleData && (
               <LocationTitle
                 name={locationTitleData.name}

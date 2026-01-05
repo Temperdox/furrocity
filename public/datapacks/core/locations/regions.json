@@ -25,7 +25,13 @@
       "residential_area"
     ],
     "neighborRegions": ["darkwood", "mountain_pass", "plains"],
+    "neighborDistances": {
+      "darkwood": { "distance": 50, "terrain": "forest_edge", "dangerLevel": 2 },
+      "mountain_pass": { "distance": 80, "terrain": "mountain_trail", "dangerLevel": 3 },
+      "plains": { "distance": 40, "terrain": "road", "dangerLevel": 1 }
+    },
     "tags": ["safe", "town", "trading"],
+    "travelTags": ["road", "safe_travel"],
     "ambiance": {
       "music": "peaceful_town",
       "sounds": ["crowd_chatter", "merchant_calls", "birds"]
@@ -65,7 +71,13 @@
       "ancient_ruins"
     ],
     "neighborRegions": ["crossroads", "demon_realm", "mountain_pass"],
+    "neighborDistances": {
+      "crossroads": { "distance": 50, "terrain": "forest_edge", "dangerLevel": 2 },
+      "demon_realm": { "distance": 120, "terrain": "corrupted_path", "dangerLevel": 5 },
+      "mountain_pass": { "distance": 70, "terrain": "forest_mountain", "dangerLevel": 4 }
+    },
     "tags": ["dangerous", "forest", "corrupted", "magic"],
+    "travelTags": ["forest", "dangerous", "corrupted"],
     "ambiance": {
       "music": "dark_forest",
       "sounds": ["wind_howling", "branches_creaking", "distant_howls"]
@@ -104,7 +116,13 @@
       "summit_pass"
     ],
     "neighborRegions": ["crossroads", "darkwood", "highland_fortress"],
+    "neighborDistances": {
+      "crossroads": { "distance": 80, "terrain": "mountain_trail", "dangerLevel": 3 },
+      "darkwood": { "distance": 70, "terrain": "forest_mountain", "dangerLevel": 4 },
+      "highland_fortress": { "distance": 60, "terrain": "mountain_path", "dangerLevel": 4 }
+    },
     "tags": ["dangerous", "mountain", "bandits"],
+    "travelTags": ["mountain", "dangerous", "bandits"],
     "ambiance": {
       "music": "mountain_wind",
       "sounds": ["wind_gusts", "rocks_falling", "eagle_cries"]
@@ -142,7 +160,12 @@
       "wild_horse_meadow"
     ],
     "neighborRegions": ["crossroads", "desert_wastes"],
+    "neighborDistances": {
+      "crossroads": { "distance": 40, "terrain": "road", "dangerLevel": 1 },
+      "desert_wastes": { "distance": 100, "terrain": "desert_edge", "dangerLevel": 3 }
+    },
     "tags": ["outdoor", "plains", "nomads"],
+    "travelTags": ["plains", "open"],
     "ambiance": {
       "music": "open_plains",
       "sounds": ["wind_grass", "horse_neighs", "distant_drums"]
@@ -182,7 +205,11 @@
       "slave_pens"
     ],
     "neighborRegions": ["darkwood"],
+    "neighborDistances": {
+      "darkwood": { "distance": 120, "terrain": "corrupted_path", "dangerLevel": 5 }
+    },
     "tags": ["dangerous", "demon", "corrupted", "nsfw"],
+    "travelTags": ["corrupted", "demon", "dangerous"],
     "ambiance": {
       "music": "demonic_ambient",
       "sounds": ["screams", "dark_whispers", "chains"]

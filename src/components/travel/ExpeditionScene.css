@@ -1,0 +1,628 @@
+/**
+ * ExpeditionScene.css - Styles for region-to-region travel interface
+ */
+
+/* Overlay */
+.expedition-scene-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Main Scene Container */
+.expedition-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 1200px;
+  max-height: 800px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Background */
+.expedition-background {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(2px);
+  opacity: 0.4;
+}
+
+/* Terrain-specific backgrounds */
+.expedition-background.terrain-forest-edge {
+  background: linear-gradient(180deg, #1a3a1a 0%, #0d1f0d 100%);
+}
+
+.expedition-background.terrain-road {
+  background: linear-gradient(180deg, #2a2a3a 0%, #1a1a2a 100%);
+}
+
+.expedition-background.terrain-mountain-trail {
+  background: linear-gradient(180deg, #3a3a4a 0%, #1a1a2a 100%);
+}
+
+.expedition-background.terrain-corrupted-path {
+  background: linear-gradient(180deg, #3a1a3a 0%, #1a0d1a 100%);
+}
+
+.expedition-background.terrain-desert-edge {
+  background: linear-gradient(180deg, #4a3a1a 0%, #2a1a0a 100%);
+}
+
+.expedition-background.terrain-default {
+  background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
+}
+
+/* Time overlay */
+.expedition-time-overlay {
+  position: absolute;
+  inset: 0;
+  transition: background 1s ease;
+}
+
+.expedition-time-overlay.day {
+  background: rgba(255, 200, 100, 0.05);
+}
+
+.expedition-time-overlay.night {
+  background: rgba(20, 20, 60, 0.3);
+}
+
+/* Content Layout */
+.expedition-content {
+  position: relative;
+  flex: 1;
+  display: flex;
+  gap: 24px;
+  padding: 24px;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* Left Panel */
+.expedition-left-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 500px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(61, 90, 128, 0.5);
+  border-radius: 12px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+}
+
+/* Header */
+.expedition-header {
+  text-align: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(61, 90, 128, 0.3);
+}
+
+.expedition-title {
+  margin: 0 0 8px;
+  font-size: 1.6rem;
+  color: #ffd700;
+  font-family: 'Cinzel', serif;
+  text-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.expedition-route {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 1rem;
+  color: #e0e0e0;
+}
+
+.expedition-from {
+  color: #8b9dc3;
+}
+
+.expedition-arrow {
+  color: #ffd700;
+  font-size: 1.2rem;
+}
+
+.expedition-to {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+/* Status Section */
+.expedition-status {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.expedition-time,
+.expedition-terrain,
+.expedition-danger,
+.expedition-hours {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.time-icon {
+  font-size: 1.2rem;
+}
+
+.time-text {
+  color: #e0e0e0;
+  font-weight: 600;
+}
+
+.time-detail {
+  color: #8b9dc3;
+  font-size: 0.8rem;
+}
+
+.terrain-label,
+.danger-label,
+.hours-label {
+  color: #8b9dc3;
+}
+
+.terrain-name {
+  color: #e0e0e0;
+  text-transform: capitalize;
+}
+
+.danger-level {
+  letter-spacing: -2px;
+}
+
+.hours-value {
+  color: #e0e0e0;
+}
+
+/* Equipment Status */
+.expedition-equipment {
+  display: flex;
+  gap: 12px;
+}
+
+.equipment-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(61, 90, 128, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.equipment-item:hover {
+  background: rgba(61, 90, 128, 0.2);
+  border-color: rgba(61, 90, 128, 0.6);
+}
+
+.equipment-item.active {
+  opacity: 1;
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.equipment-item.torch.active {
+  border-color: #f97316;
+  background: rgba(249, 115, 22, 0.1);
+}
+
+.equipment-icon {
+  font-size: 1.5rem;
+}
+
+.equipment-label {
+  font-size: 0.8rem;
+  color: #8b9dc3;
+}
+
+.equipment-status {
+  font-size: 0.75rem;
+  color: #e0e0e0;
+  text-transform: capitalize;
+}
+
+/* Warning Message */
+.expedition-warning {
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 6px;
+  color: #fca5a5;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* Stamina Bar */
+.expedition-stamina {
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.stamina-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.stamina-label {
+  color: #8b9dc3;
+  font-size: 0.9rem;
+}
+
+.stamina-value {
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.stamina-bar-container {
+  height: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(61, 90, 128, 0.3);
+}
+
+.stamina-bar-fill {
+  height: 100%;
+  transition: width 0.5s ease, background-color 0.3s ease;
+  border-radius: 8px;
+}
+
+/* Action Buttons */
+.expedition-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.expedition-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.expedition-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-icon {
+  font-size: 1.4rem;
+}
+
+.btn-text {
+  font-size: 0.85rem;
+}
+
+.expedition-btn--progress {
+  background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.expedition-btn--progress:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+}
+
+.expedition-btn--rest {
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.expedition-btn--rest:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.expedition-btn--scavenge {
+  background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.expedition-btn--scavenge:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+}
+
+.expedition-btn--items {
+  background: linear-gradient(180deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.expedition-btn--items:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+}
+
+/* Camp Options */
+.expedition-camp-options {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.camp-options-label {
+  color: #8b9dc3;
+  font-size: 0.85rem;
+}
+
+.camp-buttons {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+.camp-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(61, 90, 128, 0.2);
+  border: 1px solid rgba(61, 90, 128, 0.4);
+  border-radius: 6px;
+  color: #8b9dc3;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.camp-btn:hover:not(:disabled) {
+  background: rgba(61, 90, 128, 0.4);
+  color: #e0e0e0;
+}
+
+.camp-btn.active {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.5);
+  color: #22c55e;
+}
+
+.camp-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Footer with Cancel */
+.expedition-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(61, 90, 128, 0.3);
+}
+
+.expedition-btn--cancel {
+  width: 100%;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.expedition-btn--cancel:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* Right Panel - Portrait */
+.expedition-right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 320px;
+}
+
+.expedition-portrait {
+  position: relative;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(61, 90, 128, 0.3);
+  border-radius: 12px;
+  transition: opacity 0.5s ease;
+}
+
+.expedition-portrait.fading {
+  opacity: 0.3;
+}
+
+/* Discoveries */
+.expedition-discoveries {
+  width: 100%;
+  padding: 12px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 8px;
+}
+
+.discoveries-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #22c55e;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.discoveries-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.discovery-item {
+  padding: 4px 0;
+  color: #a3e635;
+  font-size: 0.85rem;
+}
+
+.discovery-item::before {
+  content: '★ ';
+}
+
+/* Progress Bar at Bottom */
+.expedition-progress-bar-container {
+  position: relative;
+  padding: 16px 24px 24px;
+  background: rgba(0, 0, 0, 0.6);
+  border-top: 1px solid rgba(61, 90, 128, 0.3);
+  z-index: 2;
+}
+
+.expedition-progress-bar {
+  position: relative;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(61, 90, 128, 0.4);
+  overflow: visible;
+}
+
+.expedition-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+  border-radius: 12px;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+}
+
+.expedition-progress-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  transition: left 0.5s ease;
+  z-index: 3;
+}
+
+.expedition-progress-markers {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px;
+  pointer-events: none;
+}
+
+.progress-start,
+.progress-end {
+  font-size: 0.75rem;
+  color: #8b9dc3;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.progress-distance {
+  position: absolute;
+  left: 50%;
+  bottom: -22px;
+  transform: translateX(-50%);
+  font-size: 0.85rem;
+  color: #e0e0e0;
+  font-weight: 600;
+}
+
+/* Action Message Popup */
+.expedition-message {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 16px 32px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid #ffd700;
+  border-radius: 12px;
+  color: #ffd700;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  animation: messagePopIn 0.3s ease-out, messageFadeOut 0.3s ease-in 1.5s forwards;
+  z-index: 100;
+}
+
+@keyframes messagePopIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes messageFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .expedition-content {
+    flex-direction: column;
+  }
+
+  .expedition-left-panel {
+    max-width: 100%;
+  }
+
+  .expedition-right-panel {
+    max-width: 100%;
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .expedition-portrait {
+    max-width: 200px;
+  }
+}
