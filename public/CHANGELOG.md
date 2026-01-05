@@ -43,6 +43,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `rentProperty`: Begin renting a property
   - `makeRentPayment`: Pay rent on a property
   - `cancelRental`: Cancel property rental
+- **Enemy Scaling System**: Dynamic enemy stat generation
+  - Enemies can omit level, stats, resistances, rewards - engine calculates them
+  - Scaling based on player level, location danger, and enemy type
+  - Player stats affect rewards: luck → gold drops, intelligence → XP
+  - Equipment and effect bonuses (goldFind, xpBoost) apply to rewards
+  - 10 enemy types with unique stat profiles (beast, humanoid, undead, demon, etc.)
+  - Variant creation: weak, strong, elite, champion, boss versions
+  - Partial stat definitions supported (specify only what you want fixed)
 
 ### Changed
 - `handleSleep` now checks action requirements before allowing sleep
@@ -55,8 +63,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `engine/InputValidationSystem.js` - Input validation with formula support
 - `engine/LodgingSystem.js` - Inn room and rental property management
 - `engine/ActionRequirementSystem.js` - Action requirement checking
+- `engine/EnemyScalingSystem.js` - Dynamic enemy stat generation
 - `src/components/ui/SceneInputs.jsx` - React components for scene inputs
 - `src/components/ui/SceneInputs.css` - Styling for input components
+- `src/components/ui/SceneDisplay.jsx` - Comprehensive scene rendering component
+- `src/components/ui/SceneDisplay.css` - Scene display styling
 - `public/datapacks/core/lodging/lodging_config.json` - Lodging definitions
 - `public/datapacks/core/scenes/inn_rental_scenes.json` - Example inn scenes
 

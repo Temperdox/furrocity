@@ -1487,7 +1487,9 @@ const summary = timeSystem.getTimeSummary(time);
 
 ## 10. Creating Enemies
 
-### Basic Enemy
+### Basic Enemy (Full Definition)
+
+All stats explicitly defined:
 
 ```json
 {
@@ -1521,6 +1523,103 @@ const summary = timeSystem.getTimeSummary(time);
   "lootTable": "wolf_loot"
 }
 ```
+
+### Minimal Enemy (Dynamic Scaling)
+
+Leave stats undefined and the engine calculates them based on context:
+
+```json
+{
+  "id": "forest_wolf",
+  "name": "Forest Wolf",
+  "description": "A large gray wolf.",
+  "image": "/images/enemies/wolf.png",
+  "type": "beast",
+  "tags": ["beast", "wolf", "forest"],
+  "skills": [
+    { "id": "bite", "weight": 50 },
+    { "id": "claw_swipe", "weight": 30 }
+  ]
+}
+```
+
+The `EnemyScalingSystem` will calculate:
+- **level** - Based on player level + location danger level (±2 variance)
+- **stats** - Based on level, enemy type, and location danger
+- **resistances** - Based on enemy type and tags
+- **experienceReward** - Based on level, type, and player XP modifiers
+- **goldDrop** - Based on level, type, and player luck/gold find stats
+- **lootTable** - Defaults to `{type}_loot` or `{tag}_loot`
+
+### Dynamic Scaling Options
+
+Control scaling behavior per enemy:
+
+```json
+{
+  "id": "scaled_enemy",
+  "name": "Scaled Enemy",
+  "type": "beast",
+
+  "levelModifier": 2,
+  "minLevel": 5,
+  "maxLevel": 20,
+
+  "stats": {
+    "maxHp": 100
+  }
+}
+```
+
+| Property | Description |
+|----------|-------------|
+| `levelModifier` | Add/subtract from calculated level |
+| `minLevel` | Minimum level this enemy can be |
+| `maxLevel` | Maximum level this enemy can be |
+| Partial `stats` | Only specified stats are used; others are calculated |
+
+### Enemy Types
+
+Type affects base stats, resistances, and rewards:
+
+| Type | HP | ATK | DEF | SPD | Gold | XP |
+|------|-----|-----|-----|-----|------|-----|
+| `beast` | 1.0x | 1.1x | 0.8x | 1.2x | Low | 1.0x |
+| `humanoid` | 1.0x | 1.0x | 1.0x | 1.0x | Med | 1.1x |
+| `undead` | 1.2x | 0.9x | 1.1x | 0.7x | Low | 1.2x |
+| `demon` | 1.3x | 1.2x | 1.0x | 1.0x | High | 1.4x |
+| `elemental` | 0.9x | 1.3x | 0.9x | 1.1x | Med | 1.3x |
+| `construct` | 1.4x | 1.0x | 1.3x | 0.6x | Med | 1.2x |
+| `plant` | 1.1x | 0.8x | 1.0x | 0.5x | Low | 0.9x |
+| `slime` | 0.8x | 0.7x | 0.6x | 0.8x | Low | 0.7x |
+| `dragon` | 1.8x | 1.5x | 1.4x | 1.0x | High | 2.0x |
+| `boss` | 2.5x | 1.4x | 1.3x | 0.9x | Very High | 3.0x |
+
+### Creating Enemy Variants
+
+Programmatically create scaled versions:
+
+```javascript
+const system = new EnemyScalingSystem();
+const context = { player, location };
+
+// Create an elite version
+const eliteWolf = system.createVariant(wolfDef, 'elite', context);
+// Results in: "Elite Forest Wolf" with +3 level, 1.5x stats, 1.8x rewards
+
+// Available variants: weak, normal, strong, elite, champion, boss
+```
+
+### Player Modifiers Affecting Enemies
+
+These player stats affect enemy rewards:
+
+| Stat | Effect |
+|------|--------|
+| `luck` | Increases gold drop range |
+| `intelligence` | Increases XP reward |
+| `goldFind` (effect) | Multiplies gold drops |
+| `xpBoost` (effect) | Multiplies XP rewards |
 
 ### NSFW Enemy Behavior
 

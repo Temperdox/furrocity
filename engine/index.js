@@ -79,6 +79,14 @@ export { EncounterTableSystem } from './EncounterTableSystem.js';
 export { CombatOutcomeHandler } from './CombatOutcomeHandler.js';
 export { SceneSelector } from './SceneSelector.js';
 export { ConditionEvaluator } from './ConditionEvaluator.js';
+export {
+  EnemyScalingSystem,
+  ENEMY_TYPE_STATS,
+  ENEMY_TYPE_RESISTANCES,
+  DANGER_LEVEL_SCALING,
+  resolveEnemy,
+  resolveEnemies
+} from './EnemyScalingSystem.js';
 
 // =============================================================================
 // SUBSTANCE & EFFECT SYSTEMS
