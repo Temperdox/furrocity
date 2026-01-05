@@ -1,0 +1,436 @@
+{
+  "$schema": "../../schemas/scene.schema.json",
+  "scenes": [
+    {
+      "id": "weary_traveler_innkeeper",
+      "name": "The Weary Traveler - Innkeeper",
+      "description": "Interaction with Mary, the innkeeper at The Weary Traveler inn",
+      "location": "starting_inn",
+      "trigger": "interact_innkeeper",
+      "tags": ["inn", "lodging", "dialogue"],
+      "nodes": [
+        {
+          "type": "dialogue",
+          "speaker": "Mary",
+          "speakerImage": "/images/npcs/mary_innkeeper.png",
+          "text": "Welcome to The Weary Traveler! I'm Mary, the innkeeper. What can I do for you, dear?"
+        },
+        {
+          "type": "choice",
+          "prompt": "Mary waits patiently for your response.",
+          "choices": [
+            {
+              "id": "rent_room",
+              "text": "I'd like to rent a room.",
+              "goto": 2
+            },
+            {
+              "id": "check_room",
+              "text": "I already have a room here.",
+              "showIf": { "type": "has_lodging", "lodgingType": "inn_room", "locationId": "starting_inn" },
+              "goto": 10
+            },
+            {
+              "id": "buy_food",
+              "text": "What food do you have?",
+              "goto": 15
+            },
+            {
+              "id": "ask_rumors",
+              "text": "Heard any interesting rumors?",
+              "goto": 20
+            },
+            {
+              "id": "leave",
+              "text": "Nevermind, just passing through.",
+              "goto": 99
+            }
+          ]
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Mary",
+          "text": "Of course! We have three room options available. What suits your needs?",
+          "label": "room_selection"
+        },
+        {
+          "type": "choice",
+          "prompt": "Available Rooms:",
+          "choices": [
+            {
+              "id": "standard_single",
+              "text": "Standard Room - 10g per night",
+              "inputType": "button",
+              "enableIf": { "type": "hasGold", "amount": 10 },
+              "disabledReason": "Not enough gold",
+              "goto": 4
+            },
+            {
+              "id": "standard_multi",
+              "text": "Standard Room - Multiple nights:",
+              "inputType": "numberInput",
+              "inputConfig": {
+                "variable": "nightsToRent",
+                "placeholder": "Nights",
+                "defaultValue": 1,
+                "validation": {
+                  "type": "int",
+                  "min": 1,
+                  "dynamicMax": "Math.min(7, Math.floor(player.gold / 10))",
+                  "mustBeInteger": true
+                },
+                "showCost": true,
+                "costFormula": "value * 10",
+                "costLabel": "Total: {cost}g"
+              },
+              "enableIf": { "type": "hasGold", "amount": 10 },
+              "goto": 5
+            },
+            {
+              "id": "deluxe_room",
+              "text": "Deluxe Room - 25g per night",
+              "inputType": "button",
+              "enableIf": { "type": "hasGold", "amount": 25 },
+              "disabledReason": "Not enough gold (need 25g)",
+              "goto": 6
+            },
+            {
+              "id": "suite_room",
+              "text": "Innkeeper's Suite - 50g per night",
+              "inputType": "button",
+              "showIf": {
+                "or": [
+                  { "type": "flag", "flag": "vip_guest" },
+                  { "type": "stat", "stat": "charisma", "value": 8 }
+                ]
+              },
+              "enableIf": { "type": "hasGold", "amount": 50 },
+              "disabledReason": "Not enough gold (need 50g)",
+              "goto": 7
+            },
+            {
+              "id": "room_dropdown",
+              "text": "Choose from all options:",
+              "inputType": "dropdown",
+              "inputConfig": {
+                "variable": "selectedRoomType",
+                "options": [
+                  { "value": "standard", "label": "Standard Room (10g)", "cost": 10 },
+                  { "value": "deluxe", "label": "Deluxe Room (25g)", "cost": 25 },
+                  {
+                    "value": "suite",
+                    "label": "Innkeeper's Suite (50g)",
+                    "cost": 50,
+                    "showIf": {
+                      "or": [
+                        { "type": "flag", "flag": "vip_guest" },
+                        { "type": "stat", "stat": "charisma", "value": 8 }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "goto": 8
+            },
+            {
+              "id": "back",
+              "text": "Actually, let me think about it.",
+              "inputType": "button",
+              "goto": 1
+            }
+          ]
+        },
+        {
+          "type": "action",
+          "label": "rent_standard_single",
+          "actions": [
+            { "type": "rentRoom", "roomId": "weary_traveler_standard", "days": 1 }
+          ]
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Mary",
+          "text": "Wonderful! Here's your key. You've got the standard room for tonight. Enjoy your stay!",
+          "goto": 9
+        },
+        {
+          "type": "action",
+          "label": "rent_standard_multi",
+          "actions": [
+            { "type": "rentRoom", "roomId": "weary_traveler_standard", "days": "{nightsToRent}" }
+          ]
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Mary",
+          "text": "Perfect! Here's your key. You've got the standard room for {nightsToRent} night(s). Make yourself at home!",
+          "goto": 9
+        },
+        {
+          "type": "action",
+          "label": "rent_deluxe",
+          "actions": [
+            { "type": "rentRoom", "roomId": "weary_traveler_deluxe", "days": 1 }
+          ]
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Mary",
+          "text": "Excellent choice! The deluxe room has a lovely fireplace. Here's your key. Sleep well!",
+          "goto": 9
+        },
+        {
+          "type": "action",
+          "label": "rent_suite",
+          "actions": [
+            { "type": "rentRoom", "roomId": "weary_traveler_suite", "days": 1 }
+          ]
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Mary",
+          "text": "The suite! You have excellent taste. It's our finest room. Here's your key, dear.",
+          "goto": 9
+        },
+        {
+          "type": "branch",
+          "label": "handle_dropdown_selection",
+          "branches": [
+            {
+              "condition": { "type": "flag", "flag": "selectedRoomType", "operator": "equals", "value": "standard" },
+              "goto": 4
+            },
+            {
+              "condition": { "type": "flag", "flag": "selectedRoomType", "operator": "equals", "value": "deluxe" },
+              "goto": 6
+            },
+            {
+              "condition": { "type": "flag", "flag": "selectedRoomType", "operator": "equals", "value": "suite" },
+              "goto": 7
+            }
+          ],
+          "default": { "goto": 3 }
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Mary",
+          "label": "room_confirmed",
+          "text": "Your room is ready whenever you need it. Just head upstairs - it's the door with the matching number on your key."
+        },
+        {
+          "type": "end",
+          "outcome": "room_rented"
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Mary",
+          "label": "check_existing_room",
+          "text": "Ah yes! Your room is still available. Would you like to extend your stay?"
+        },
+        {
+          "type": "choice",
+          "prompt": "Manage your room rental:",
+          "choices": [
+            {
+              "id": "extend_stay",
+              "text": "Extend my stay:",
+              "inputType": "numberInput",
+              "inputConfig": {
+                "variable": "extendDays",
+                "defaultValue": 1,
+                "validation": {
+                  "type": "int",
+                  "min": 1,
+                  "dynamicMax": "Math.min(7, Math.floor(player.gold / 10))"
+                },
+                "showCost": true,
+                "costFormula": "value * 10"
+              },
+              "goto": 12
+            },
+            {
+              "id": "go_to_room",
+              "text": "I'll head to my room now.",
+              "goto": 13
+            },
+            {
+              "id": "back_main",
+              "text": "Thanks, I had another question.",
+              "goto": 1
+            }
+          ]
+        },
+        {
+          "type": "action",
+          "actions": [
+            { "type": "extendStay", "roomId": "weary_traveler_standard", "days": "{extendDays}" }
+          ]
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Mary",
+          "text": "All set! I've extended your stay by {extendDays} more night(s). Enjoy!",
+          "goto": 99
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Mary",
+          "text": "Of course! It's up the stairs, second door on the right. Rest well!"
+        },
+        {
+          "type": "end",
+          "outcome": "went_to_room"
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Mary",
+          "label": "food_menu",
+          "text": "We've got a lovely stew today, fresh bread, and some excellent ale. What would you like?"
+        },
+        {
+          "type": "end",
+          "outcome": "food_dialogue"
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Mary",
+          "label": "rumors",
+          "text": "Well, I've heard some travelers talking about strange lights in the forest to the north. Best be careful if you're heading that way..."
+        },
+        {
+          "type": "end",
+          "outcome": "rumors_shared"
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Mary",
+          "label": "farewell",
+          "text": "Safe travels, dear! Come back if you need a warm bed."
+        },
+        {
+          "type": "end",
+          "outcome": "left"
+        }
+      ]
+    },
+    {
+      "id": "inn_room_reservation_name",
+      "name": "Room Reservation - Name Input Example",
+      "description": "Example scene showing text input for a room reservation name",
+      "location": "starting_inn",
+      "trigger": "manual",
+      "tags": ["inn", "example", "text_input"],
+      "nodes": [
+        {
+          "type": "dialogue",
+          "speaker": "Innkeeper",
+          "text": "I'll need a name for the reservation. What shall I put down?"
+        },
+        {
+          "type": "textInput",
+          "prompt": "Enter a name for the reservation:",
+          "variable": "reservationName",
+          "placeholder": "Your name or alias...",
+          "defaultValue": "{player.name}",
+          "validation": {
+            "required": true,
+            "minLength": 2,
+            "maxLength": 30,
+            "pattern": "^[a-zA-Z\\s'-]+$",
+            "customMessage": "Please enter a valid name (letters, spaces, hyphens, and apostrophes only)"
+          },
+          "goto": 2
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Innkeeper",
+          "text": "Perfect! The room is reserved under the name '{reservationName}'. Here's your key."
+        },
+        {
+          "type": "end",
+          "outcome": "reservation_complete"
+        }
+      ]
+    },
+    {
+      "id": "inn_tip_amount",
+      "name": "Tipping Example",
+      "description": "Example scene showing number input for tipping",
+      "location": "starting_inn",
+      "trigger": "manual",
+      "tags": ["inn", "example", "number_input"],
+      "nodes": [
+        {
+          "type": "dialogue",
+          "speaker": "Server",
+          "text": "Thank you for dining with us! If you'd like to leave a tip, it would be much appreciated."
+        },
+        {
+          "type": "numberInput",
+          "prompt": "How much would you like to tip?",
+          "variable": "tipAmount",
+          "validation": {
+            "type": "int",
+            "min": 0,
+            "dynamicMax": "player.gold",
+            "constraint": "value <= player.gold"
+          },
+          "showCost": true,
+          "costFormula": "value",
+          "costLabel": "Tip: {cost}g",
+          "showSlider": true,
+          "goto": 2
+        },
+        {
+          "type": "branch",
+          "branches": [
+            {
+              "condition": { "type": "flag", "flag": "tipAmount", "operator": "gte", "value": 10 },
+              "goto": 3
+            },
+            {
+              "condition": { "type": "flag", "flag": "tipAmount", "operator": "gt", "value": 0 },
+              "goto": 4
+            }
+          ],
+          "default": { "goto": 5 }
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Server",
+          "text": "Oh my! That's incredibly generous! Thank you so much!",
+          "actions": [
+            { "type": "giveGold", "amount": "-{tipAmount}" },
+            { "type": "modifyRelationship", "npcId": "inn_server", "amount": 10 }
+          ]
+        },
+        {
+          "type": "end",
+          "outcome": "generous_tip"
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Server",
+          "text": "Thank you kindly! Much appreciated!",
+          "actions": [
+            { "type": "giveGold", "amount": "-{tipAmount}" },
+            { "type": "modifyRelationship", "npcId": "inn_server", "amount": 3 }
+          ]
+        },
+        {
+          "type": "end",
+          "outcome": "small_tip"
+        },
+        {
+          "type": "dialogue",
+          "speaker": "Server",
+          "text": "No worries! Come back soon!"
+        },
+        {
+          "type": "end",
+          "outcome": "no_tip"
+        }
+      ]
+    }
+  ]
+}

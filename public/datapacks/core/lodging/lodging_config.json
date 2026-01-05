@@ -1,0 +1,135 @@
+{
+  "$schema": "../../schemas/lodging.schema.json",
+  "id": "core_lodging",
+  "name": "Core Lodging Configuration",
+  "description": "Default inn rooms and rental properties",
+
+  "innRooms": {
+    "weary_traveler_standard": {
+      "id": "weary_traveler_standard",
+      "locationId": "starting_inn",
+      "name": "Standard Room",
+      "description": "A simple but clean room with a straw mattress bed and a small window.",
+      "pricePerNight": 10,
+      "quality": "standard",
+      "maxDays": 7,
+      "bonuses": {},
+      "amenities": ["bed", "window", "chamber_pot"],
+      "tags": ["basic", "clean"]
+    },
+    "weary_traveler_deluxe": {
+      "id": "weary_traveler_deluxe",
+      "locationId": "starting_inn",
+      "name": "Deluxe Room",
+      "description": "A spacious room with a feather bed, writing desk, and a fireplace.",
+      "pricePerNight": 25,
+      "quality": "deluxe",
+      "maxDays": 14,
+      "bonuses": {
+        "restQuality": 1.2,
+        "staminaRecovery": 1.1
+      },
+      "amenities": ["feather_bed", "fireplace", "desk", "window", "chamber_pot", "washbasin"],
+      "tags": ["comfortable", "warm", "private"]
+    },
+    "weary_traveler_suite": {
+      "id": "weary_traveler_suite",
+      "locationId": "starting_inn",
+      "name": "Innkeeper's Suite",
+      "description": "The finest room at the inn. A luxurious suite with a four-poster bed, sitting area, and private bathing room.",
+      "pricePerNight": 50,
+      "quality": "luxury",
+      "maxDays": 30,
+      "bonuses": {
+        "restQuality": 1.5,
+        "staminaRecovery": 1.3,
+        "healthRecovery": 1.2
+      },
+      "amenities": ["four_poster_bed", "sitting_area", "fireplace", "private_bath", "wardrobe", "desk"],
+      "tags": ["luxurious", "private", "exclusive"],
+      "unlockRequirements": {
+        "type": "or",
+        "conditions": [
+          { "type": "flag", "flag": "vip_guest" },
+          { "type": "stat", "stat": "charisma", "value": 8 }
+        ]
+      }
+    }
+  },
+
+  "rentedProperties": {
+    "crossroads_cottage": {
+      "id": "crossroads_cottage",
+      "locationId": "crossroads_cottage",
+      "name": "Small Cottage",
+      "description": "A modest one-room cottage on the outskirts of the crossroads. Simple but private.",
+      "rentPerPeriod": 100,
+      "rentPeriodDays": 7,
+      "deposit": 200,
+      "maxMissedPayments": 2,
+      "quality": "basic",
+      "bonuses": {
+        "restQuality": 1.1,
+        "privacy": true
+      },
+      "amenities": ["bed", "fireplace", "storage_chest", "cooking_pot"],
+      "features": ["storage", "crafting_basic"],
+      "tags": ["private", "quiet", "humble"]
+    },
+    "merchant_apartment": {
+      "id": "merchant_apartment",
+      "locationId": "town_merchant_district",
+      "name": "Merchant's Apartment",
+      "description": "A well-appointed apartment above a shop in the merchant district. Includes a small balcony.",
+      "rentPerPeriod": 250,
+      "rentPeriodDays": 7,
+      "deposit": 500,
+      "maxMissedPayments": 2,
+      "quality": "standard",
+      "bonuses": {
+        "restQuality": 1.3,
+        "merchantDiscount": 0.05,
+        "privacy": true
+      },
+      "amenities": ["comfortable_bed", "fireplace", "wardrobe", "desk", "balcony", "private_bath"],
+      "features": ["storage", "crafting_basic", "merchant_access"],
+      "tags": ["comfortable", "convenient", "urban"],
+      "unlockRequirements": {
+        "type": "hasGold",
+        "amount": 1000
+      }
+    }
+  },
+
+  "qualityTiers": {
+    "basic": {
+      "restQualityBase": 0.8,
+      "staminaRecoveryBase": 0.9,
+      "encounterProtection": false
+    },
+    "standard": {
+      "restQualityBase": 1.0,
+      "staminaRecoveryBase": 1.0,
+      "encounterProtection": true
+    },
+    "deluxe": {
+      "restQualityBase": 1.2,
+      "staminaRecoveryBase": 1.1,
+      "encounterProtection": true
+    },
+    "luxury": {
+      "restQualityBase": 1.5,
+      "staminaRecoveryBase": 1.3,
+      "encounterProtection": true,
+      "bonusEffects": ["well_rested"]
+    }
+  },
+
+  "settings": {
+    "defaultMaxInnDays": 7,
+    "defaultRentPeriod": 7,
+    "defaultMaxMissedPayments": 2,
+    "evictionGracePeriodDays": 1,
+    "depositRefundPercent": 0.5
+  }
+}

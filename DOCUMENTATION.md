@@ -1,6 +1,6 @@
 # Furrocity Engine - Complete Documentation
 
-> **Version:** 0.5.0
+> **Version:** 0.6.0
 > **Engine:** Furrocity Engine
 > **Authors:** Cotton Le Sergal & Shluggo
 
@@ -16,25 +16,26 @@
 6. [Creating Locations](#6-creating-locations)
 7. [Travel System](#7-travel-system)
 8. [Expedition System](#8-expedition-system)
-9. [Creating Enemies](#9-creating-enemies)
-10. [Creating NPCs & Merchants](#10-creating-npcs--merchants)
-11. [Merchant System](#11-merchant-system)
-12. [Fame, Titles & Infamy](#12-fame-titles--infamy)
-13. [Local/Global Reputation & Rumor System](#13-localglobal-reputation--rumor-system)
-14. [Location Services (Church, Clinic, Nursery)](#14-location-services-church-clinic-nursery)
-15. [Public Events, Discovery & Barring System](#15-public-events-discovery--barring-system)
-16. [Creating Items](#16-creating-items)
-17. [Inventory System](#17-inventory-system)
-18. [Loot Tables](#18-loot-tables)
-19. [Effects & Status System](#19-effects--status-system)
-20. [Substance System](#20-substance-system)
-21. [Encounter System](#21-encounter-system)
-22. [Paperdoll System](#22-paperdoll-system)
-23. [Player State Schema](#23-player-state-schema)
-24. [Condition Reference](#24-condition-reference)
-25. [Effect Actions Reference](#25-effect-actions-reference)
-26. [Adding New Content](#26-adding-new-content)
-27. [Performance & Optimization](#27-performance--optimization)
+9. [Time System](#9-time-system)
+10. [Creating Enemies](#10-creating-enemies)
+11. [Creating NPCs & Merchants](#11-creating-npcs--merchants)
+12. [Merchant System](#12-merchant-system)
+13. [Fame, Titles & Infamy](#13-fame-titles--infamy)
+14. [Local/Global Reputation & Rumor System](#14-localglobal-reputation--rumor-system)
+15. [Location Services (Church, Clinic, Nursery)](#15-location-services-church-clinic-nursery)
+16. [Public Events, Discovery & Barring System](#16-public-events-discovery--barring-system)
+17. [Creating Items](#17-creating-items)
+18. [Inventory System](#18-inventory-system)
+19. [Loot Tables](#19-loot-tables)
+20. [Effects & Status System](#20-effects--status-system)
+21. [Substance System](#21-substance-system)
+22. [Encounter System](#22-encounter-system)
+23. [Paperdoll System](#23-paperdoll-system)
+24. [Player State Schema](#24-player-state-schema)
+25. [Condition Reference](#25-condition-reference)
+26. [Effect Actions Reference](#26-effect-actions-reference)
+27. [Adding New Content](#27-adding-new-content)
+28. [Performance & Optimization](#28-performance--optimization)
 
 ---
 
@@ -87,6 +88,8 @@ furrocity/
 │       └── ui/
 │           ├── LocationTitle.jsx        # Animated location titles
 │           ├── LocationTitle.css        # Title animation styles
+│           ├── MedievalClock.jsx        # Day/night clock UI
+│           ├── MedievalClock.css        # Clock animation styles
 │           └── RequirementTooltip.jsx   # Unlock requirement display
 │
 ├── engine/                   # Core game systems
@@ -108,6 +111,7 @@ furrocity/
 │   ├── UnlockSystem.js       # Location/content unlocking
 │   ├── LocationSystem.js     # Travel & region management
 │   ├── ExpeditionSystem.js   # Region-to-region travel
+│   ├── TimeSystem.js         # Day/night cycle & time management
 │   └── SaveSystem.js         # Save/load
 │
 ├── public/
@@ -1088,7 +1092,206 @@ const summary = expeditionSystem.getExpeditionSummary(expedition);
 
 ---
 
-## 9. Creating Enemies
+## 9. Time System
+
+The time system manages the in-game day/night cycle, tracking time progression based on player actions rather than real-time.
+
+### Overview
+
+Time in Furrocity advances through player actions (turns/events), not real-time. Different actions consume different amounts of in-game time, and the current time affects encounter chances, NPC availability, and visual presentation.
+
+### Time Periods
+
+| Period | Hours | Icon | Is Night |
+|--------|-------|------|----------|
+| Dawn | 5-6 | 🌅 | No |
+| Morning | 7-11 | ☀️ | No |
+| Afternoon | 12-16 | 🌤️ | No |
+| Evening | 17-19 | 🌆 | No |
+| Dusk | 20 | 🌇 | No |
+| Night | 21-4 | 🌙 | Yes |
+
+### Default Time Costs
+
+Actions consume time based on their type:
+
+| Action | Minutes |
+|--------|---------|
+| `npc_interaction` | 30 |
+| `dialogue` | 15 |
+| `merchant_browse` | 20 |
+| `merchant_transaction` | 10 |
+| `local_travel` | 60 |
+| `region_travel` | 120 (per progress) |
+| `combat` | 120 |
+| `combat_victory` | 30 (additional) |
+| `combat_defeat` | 60 (additional) |
+| `sex` | 240 |
+| `sex_quick` | 60 |
+| `sex_extended` | 480 |
+| `rest` | 60 |
+| `sleep_short` | 240 (4 hours) |
+| `sleep_full` | 480 (8 hours) |
+| `search` | 30 |
+| `explore` | 45 |
+| `scavenge` | 60 |
+| `use_item` | 5 |
+| `read_book` | 30 |
+
+### Scene Time Overrides
+
+Scenes can override the default time cost by specifying `timeCost` or `timeMinutes`:
+
+```json
+{
+  "id": "long_ritual_scene",
+  "type": "nsfw",
+  "timeCost": 480,
+  "nodes": [...]
+}
+```
+
+If no override is specified, the scene type determines the cost (e.g., `scene_dialogue: 15`, `scene_combat: 120`, `scene_nsfw: 240`).
+
+### Night Encounter Modifiers
+
+During night time, encounter chances increase based on location tags:
+
+| Location Tag | Night Modifier |
+|--------------|----------------|
+| `safe`, `town`, `village` | +5% |
+| `inn`, `temple`, `church` | +2-3% |
+| `road`, `outdoor`, `plains` | +10% |
+| `dangerous`, `hostile` | +20-25% |
+| `forest`, `wilderness` | +15% |
+| `dungeon`, `cave` | +20-25% |
+| `corrupted`, `demon` | +30-35% |
+
+Modifiers are additive to the base encounter chance. For example, a location with 30% base encounter chance and `dangerous` tag would have 50% encounter chance at night.
+
+### Sleep Mechanics
+
+Players can sleep to skip time:
+
+| Sleep Type | Target Time | Result |
+|------------|-------------|--------|
+| Sleep to Night | 21:00 (9 PM) | Skips to nightfall (only if daytime) |
+| Sleep to Morning | 07:00 (7 AM) | Always advances to next day |
+
+Sleeping restores stamina and health.
+
+### Medieval Clock UI
+
+The `MedievalClock` component displays:
+
+- Animated clock face with Roman numerals
+- Hour and minute hands
+- Day counter
+- Time period indicator (icon + text)
+- Expandable panel with sleep controls
+
+**Props:**
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `time` | object | `{ day: 1, hour: 8, minute: 0 }` | Current game time |
+| `timeSummary` | object | null | Pre-computed summary from TimeSystem |
+| `onSleep` | function | null | Sleep handler (receives 'night' or 'morning') |
+| `showDetails` | boolean | false | Enable expandable panel |
+| `size` | string | 'medium' | 'small', 'medium', or 'large' |
+| `position` | string | 'top-right' | Clock position on screen |
+
+### Dynamic Background Colors
+
+The site background shifts based on time of day using CSS custom properties:
+
+```css
+--time-primary: #1a1a2e;    /* Background primary */
+--time-secondary: #1f1f3a;  /* Background secondary */
+--time-accent: #2a2a4a;     /* Accent color */
+--time-overlay: rgba(...);  /* Overlay tint */
+--time-text: #e0e0e0;       /* Text color */
+--time-gradient: linear-gradient(...);
+--time-period: morning;     /* Current period name */
+--time-is-night: 0;         /* 1 if night, 0 otherwise */
+```
+
+Each period has its own color scheme, with smooth 1-second transitions.
+
+### Player State: Time
+
+```javascript
+currentTime: {
+  day: 1,      // Current day (starts at 1)
+  hour: 8,     // Current hour (0-23)
+  minute: 0    // Current minute (0-59)
+},
+timeStats: {
+  totalDaysPlayed: 0,
+  totalHoursPlayed: 0,
+  nightsSurvived: 0,
+  timesSlept: 0,
+  longestDayStreak: 0,
+  currentDayStreak: 0,
+  timeSpentByActivity: {
+    combat: 0,
+    dialogue: 0,
+    travel: 0,
+    exploration: 0,
+    rest: 0,
+    nsfw: 0,
+    other: 0
+  },
+  periodsExperienced: {
+    dawn: 0,
+    morning: 0,
+    afternoon: 0,
+    evening: 0,
+    dusk: 0,
+    night: 0
+  }
+}
+```
+
+### TimeSystem API
+
+```javascript
+const timeSystem = new TimeSystem({
+  customTimeCosts: {},        // Override default costs
+  customNightModifiers: {}    // Override night modifiers
+});
+
+// Get current time period
+const period = timeSystem.getTimePeriod(hour);
+// { start, end, name, icon, isNight }
+
+// Check if night
+const isNight = timeSystem.isNight(hour);
+
+// Advance time
+const result = timeSystem.advanceTime(currentTime, minutes);
+// { newTime, daysAdvanced, dayChanged, periodChanged, becameNight, becameDay, period }
+
+// Process action (combines getTimeCost + advanceTime)
+const result = timeSystem.processAction(currentTime, 'combat', sceneOverride);
+// { newTime, ..., actionType, timeCost }
+
+// Sleep
+const result = timeSystem.sleep(currentTime, 'morning');
+// { newTime, hoursSlept, daysAdvanced, restoreStamina, restoreHealth, period }
+
+// Get night encounter modifier
+const modifier = timeSystem.getNightEncounterModifier(locationTags, hour);
+// 0.0 to 0.35 (based on tags)
+
+// Get time display data
+const summary = timeSystem.getTimeSummary(time);
+// { day, hour, minute, formatted, formatted24, period, periodIcon, isNight, colors, clockAngles, cssProperties }
+```
+
+---
+
+## 10. Creating Enemies
 
 ### Basic Enemy
 
@@ -1159,7 +1362,7 @@ const summary = expeditionSystem.getExpeditionSummary(expedition);
 
 ---
 
-## 10. Creating NPCs & Merchants
+## 11. Creating NPCs & Merchants
 
 ### Basic NPC
 
@@ -1191,7 +1394,7 @@ const summary = expeditionSystem.getExpeditionSummary(expedition);
 
 ---
 
-## 11. Merchant System
+## 12. Merchant System
 
 The merchant system supports tag-based filtering and dynamic pricing.
 
@@ -1285,7 +1488,7 @@ class MerchantSystem {
 
 ---
 
-## 12. Fame, Titles & Infamy
+## 13. Fame, Titles & Infamy
 
 ### Player State Extensions
 
@@ -1370,7 +1573,7 @@ class FameSystem {
 
 ---
 
-## 13. Local/Global Reputation & Rumor System
+## 14. Local/Global Reputation & Rumor System
 
 The reputation system tracks fame and infamy both locally (per-location) and globally. Rumors about the player can spread between locations, and NPCs may confront the player about them.
 
@@ -1656,7 +1859,7 @@ config: {
 
 ---
 
-## 14. Location Services (Church, Clinic, Nursery)
+## 15. Location Services (Church, Clinic, Nursery)
 
 The Location Services system provides specialized healing and treatment options at specific location types. Each service type handles different conditions.
 
@@ -1859,7 +2062,7 @@ Add service triggers through scene effects:
 
 ---
 
-## 15. Public Events, Discovery & Barring System
+## 16. Public Events, Discovery & Barring System
 
 This system handles what happens when NSFW events occur in public, hidden location tags, and location access restrictions.
 
@@ -2102,7 +2305,7 @@ discoveryProgress: {
 
 ---
 
-## 16. Creating Items
+## 17. Creating Items
 
 ### Item Types
 
@@ -2211,7 +2414,7 @@ discoveryProgress: {
 
 ---
 
-## 17. Inventory System
+## 18. Inventory System
 
 ### Item User Flags
 
@@ -2262,7 +2465,7 @@ class InventorySystem {
 
 ---
 
-## 18. Loot Tables
+## 19. Loot Tables
 
 ### Basic Loot Table
 
@@ -2322,7 +2525,7 @@ class InventorySystem {
 
 ---
 
-## 19. Effects & Status System
+## 20. Effects & Status System
 
 All effects use turn-based or action-based durations (no real-time).
 
@@ -2430,7 +2633,7 @@ All effects use turn-based or action-based durations (no real-time).
 
 ---
 
-## 20. Substance System
+## 21. Substance System
 
 All substance timing uses turn-based durations (actions, turns, days) rather than real-time milliseconds.
 
@@ -2515,7 +2718,7 @@ All substance timing uses turn-based durations (actions, turns, days) rather tha
 
 ---
 
-## 21. Encounter System
+## 22. Encounter System
 
 ### Encounter Types
 
@@ -2561,7 +2764,7 @@ All substance timing uses turn-based durations (actions, turns, days) rather tha
 
 ---
 
-## 22. Paperdoll System
+## 23. Paperdoll System
 
 ### Body Regions
 
@@ -2605,7 +2808,7 @@ All substance timing uses turn-based durations (actions, turns, days) rather tha
 
 ---
 
-## 23. Player State Schema
+## 24. Player State Schema
 
 ```javascript
 const playerState = {
@@ -2658,7 +2861,7 @@ const playerState = {
 
 ---
 
-## 24. Condition Reference
+## 25. Condition Reference
 
 ### Stat Conditions
 ```json
@@ -2708,7 +2911,7 @@ const playerState = {
 
 ---
 
-## 25. Effect Actions Reference
+## 26. Effect Actions Reference
 
 ### Stat Modifications
 ```json
@@ -2749,7 +2952,7 @@ const playerState = {
 
 ---
 
-## 26. Adding New Content
+## 27. Adding New Content
 
 ### Step-by-Step: Adding a New Merchant
 
@@ -2825,7 +3028,7 @@ const playerState = {
 
 ---
 
-## 27. Performance & Optimization
+## 28. Performance & Optimization
 
 ### Best Practices
 

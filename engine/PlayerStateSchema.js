@@ -572,6 +572,67 @@ export const comprehensivePlayerState = {
   unlockedFastTravel: [],
 
   // ============================================================================
+  // LODGING STATE - Inn rooms and rental properties
+  // ============================================================================
+  lodging: {
+    // Active inn room rentals
+    innRooms: {
+      // [roomId]: {
+      //   roomId: "weary_traveler_standard",
+      //   locationId: "starting_inn",
+      //   checkInDay: 1,
+      //   expirationDay: 2,       // Room expires at start of this day
+      //   daysRented: 1,
+      //   quality: "standard",    // 'basic' | 'standard' | 'deluxe' | 'luxury'
+      //   bonuses: {},            // { restQuality: 1.2, etc. }
+      //   isActive: true
+      // }
+    },
+
+    // Rented properties (ongoing rentals with periodic payments)
+    rentedProperties: {
+      // [propertyId]: {
+      //   propertyId: "small_cottage",
+      //   locationId: "crossroads_cottage",
+      //   name: "Small Cottage",
+      //   startDay: 5,
+      //   nextPaymentDay: 12,     // Day rent is due
+      //   rentPeriodDays: 7,      // Days between payments
+      //   rentAmount: 100,
+      //   depositPaid: 200,
+      //   missedPayments: 0,
+      //   maxMissedPayments: 2,
+      //   isActive: true,
+      //   accessGranted: true     // Can sleep/store here
+      // }
+    },
+
+    // Lodging history
+    history: [
+      // {
+      //   type: 'inn_room' | 'rental_property',
+      //   id: "room_or_property_id",
+      //   locationId: "location_id",
+      //   startDay: 1,
+      //   endDay: 5,
+      //   totalGoldSpent: 40,
+      //   reason: 'expired' | 'evicted' | 'cancelled'
+      // }
+    ],
+
+    // Lodging statistics
+    stats: {
+      totalNightsAtInns: 0,
+      totalNightsAtRentals: 0,
+      totalGoldOnLodging: 0,
+      totalGoldOnDeposits: 0,
+      depositsLost: 0,
+      evictionCount: 0,
+      currentHomeProperty: null    // propertyId of primary residence
+    }
+  },
+
+  // ============================================================================
   // EXPEDITION / REGION TRAVEL STATE
   // ============================================================================
   expedition: {
@@ -698,9 +759,37 @@ export const comprehensivePlayerState = {
     day: 1,
     hour: 8,
     minute: 0,
-    dayOfWeek: 0,   // 0-6
-    season: 0,      // 0-3
+    dayOfWeek: 0,   // 0-6 (0 = Sunday)
+    season: 0,      // 0-3 (Spring, Summer, Fall, Winter)
     year: 1
+  },
+
+  // Time tracking statistics
+  timeStats: {
+    totalDaysPlayed: 0,         // Total in-game days that have passed
+    totalHoursPlayed: 0,        // Total in-game hours (for achievements)
+    nightsSurvived: 0,          // Nights spent awake (not sleeping)
+    timesSlept: 0,              // Number of times player has slept
+    longestDayStreak: 0,        // Most days without sleeping
+    currentDayStreak: 0,        // Current days without sleeping
+    timeSpentByActivity: {
+      // Track time spent on different activities
+      combat: 0,
+      dialogue: 0,
+      travel: 0,
+      exploration: 0,
+      rest: 0,
+      nsfw: 0,
+      other: 0
+    },
+    periodsExperienced: {
+      dawn: 0,
+      morning: 0,
+      afternoon: 0,
+      evening: 0,
+      dusk: 0,
+      night: 0
+    }
   },
   
   // ============================================================================

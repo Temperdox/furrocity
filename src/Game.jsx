@@ -6,6 +6,8 @@ import TravelModal from './components/travel/TravelModal.jsx';
 import ExpeditionScene from './components/travel/ExpeditionScene.jsx';
 import LocationTitle from './components/ui/LocationTitle.jsx';
 import { ExpeditionSystem } from '../engine/ExpeditionSystem.js';
+import { TimeSystem, DEFAULT_TIME_COSTS } from '../engine/TimeSystem.js';
+import MedievalClock from './components/ui/MedievalClock.jsx';
 import { MerchantSystem } from '../engine/MerchantSystem.js';
 import { InventorySystem } from '../engine/InventorySystem.js';
 import { FameSystem } from '../engine/FameSystem.js';
@@ -17,6 +19,9 @@ import LocationServices from '../engine/LocationServices.js';
 import LocationDiscoverySystem from '../engine/LocationDiscoverySystem.js';
 import PublicEventSystem from '../engine/PublicEventSystem.js';
 import LocationBarringSystem from '../engine/LocationBarringSystem.js';
+import { LodgingSystem } from '../engine/LodgingSystem.js';
+import { InputValidationSystem } from '../engine/InputValidationSystem.js';
+import { ActionRequirementSystem } from '../engine/ActionRequirementSystem.js';
 import RumorConfrontation, { RumorConfrontationResult } from './components/ui/RumorConfrontation.jsx';
 import ServiceInteraction, { ServiceResult } from './components/ui/ServiceInteraction.jsx';
 import ChangelogModal from './components/ui/ChangelogModal.jsx';
@@ -1842,8 +1847,14 @@ const CombatSystem = {
     return { success: true, damage, staminaCost: player.maxStamina * 0.1 };
   },
 
-  generateEncounter: (location, playerLevel, difficulty) => {
-    if (!rollChance(location.encounterChance * (GameData.difficulties.find(d => d.id === difficulty)?.encounterRateMultiplier || 1))) {
+  generateEncounter: (location, playerLevel, difficulty, nightModifier = 0) => {
+    // Calculate total encounter chance: base * difficulty multiplier + night bonus
+    const diffMultiplier = GameData.difficulties.find(d => d.id === difficulty)?.encounterRateMultiplier || 1;
+    const baseChance = location.encounterChance * diffMultiplier;
+    const nightBonus = location.encounterChance * nightModifier; // nightModifier is 0.0 to 0.35
+    const totalChance = Math.min(100, baseChance + nightBonus);
+
+    if (!rollChance(totalChance)) {
       return null;
     }
 
@@ -5785,6 +5796,10 @@ const Game = () => {
   const publicEventSystemRef = useRef(null);
   const barringSystemRef = useRef(null);
   const expeditionSystemRef = useRef(null);
+  const timeSystemRef = useRef(null);
+  const lodgingSystemRef = useRef(null);
+  const inputValidationSystemRef = useRef(null);
+  const actionRequirementSystemRef = useRef(null);
   const systemsInitializedRef = useRef(false);
 
   // Initialize engine systems
@@ -5886,16 +5901,53 @@ const Game = () => {
         discoverySystemRef.current
       );
 
+      // Initialize time system for day/night cycle
+      timeSystemRef.current = new TimeSystem();
+
       // Initialize expedition system for region-to-region travel
       expeditionSystemRef.current = new ExpeditionSystem({
         gameTimeProvider: () => ({
           currentDay: player?.currentTime?.day || 1,
           currentHour: player?.currentTime?.hour || 12,
-          isNight: (player?.currentTime?.hour || 12) < 6 || (player?.currentTime?.hour || 12) >= 20
+          isNight: timeSystemRef.current?.isNight(player?.currentTime?.hour || 12) || false
         }),
         getRegion: (regionId) => locationSystemRef.current?.getRegion(regionId),
         encounterTables: {}  // Will be loaded from datapacks
       });
+
+      // Initialize lodging system for inn rooms and rental properties
+      lodgingSystemRef.current = new LodgingSystem(timeSystemRef.current);
+      // Lodging data will be loaded from datapacks in production
+      const lodgingData = {
+        innRooms: {
+          weary_traveler_standard: {
+            id: 'weary_traveler_standard',
+            locationId: 'starting_inn',
+            name: 'Standard Room',
+            pricePerNight: 10,
+            quality: 'standard',
+            maxDays: 7,
+            bonuses: {}
+          },
+          weary_traveler_deluxe: {
+            id: 'weary_traveler_deluxe',
+            locationId: 'starting_inn',
+            name: 'Deluxe Room',
+            pricePerNight: 25,
+            quality: 'deluxe',
+            maxDays: 14,
+            bonuses: { restQuality: 1.2 }
+          }
+        },
+        rentedProperties: {}
+      };
+      lodgingSystemRef.current.initialize(lodgingData);
+
+      // Initialize input validation system for scene inputs
+      inputValidationSystemRef.current = new InputValidationSystem();
+
+      // Initialize action requirement system for sleep/rest checks
+      actionRequirementSystemRef.current = new ActionRequirementSystem(lodgingSystemRef.current);
 
       // Initialize merchant data from GameData merchants
       // Since we don't have full DataRegistry integration, we'll manually populate merchants
@@ -6149,9 +6201,15 @@ const Game = () => {
   
   // Scene complete handler
   const handleSceneComplete = () => {
+    // Advance time based on scene type or custom timeCost
+    if (currentScene) {
+      const sceneType = currentScene.type || 'event';
+      advanceTime(`scene_${sceneType}`, currentScene);
+    }
+
     setCurrentScene(null);
     setScreen('game');
-    
+
     // Auto-save
     SaveSystem.save('auto', player, gameState);
   };
@@ -6172,10 +6230,14 @@ const Game = () => {
 
       case 'explore':
       case 'search':
-        // Check for random encounter
+        // Advance time for exploration/search
+        advanceTime(action === 'explore' ? 'explore' : 'search');
+
+        // Check for random encounter (with night modifier)
         const location = GameData.locations.find(l => l.id === player.currentLocation);
-        const encounter = CombatSystem.generateEncounter(location, player.level, gameState.difficulty);
-        
+        const nightMod = getNightEncounterModifier();
+        const encounter = CombatSystem.generateEncounter(location, player.level, gameState.difficulty, nightMod);
+
         if (encounter) {
           toast.combat(`${encounter.length} ${encounter.length === 1 ? 'enemy' : 'enemies'} appeared!`);
           setCombatEnemies(encounter);
@@ -6187,8 +6249,11 @@ const Game = () => {
           toast.gold(goldFound, `Found while ${action === 'explore' ? 'exploring' : 'searching'}`);
         }
         break;
-        
+
       case 'rest':
+        // Advance time for resting
+        advanceTime('rest');
+
         setPlayer(prev => ({
           ...prev,
           currentHp: prev.maxHp,
@@ -6204,6 +6269,9 @@ const Game = () => {
         break;
         
       case 'interact':
+        // Advance time for NPC interaction
+        advanceTime('npc_interaction');
+
         // Check for rumor confrontation with NPCs at location
         if (rumorSystemRef.current && player.rumors && player.rumors.length > 0) {
           // Get NPCs at current location
@@ -6379,9 +6447,10 @@ const Game = () => {
       return;
     }
 
-    // Check for encounter during travel
+    // Check for encounter during travel (with night modifier)
     if (location.encounterChance > 0) {
-      const encounter = CombatSystem.generateEncounter(location, player.level, gameState.difficulty);
+      const travelNightMod = getNightEncounterModifier();
+      const encounter = CombatSystem.generateEncounter(location, player.level, gameState.difficulty, travelNightMod);
       if (encounter) {
         toast.combat(`Ambushed by ${encounter.length} ${encounter.length === 1 ? 'enemy' : 'enemies'}!`);
         setCombatEnemies(encounter);
@@ -6390,6 +6459,9 @@ const Game = () => {
         return;
       }
     }
+
+    // Advance time for local travel
+    advanceTime('local_travel');
 
     // Check if first visit
     const isFirstVisit = !player.visitedLocations.includes(destinationId);
@@ -6674,6 +6746,304 @@ const Game = () => {
     setShowExpedition(false);
   }, [currentExpedition, toast]);
 
+  // ============================================================================
+  // TIME SYSTEM HANDLERS
+  // ============================================================================
+
+  /**
+   * Advance game time based on action type
+   * @param {string} actionType - Type of action from DEFAULT_TIME_COSTS
+   * @param {Object} sceneOverride - Optional scene with custom timeCost
+   * @returns {Object} Time advancement result
+   */
+  const advanceTime = useCallback((actionType, sceneOverride = null) => {
+    if (!timeSystemRef.current) return null;
+
+    const result = timeSystemRef.current.processAction(
+      player.currentTime || { day: 1, hour: 8, minute: 0 },
+      actionType,
+      sceneOverride
+    );
+
+    // Update player state with new time
+    setPlayer(prev => {
+      const newTimeStats = { ...prev.timeStats };
+
+      // Update time tracking stats
+      if (result.dayChanged) {
+        newTimeStats.totalDaysPlayed = (newTimeStats.totalDaysPlayed || 0) + result.daysAdvanced;
+      }
+
+      // Track time by activity category
+      const activityCategory = getActivityCategory(actionType);
+      if (activityCategory && newTimeStats.timeSpentByActivity) {
+        newTimeStats.timeSpentByActivity[activityCategory] =
+          (newTimeStats.timeSpentByActivity[activityCategory] || 0) + result.timeCost;
+      }
+
+      // Track period changes
+      if (result.periodChanged && newTimeStats.periodsExperienced) {
+        const periodKey = result.period.name.toLowerCase();
+        newTimeStats.periodsExperienced[periodKey] =
+          (newTimeStats.periodsExperienced[periodKey] || 0) + 1;
+      }
+
+      return {
+        ...prev,
+        currentTime: result.newTime,
+        timeStats: newTimeStats
+      };
+    });
+
+    // Notify if period changed
+    if (result.becameNight) {
+      toast.info('Night Falls', 'Encounter chances increase in the darkness.');
+    } else if (result.becameDay) {
+      toast.info('Dawn Breaks', 'A new day begins.');
+    }
+
+    return result;
+  }, [player.currentTime, toast]);
+
+  /**
+   * Get activity category for time tracking
+   */
+  const getActivityCategory = (actionType) => {
+    if (actionType.includes('combat')) return 'combat';
+    if (actionType.includes('dialogue') || actionType.includes('npc') || actionType.includes('merchant')) return 'dialogue';
+    if (actionType.includes('travel') || actionType.includes('region')) return 'travel';
+    if (actionType.includes('search') || actionType.includes('explore') || actionType.includes('scavenge')) return 'exploration';
+    if (actionType.includes('rest') || actionType.includes('sleep')) return 'rest';
+    if (actionType.includes('sex') || actionType.includes('nsfw')) return 'nsfw';
+    return 'other';
+  };
+
+  /**
+   * Handle player sleeping
+   * @param {string} sleepType - 'night' or 'morning'
+   */
+  const handleSleep = useCallback((sleepType) => {
+    if (!timeSystemRef.current) return { success: false, error: 'Time system not available' };
+
+    // Check if sleep is allowed at current location
+    if (actionRequirementSystemRef.current) {
+      const currentLocation = locationSystemRef.current?.getLocation(player.currentLocation);
+      const sleepCheck = actionRequirementSystemRef.current.checkActionRequirements(
+        'sleep',
+        player,
+        gameState,
+        currentLocation
+      );
+
+      if (!sleepCheck.allowed) {
+        toast.error('Cannot Sleep', sleepCheck.message);
+        return { success: false, error: sleepCheck.message, reason: sleepCheck.reason };
+      }
+    }
+
+    const result = timeSystemRef.current.sleep(
+      player.currentTime || { day: 1, hour: 8, minute: 0 },
+      sleepType
+    );
+
+    setPlayer(prev => {
+      const newTimeStats = { ...prev.timeStats };
+      let newLodging = prev.lodging;
+
+      // Update sleep stats
+      newTimeStats.timesSlept = (newTimeStats.timesSlept || 0) + 1;
+      newTimeStats.currentDayStreak = 0; // Reset day streak
+
+      // Update days if changed
+      if (result.dayChanged) {
+        newTimeStats.totalDaysPlayed = (newTimeStats.totalDaysPlayed || 0) + result.daysAdvanced;
+
+        // Process lodging on day change (check for expired rooms, missed payments)
+        if (lodgingSystemRef.current && prev.lodging) {
+          const lodgingResult = lodgingSystemRef.current.processNewDay(
+            prev,
+            result.newTime.day
+          );
+
+          if (lodgingResult.updatedLodging) {
+            newLodging = lodgingResult.updatedLodging;
+          }
+
+          // Notify about expired rooms
+          if (lodgingResult.expiredRooms?.length > 0) {
+            setTimeout(() => {
+              toast.warning(
+                'Room Expired',
+                `Your inn room rental has expired. You'll need to rent again to sleep here.`
+              );
+            }, 100);
+          }
+
+          // Notify about evictions
+          if (lodgingResult.evictions?.length > 0) {
+            setTimeout(() => {
+              toast.error(
+                'Evicted!',
+                `You've been evicted from ${lodgingResult.evictions[0].name} for non-payment.`
+              );
+            }, 100);
+          }
+        }
+      }
+
+      // Restore stamina and health
+      const newCurrentHp = result.restoreHealth ? prev.maxHp : prev.currentHp;
+      const newCurrentStamina = result.restoreStamina ? prev.maxStamina : prev.currentStamina;
+
+      return {
+        ...prev,
+        currentTime: result.newTime,
+        timeStats: newTimeStats,
+        lodging: newLodging,
+        currentHp: newCurrentHp,
+        currentStamina: newCurrentStamina
+      };
+    });
+
+    toast.success(
+      sleepType === 'morning' ? 'Good Morning!' : 'Nightfall',
+      `You slept for ${result.hoursSlept} hours. HP and stamina restored.`
+    );
+
+    return { success: true, ...result };
+  }, [player, gameState, toast]);
+
+  /**
+   * Check if player can sleep at current location
+   * @returns {Object} { canSleep: boolean, reason: string }
+   */
+  const canSleep = useCallback(() => {
+    if (!actionRequirementSystemRef.current) {
+      return { canSleep: true, reason: '' };
+    }
+
+    const currentLocation = locationSystemRef.current?.getLocation(player.currentLocation);
+    const result = actionRequirementSystemRef.current.checkActionRequirements(
+      'sleep',
+      player,
+      gameState,
+      currentLocation
+    );
+
+    return {
+      canSleep: result.allowed,
+      reason: result.message || '',
+      satisfiedBy: result.satisfiedBy
+    };
+  }, [player, gameState]);
+
+  /**
+   * Rent an inn room (called from scene actions)
+   * @param {string} roomId - Room ID to rent
+   * @param {number} days - Number of days to rent
+   * @returns {Object} Result of rental
+   */
+  const rentRoom = useCallback((roomId, days = 1) => {
+    if (!lodgingSystemRef.current) {
+      return { success: false, error: 'Lodging system not available' };
+    }
+
+    const currentDay = player.currentTime?.day || 1;
+    const result = lodgingSystemRef.current.rentRoom(player, roomId, days, currentDay);
+
+    if (result.success) {
+      setPlayer(prev => ({
+        ...prev,
+        gold: prev.gold - result.cost,
+        lodging: result.updatedLodging
+      }));
+
+      toast.success(
+        'Room Rented',
+        `Rented ${result.room.name} for ${days} night(s). Total: ${result.cost}g`
+      );
+    } else {
+      toast.error('Cannot Rent Room', result.error);
+    }
+
+    return result;
+  }, [player, toast]);
+
+  /**
+   * Extend an existing inn room stay
+   * @param {string} roomId - Room ID to extend
+   * @param {number} additionalDays - Days to add
+   * @returns {Object} Result of extension
+   */
+  const extendStay = useCallback((roomId, additionalDays = 1) => {
+    if (!lodgingSystemRef.current) {
+      return { success: false, error: 'Lodging system not available' };
+    }
+
+    const currentDay = player.currentTime?.day || 1;
+    const result = lodgingSystemRef.current.extendStay(player, roomId, additionalDays, currentDay);
+
+    if (result.success) {
+      setPlayer(prev => ({
+        ...prev,
+        gold: prev.gold - result.cost,
+        lodging: result.updatedLodging
+      }));
+
+      toast.success(
+        'Stay Extended',
+        `Extended stay by ${additionalDays} night(s). Cost: ${result.cost}g`
+      );
+    } else {
+      toast.error('Cannot Extend Stay', result.error);
+    }
+
+    return result;
+  }, [player, toast]);
+
+  /**
+   * Get current time summary for display
+   */
+  const getTimeSummary = useCallback(() => {
+    if (!timeSystemRef.current) {
+      return {
+        day: player.currentTime?.day || 1,
+        hour: player.currentTime?.hour || 8,
+        minute: player.currentTime?.minute || 0,
+        period: 'Morning',
+        periodIcon: '☀️',
+        isNight: false,
+        formatted: '8:00 AM'
+      };
+    }
+
+    return timeSystemRef.current.getTimeSummary(player.currentTime || { day: 1, hour: 8, minute: 0 });
+  }, [player.currentTime]);
+
+  /**
+   * Get night encounter modifier for current location
+   */
+  const getNightEncounterModifier = useCallback(() => {
+    if (!timeSystemRef.current || !player.currentLocation) return 0;
+
+    const location = GameData.locations.find(l => l.id === player.currentLocation);
+    if (!location) return 0;
+
+    return timeSystemRef.current.getNightEncounterModifier(
+      location.tags || [],
+      player.currentTime?.hour || 8
+    );
+  }, [player.currentLocation, player.currentTime]);
+
+  /**
+   * Get CSS properties for time-based theming
+   */
+  const getTimeThemeStyles = useCallback(() => {
+    if (!timeSystemRef.current) return {};
+
+    return timeSystemRef.current.getTimeCSSProperties(player.currentTime?.hour || 8);
+  }, [player.currentTime]);
+
   // Rumor confrontation handlers
   const handleRumorResponse = useCallback((responseId) => {
     if (!rumorConfrontationData || !rumorSystemRef.current) return;
@@ -6886,7 +7256,10 @@ const Game = () => {
       : combatEnemies;
     
     if (updatedEnemies.every(e => e.currentHp <= 0)) {
-      // Victory!
+      // Victory! Advance time for combat + victory bonus
+      advanceTime('combat');
+      advanceTime('combat_victory');
+
       const location = GameData.locations.find(l => l.id === player.currentLocation);
       const loot = CombatSystem.generateLoot(combatEnemies, location, player.level, gameState.difficulty);
       const expGained = combatEnemies.reduce((sum, e) => sum + e.level * 10, 0);
@@ -7111,6 +7484,15 @@ const Game = () => {
               onAction={handleLocationAction}
               onPause={() => setScreen('pause')}
             />
+            <MedievalClock
+              time={player.currentTime || { day: 1, hour: 8, minute: 0 }}
+              timeSummary={getTimeSummary()}
+              onSleep={handleSleep}
+              canSleep={canSleep}
+              showDetails={true}
+              size="medium"
+              position="top-right"
+            />
             <TravelModal
               isOpen={showTravelModal}
               onClose={() => setShowTravelModal(false)}
@@ -7221,36 +7603,48 @@ const Game = () => {
     }
   };
   
+  // Get time-based theme styles
+  const timeThemeStyles = getTimeThemeStyles();
+
   return (
     <GameContext.Provider value={{ player, setPlayer, gameState, setGameState, GameData }}>
+      <div
+        className="game-time-wrapper"
+        style={{
+          ...timeThemeStyles,
+          minHeight: '100vh',
+          background: timeThemeStyles['--time-gradient'] || 'linear-gradient(180deg, #1a1a2e 0%, #1f1f3a 50%, #2a2a4a 100%)',
+          transition: 'background 1s ease-in-out'
+        }}
+      >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
-        
+
         * {
           box-sizing: border-box;
           margin: 0;
           padding: 0;
         }
-        
+
         ::-webkit-scrollbar {
           width: 8px;
         }
-        
+
         ::-webkit-scrollbar-track {
           background: rgba(0, 0, 0, 0.2);
           border-radius: 4px;
         }
-        
+
         ::-webkit-scrollbar-thumb {
           background: rgba(139, 92, 246, 0.4);
           border-radius: 4px;
         }
-        
+
         ::-webkit-scrollbar-thumb:hover {
           background: rgba(139, 92, 246, 0.6);
         }
       `}</style>
-      
+
       {/* Difficulty Modal */}
       <DifficultyModal
         isOpen={showDifficultyModal}
@@ -7334,6 +7728,7 @@ const Game = () => {
       />
 
       {renderScreen()}
+      </div>
     </GameContext.Provider>
   );
 };

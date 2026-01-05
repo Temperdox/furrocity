@@ -23,7 +23,19 @@ export const NODE_TYPES = {
   RANDOM: 'random',
   SET_FLAG: 'setFlag',
   TRIGGER_EVENT: 'triggerEvent',
-  END: 'end'
+  END: 'end',
+  // Input node types
+  TEXT_INPUT: 'textInput',
+  DROPDOWN: 'dropdown',
+  NUMBER_INPUT: 'numberInput'
+};
+
+// Input types for choice nodes
+export const INPUT_TYPES = {
+  BUTTON: 'button',         // Default - standard clickable choice
+  TEXT_INPUT: 'textInput',  // Text input field
+  NUMBER_INPUT: 'numberInput', // Number input with validation
+  DROPDOWN: 'dropdown'      // Dropdown selection
 };
 
 /**
@@ -323,7 +335,16 @@ export class SceneRunner {
         
       case NODE_TYPES.END:
         return { type: 'end', scene: this.currentScene, outcome: node.outcome };
-        
+
+      case NODE_TYPES.TEXT_INPUT:
+        return this.processTextInput(node, context);
+
+      case NODE_TYPES.NUMBER_INPUT:
+        return this.processNumberInput(node, context);
+
+      case NODE_TYPES.DROPDOWN:
+        return this.processDropdown(node, context);
+
       default:
         console.warn(`Unknown node type: ${node.type}`);
         return this.advance(context);
@@ -380,19 +401,227 @@ export class SceneRunner {
         if (!hasAllTags) return false;
       }
       return true;
-    }).map(choice => ({
-      ...choice,
-      text: interpolateText(choice.text, context),
-      disabled: choice.enableIf ? !evaluateSceneCondition(choice.enableIf, context) : false,
-      disabledReason: choice.disabledReason ? interpolateText(choice.disabledReason, context) : null
-    }));
-    
+    }).map(choice => {
+      const processedChoice = {
+        ...choice,
+        text: interpolateText(choice.text, context),
+        disabled: choice.enableIf ? !evaluateSceneCondition(choice.enableIf, context) : false,
+        disabledReason: choice.disabledReason ? interpolateText(choice.disabledReason, context) : null,
+        // Default to button if no inputType specified
+        inputType: choice.inputType || INPUT_TYPES.BUTTON
+      };
+
+      // Process inputConfig if present (for non-button input types)
+      if (choice.inputConfig) {
+        processedChoice.inputConfig = this.resolveInputConfig(choice.inputConfig, context);
+      }
+
+      return processedChoice;
+    });
+
     return {
       type: 'choice',
       prompt: node.prompt ? interpolateText(node.prompt, context) : null,
       choices: availableChoices,
       allowBack: node.allowBack,
       timeLimit: node.timeLimit
+    };
+  }
+
+  /**
+   * Resolve input configuration with dynamic values
+   */
+  resolveInputConfig(config, context) {
+    if (!config) return config;
+
+    const resolved = { ...config };
+
+    // Resolve defaultValue if it contains placeholders
+    if (resolved.defaultValue && typeof resolved.defaultValue === 'string') {
+      resolved.defaultValue = interpolateText(resolved.defaultValue, context);
+    }
+
+    // Resolve validation rules with dynamic formulas
+    if (resolved.validation) {
+      resolved.validation = this.resolveValidationRules(resolved.validation, context);
+    }
+
+    // Resolve costFormula preview if provided
+    if (resolved.costFormula) {
+      resolved.costFormulaResolved = resolved.costFormula;
+    }
+
+    // Resolve dropdown options
+    if (resolved.options) {
+      resolved.options = resolved.options.filter(opt => {
+        if (opt.showIf && !evaluateSceneCondition(opt.showIf, context)) {
+          return false;
+        }
+        return true;
+      }).map(opt => ({
+        ...opt,
+        label: interpolateText(opt.label, context),
+        disabled: opt.enableIf ? !evaluateSceneCondition(opt.enableIf, context) : false
+      }));
+    }
+
+    return resolved;
+  }
+
+  /**
+   * Resolve validation rules, evaluating any dynamic formulas
+   */
+  resolveValidationRules(rules, context) {
+    if (!rules) return rules;
+
+    const resolved = { ...rules };
+
+    // Evaluate dynamic min/max using safe formula evaluation
+    if (rules.dynamicMin !== undefined) {
+      resolved.min = this.evaluateFormula(rules.dynamicMin, context);
+    }
+    if (rules.dynamicMax !== undefined) {
+      resolved.max = this.evaluateFormula(rules.dynamicMax, context);
+    }
+    if (rules.dynamicMinLength !== undefined) {
+      resolved.minLength = this.evaluateFormula(rules.dynamicMinLength, context);
+    }
+    if (rules.dynamicMaxLength !== undefined) {
+      resolved.maxLength = this.evaluateFormula(rules.dynamicMaxLength, context);
+    }
+
+    return resolved;
+  }
+
+  /**
+   * Safe formula evaluation for dynamic validation rules
+   */
+  evaluateFormula(formula, context) {
+    if (formula === undefined || formula === null) return undefined;
+    if (typeof formula === 'number') return formula;
+    if (typeof formula !== 'string') return formula;
+
+    // Simple number string
+    if (/^-?\d+(\.\d+)?$/.test(formula)) {
+      return parseFloat(formula);
+    }
+
+    try {
+      const safeContext = {
+        player: context.player || {},
+        gameState: context.gameState || {},
+        flags: context.flags || {},
+        Math: Math,
+        parseInt: parseInt,
+        parseFloat: parseFloat,
+        Number: Number,
+        String: String,
+        Boolean: Boolean
+      };
+
+      const contextKeys = Object.keys(safeContext);
+      const contextValues = Object.values(safeContext);
+
+      const fn = new Function(...contextKeys, `return ${formula}`);
+      return fn(...contextValues);
+    } catch (error) {
+      console.warn(`SceneRunner: Failed to evaluate formula "${formula}":`, error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Process text input node
+   */
+  processTextInput(node, context) {
+    // Check condition
+    if (node.condition && !evaluateSceneCondition(node.condition, context)) {
+      this.currentNodeIndex++;
+      return this.getCurrentState(context);
+    }
+
+    const resolved = this.resolveInputConfig({
+      validation: node.validation,
+      defaultValue: node.defaultValue
+    }, context);
+
+    return {
+      type: 'textInput',
+      prompt: node.prompt ? interpolateText(node.prompt, context) : null,
+      variable: node.variable,
+      placeholder: node.placeholder ? interpolateText(node.placeholder, context) : null,
+      defaultValue: resolved.defaultValue || '',
+      validation: resolved.validation || {},
+      multiline: node.multiline || false,
+      maxLines: node.maxLines,
+      goto: node.goto
+    };
+  }
+
+  /**
+   * Process number input node
+   */
+  processNumberInput(node, context) {
+    // Check condition
+    if (node.condition && !evaluateSceneCondition(node.condition, context)) {
+      this.currentNodeIndex++;
+      return this.getCurrentState(context);
+    }
+
+    const resolved = this.resolveInputConfig({
+      validation: node.validation,
+      defaultValue: node.defaultValue,
+      costFormula: node.costFormula
+    }, context);
+
+    return {
+      type: 'numberInput',
+      prompt: node.prompt ? interpolateText(node.prompt, context) : null,
+      variable: node.variable,
+      placeholder: node.placeholder ? interpolateText(node.placeholder, context) : null,
+      defaultValue: resolved.defaultValue || 1,
+      validation: resolved.validation || {},
+      showCost: node.showCost || false,
+      costFormula: node.costFormula,
+      costLabel: node.costLabel ? interpolateText(node.costLabel, context) : 'Cost: {cost}g',
+      showSlider: node.showSlider || false,
+      goto: node.goto
+    };
+  }
+
+  /**
+   * Process dropdown node
+   */
+  processDropdown(node, context) {
+    // Check condition
+    if (node.condition && !evaluateSceneCondition(node.condition, context)) {
+      this.currentNodeIndex++;
+      return this.getCurrentState(context);
+    }
+
+    // Filter and resolve options
+    const options = (node.options || []).filter(opt => {
+      if (opt.showIf && !evaluateSceneCondition(opt.showIf, context)) {
+        return false;
+      }
+      return true;
+    }).map(opt => ({
+      value: opt.value,
+      label: interpolateText(opt.label, context),
+      disabled: opt.enableIf ? !evaluateSceneCondition(opt.enableIf, context) : false,
+      disabledReason: opt.disabledReason ? interpolateText(opt.disabledReason, context) : null,
+      cost: opt.cost,
+      description: opt.description ? interpolateText(opt.description, context) : null
+    }));
+
+    return {
+      type: 'dropdown',
+      prompt: node.prompt ? interpolateText(node.prompt, context) : null,
+      variable: node.variable,
+      options,
+      defaultValue: node.defaultValue,
+      required: node.required !== false,
+      goto: node.goto
     };
   }
 
@@ -638,8 +867,50 @@ export class SceneRunner {
           await this.callbacks.customAction(action.handler, action.data);
         }
         break;
+
+      // Lodging actions
+      case 'rentRoom':
+        if (this.callbacks.rentRoom) {
+          // Resolve days if it's a variable reference
+          let days = action.days;
+          if (typeof days === 'string' && days.startsWith('{') && days.endsWith('}')) {
+            const varName = days.slice(1, -1);
+            days = this.localFlags[varName] || context.flags?.[varName] || 1;
+          }
+          await this.callbacks.rentRoom(action.roomId, days);
+        }
+        break;
+
+      case 'extendStay':
+        if (this.callbacks.extendStay) {
+          let days = action.days;
+          if (typeof days === 'string' && days.startsWith('{') && days.endsWith('}')) {
+            const varName = days.slice(1, -1);
+            days = this.localFlags[varName] || context.flags?.[varName] || 1;
+          }
+          await this.callbacks.extendStay(action.roomId, days);
+        }
+        break;
+
+      case 'rentProperty':
+        if (this.callbacks.rentProperty) {
+          await this.callbacks.rentProperty(action.propertyId);
+        }
+        break;
+
+      case 'makeRentPayment':
+        if (this.callbacks.makeRentPayment) {
+          await this.callbacks.makeRentPayment(action.propertyId);
+        }
+        break;
+
+      case 'cancelRental':
+        if (this.callbacks.cancelRental) {
+          await this.callbacks.cancelRental(action.propertyId);
+        }
+        break;
     }
-    
+
     return { type: action.type, ...action };
   }
 
@@ -652,45 +923,93 @@ export class SceneRunner {
   }
 
   /**
-   * Select a choice
+   * Submit an input value (for textInput, numberInput, dropdown nodes)
+   * @param {any} value - The submitted value
+   * @param {Object} context - Current context
+   * @returns {Object} Next scene state
    */
-  async selectChoice(choiceIndex, context = {}) {
+  async submitInput(value, context = {}) {
+    const state = this.getCurrentState(context);
+
+    // Validate this is an input node
+    if (!['textInput', 'numberInput', 'dropdown'].includes(state.type)) {
+      console.warn(`submitInput called on non-input node type: ${state.type}`);
+      return state;
+    }
+
+    // Store the value in local flags
+    if (state.variable) {
+      this.localFlags[state.variable] = value;
+    }
+
+    // Call onInputSubmit callback if provided
+    const fullContext = this.buildContext(context);
+    if (this.callbacks.onInputSubmit) {
+      await this.callbacks.onInputSubmit(state.variable, value, state, fullContext);
+    }
+
+    // Navigate to next node
+    if (state.goto !== undefined) {
+      this.currentNodeIndex = state.goto;
+    } else {
+      this.currentNodeIndex++;
+    }
+
+    return this.getCurrentState(context);
+  }
+
+  /**
+   * Select a choice (supports both button and input-type choices)
+   * @param {number} choiceIndex - Index of the choice
+   * @param {Object} context - Current context
+   * @param {any} inputValue - Optional input value (for non-button choices)
+   */
+  async selectChoice(choiceIndex, context = {}, inputValue = null) {
     const state = this.getCurrentState(context);
     if (state.type !== 'choice') {
       console.warn('Not at a choice node');
       return state;
     }
-    
+
     const choice = state.choices[choiceIndex];
     if (!choice) {
       console.warn(`Invalid choice index: ${choiceIndex}`);
       return state;
     }
-    
+
     if (choice.disabled) {
       console.warn('Choice is disabled');
       return state;
     }
-    
+
+    // Handle input-type choices
+    if (choice.inputType && choice.inputType !== INPUT_TYPES.BUTTON && choice.inputConfig) {
+      // Store the input value in local flags
+      if (choice.inputConfig.variable && inputValue !== null) {
+        this.localFlags[choice.inputConfig.variable] = inputValue;
+      }
+    }
+
     // Record choice
     this.choiceHistory.push({
       sceneId: this.currentScene.id,
       nodeIndex: this.currentNodeIndex,
       choiceIndex,
-      choiceId: choice.id
+      choiceId: choice.id,
+      inputValue: inputValue
     });
-    
+
     // Process choice actions
     const fullContext = this.buildContext(context);
     if (choice.actions) {
       await this.processActions(choice.actions, fullContext);
     }
-    
+
     // Callback
     if (this.callbacks.onChoice) {
-      await this.callbacks.onChoice(choice, fullContext);
+      await this.callbacks.onChoice(choice, fullContext, inputValue);
     }
-    
+
     // Determine next node
     if (choice.goto !== undefined) {
       this.currentNodeIndex = choice.goto;
@@ -706,7 +1025,7 @@ export class SceneRunner {
     } else {
       this.currentNodeIndex++;
     }
-    
+
     return this.getCurrentState(context);
   }
 

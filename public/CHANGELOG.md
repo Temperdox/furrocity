@@ -7,7 +7,100 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.5.0] - 2026-01-05
+## [0.7.0-ALPHA] - 2026-01-05
+
+### Added
+- **Action Requirements System**: Lock actions (like sleep) until requirements are met
+  - Sleep now requires appropriate conditions: safe location, inn room, rented property, or camping supplies
+  - Complex condition logic with AND/OR/NOT operators
+  - Custom requirement handlers for extensibility
+  - Contextual failure messages based on location and lodging state
+- **Lodging System**: Inn room rentals and rental property management
+  - Inn rooms: Single or multi-day rentals with automatic expiration
+  - Rental properties: Ongoing rentals with periodic payments
+  - Room quality tiers affecting rest bonuses (basic, standard, deluxe, luxury)
+  - Day-advance processing for room expiration and rent due dates
+  - Eviction system for missed rental payments
+  - Lodging history and statistics tracking
+- **Scene Input System**: New input types for scene nodes and choices
+  - `textInput` node type: Text fields with validation (min/max length, patterns)
+  - `numberInput` node type: Number fields with range validation and cost display
+  - `dropdown` node type: Selection from list with conditional options
+  - `inputType` property for choices: Embed inputs directly in choice buttons
+  - Dynamic formula validation (e.g., `Math.floor(player.gold / 10)`)
+  - Cost preview with real-time calculation
+- **Input Validation System**: Comprehensive validation with formula support
+  - Basic validation: required, min/max, minLength/maxLength, pattern matching
+  - Type coercion: int, string, number types
+  - Dynamic formulas: Evaluate expressions using player/game state
+  - Constraint expressions: Custom validation rules (e.g., `value <= player.gold`)
+  - Custom validators: Register game-specific validation handlers
+- **Scene Action Types for Lodging**:
+  - `rentRoom`: Rent an inn room for specified days
+  - `extendStay`: Extend existing room rental
+  - `rentProperty`: Begin renting a property
+  - `makeRentPayment`: Pay rent on a property
+  - `cancelRental`: Cancel property rental
+
+### Changed
+- `handleSleep` now checks action requirements before allowing sleep
+- MedievalClock sleep buttons now show disabled state when sleep is not allowed
+- SceneRunner extended with new node type processing and input submission methods
+- Player state includes `lodging` object for tracking rentals
+- Scene choices can now include `inputConfig` for embedded inputs
+
+### Added Files
+- `engine/InputValidationSystem.js` - Input validation with formula support
+- `engine/LodgingSystem.js` - Inn room and rental property management
+- `engine/ActionRequirementSystem.js` - Action requirement checking
+- `src/components/ui/SceneInputs.jsx` - React components for scene inputs
+- `src/components/ui/SceneInputs.css` - Styling for input components
+- `public/datapacks/core/lodging/lodging_config.json` - Lodging definitions
+- `public/datapacks/core/scenes/inn_rental_scenes.json` - Example inn scenes
+
+---
+
+## [0.6.0-ALPHA] - 2026-01-05
+
+### Added
+- **Day/Night Cycle System**: Action-based time progression throughout the game
+  - Time advances based on player actions (NPC: 30min, Travel: 1hr, Combat: 2hr, Sex: 4hr, etc.)
+  - Six time periods: Dawn, Morning, Afternoon, Evening, Dusk, Night
+  - Scene-level time overrides via `timeCost` or `timeMinutes` properties
+  - Day counter tracking total in-game days
+- **Medieval Clock UI**: Ornate animated clock display
+  - Roman numeral clock face with animated hour and minute hands
+  - Day counter and time period indicator
+  - Expandable panel with sleep controls
+  - Day/night visual effects and animations
+  - Position and size variants (top-right, top-left, etc.)
+- **Night Encounter Modifiers**: Dynamic encounter chance increases at night
+  - Safe locations: +5% encounter chance at night
+  - Dangerous locations: +20% encounter chance at night
+  - Location tags determine modifier: safe, dangerous, forest, dungeon, corrupted, etc.
+- **Sleep Mechanics**: Rest until specific times
+  - Sleep to Night: Skip to 9 PM (if daytime)
+  - Sleep to Morning: Advance to 7 AM next day (always advances a day)
+  - Restores stamina and health on sleep
+- **Time Statistics Tracking**: Comprehensive time-related stats
+  - Total days played, hours played
+  - Nights survived, times slept
+  - Time spent by activity (combat, dialogue, travel, exploration, rest, nsfw)
+  - Periods experienced counter for each time period
+- **Dynamic Background Colors**: Site background shifts with time of day
+  - CSS custom properties for time-based theming
+  - Smooth 1-second transitions between time periods
+  - Each period has unique gradient scheme (darker at night, warmer at dusk)
+
+### Changed
+- `CombatSystem.generateEncounter()` now accepts optional `nightModifier` parameter
+- Exploration, search, travel, rest, interact, and combat actions now advance time
+- Scene completion advances time based on scene type or custom `timeCost`
+- Player state includes `currentTime` object and `timeStats` for tracking
+
+---
+
+## [0.5.0-ALPHA] - 2026-01-05
 
 ### Added
 - **Expedition System**: Region-to-region travel with dedicated travel mechanics
@@ -41,7 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.4.0] - 2026-01-05
+## [0.4.0-ALPHA] - 2026-01-05
 
 ### Added
 - **Hierarchical Location Title Fonts**: Location titles now support multi-tag font resolution
@@ -68,7 +161,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.3.0] - 2026-01-04
+## [0.3.0-ALPHA] - 2026-01-04
 
 ### Changed
 - **Turn-Based Timing**: All game systems now use turn-based timing instead of real-time milliseconds
@@ -90,7 +183,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.2.5] - 2026-01-03
+## [0.2.5-ALPHA] - 2026-01-03
 
 ### Added
 - **Datapack Auto-Discovery**: Content files are now automatically discovered at build time
@@ -104,7 +197,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.2.4] - 2026-01-02
+## [0.2.4-ALPHA] - 2026-01-02
 
 ### Added
 - **Location Services System**: Church, Clinic, and Nursery services
@@ -118,7 +211,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.2.3] - 2026-01-01
+## [0.2.3-ALPHA] - 2026-01-01
 
 ### Added
 - **Public Events System**: Witness mechanics for NSFW events in public
@@ -140,7 +233,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.2.2] - 2025-12-28
+## [0.2.2-ALPHA] - 2025-12-28
 
 ### Added
 - **Reputation System**: Local and global fame/infamy tracking
@@ -157,7 +250,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.2.1] - 2025-12-25
+## [0.2.1-ALPHA] - 2025-12-25
 
 ### Added
 - **Fame & Titles System**
@@ -173,7 +266,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.2.0] - 2025-12-20
+## [0.2.0-ALPHA] - 2025-12-20
 
 ### Added
 - **Travel System**: Map-based navigation
@@ -196,7 +289,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.1.5] - 2025-12-15
+## [0.1.5-ALPHA] - 2025-12-15
 
 ### Added
 - **Merchant System**: Trading with NPCs
@@ -212,7 +305,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.1.0] - 2025-12-01
+## [0.1.0-ALPHA] - 2025-12-01
 
 ### Added
 - Initial engine release
@@ -238,7 +331,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.0.1] - 2025-11-15
+## [0.0.1-ALPHA] - 2025-11-15
 
 ### Added
 - Project initialization
