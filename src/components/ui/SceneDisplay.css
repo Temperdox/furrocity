@@ -1,0 +1,272 @@
+/**
+ * SceneDisplay.css - Styles for the scene display component
+ */
+
+/* Base container */
+.scene-display {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(24, 24, 27, 0.95) 100%);
+}
+
+/* ============================================================================
+   DIALOGUE NODE
+   ============================================================================ */
+
+.scene-dialogue {
+  cursor: pointer;
+  justify-content: flex-end;
+}
+
+.dialogue-backdrop {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialogue-portrait {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.dialogue-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.portrait-placeholder {
+  font-size: 4rem;
+}
+
+.dialogue-box {
+  background: rgba(24, 24, 27, 0.95);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.dialogue-speaker {
+  color: #ffd700;
+  font-family: "Cinzel", serif;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.9rem;
+}
+
+.dialogue-text {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: #e4e4e7;
+  margin: 0;
+}
+
+.dialogue-text.narrator {
+  font-style: italic;
+  color: #a1a1aa;
+}
+
+.dialogue-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  color: #52525b;
+  font-size: 0.85rem;
+}
+
+.dialogue-hint {
+  opacity: 0.7;
+}
+
+/* ============================================================================
+   CHOICE NODE
+   ============================================================================ */
+
+.scene-choice {
+  justify-content: center;
+  align-items: center;
+}
+
+.choice-prompt {
+  background: rgba(24, 24, 27, 0.95);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 600px;
+  width: 100%;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.choice-prompt p {
+  font-size: 1.1rem;
+  color: #e4e4e7;
+  margin: 0;
+}
+
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 600px;
+  width: 100%;
+}
+
+.choice-button {
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  color: #e4e4e7;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.choice-button:hover:not(.disabled) {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: rgba(139, 92, 246, 0.6);
+  transform: translateX(4px);
+}
+
+.choice-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(63, 63, 70, 0.3);
+  border-color: rgba(63, 63, 70, 0.5);
+}
+
+.choice-text {
+  font-weight: 500;
+}
+
+.choice-disabled-reason {
+  font-size: 0.85rem;
+  color: #ef4444;
+  font-style: italic;
+}
+
+/* ============================================================================
+   INPUT NODE
+   ============================================================================ */
+
+.scene-input-node {
+  justify-content: center;
+  align-items: center;
+}
+
+.scene-input-node .scene-input {
+  max-width: 500px;
+  width: 100%;
+  background: rgba(24, 24, 27, 0.95);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+/* ============================================================================
+   CHOICE INPUT (embedded in choices)
+   ============================================================================ */
+
+.choice-input {
+  background: rgba(24, 24, 27, 0.95);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.choice-input .choice-text {
+  display: block;
+  font-weight: 500;
+  color: #e4e4e7;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.choice-input-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.choice-input-disabled .disabled-reason {
+  display: block;
+  color: #ef4444;
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+.choice-input .scene-input {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.choice-input .scene-input-buttons {
+  margin-top: 1rem;
+}
+
+/* ============================================================================
+   PROCESSING STATE
+   ============================================================================ */
+
+.scene-processing {
+  justify-content: center;
+  align-items: center;
+}
+
+.processing-indicator {
+  font-size: 2rem;
+  color: #a1a1aa;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .scene-display {
+    padding: 1rem;
+  }
+
+  .dialogue-box {
+    padding: 1rem;
+  }
+
+  .dialogue-text {
+    font-size: 1rem;
+  }
+
+  .choice-prompt {
+    padding: 1rem;
+  }
+
+  .choice-button {
+    padding: 0.75rem 1rem;
+  }
+}

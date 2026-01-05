@@ -25,6 +25,7 @@ import { ActionRequirementSystem } from '../engine/ActionRequirementSystem.js';
 import RumorConfrontation, { RumorConfrontationResult } from './components/ui/RumorConfrontation.jsx';
 import ServiceInteraction, { ServiceResult } from './components/ui/ServiceInteraction.jsx';
 import ChangelogModal from './components/ui/ChangelogModal.jsx';
+import SceneDisplay from './components/ui/SceneDisplay.jsx';
 
 // ============================================================================
 // GAME DATA STRUCTURES (JSON-DRIVEN CONTENT)
@@ -6200,7 +6201,7 @@ const Game = () => {
   };
   
   // Scene complete handler
-  const handleSceneComplete = () => {
+  const handleSceneComplete = (outcome) => {
     // Advance time based on scene type or custom timeCost
     if (currentScene) {
       const sceneType = currentScene.type || 'event';
@@ -6213,7 +6214,116 @@ const Game = () => {
     // Auto-save
     SaveSystem.save('auto', player, gameState);
   };
-  
+
+  // Scene action handler - processes actions from scene nodes
+  const handleSceneAction = useCallback((action) => {
+    if (!action || !action.type) return;
+
+    switch (action.type) {
+      case 'rentRoom':
+        if (lodgingSystemRef.current) {
+          const result = lodgingSystemRef.current.rentRoom(player, action.roomId, action.days || 1);
+          if (result.success) {
+            setPlayer(prev => ({
+              ...prev,
+              gold: prev.gold - result.cost,
+              lodging: result.updatedLodging
+            }));
+            toast.success('Room Rented', `Rented for ${action.days || 1} night(s). Cost: ${result.cost}g`);
+          } else {
+            toast.error('Rental Failed', result.error);
+          }
+        }
+        break;
+
+      case 'extendStay':
+        if (lodgingSystemRef.current) {
+          const result = lodgingSystemRef.current.extendStay(player, action.roomId, action.days || 1);
+          if (result.success) {
+            setPlayer(prev => ({
+              ...prev,
+              gold: prev.gold - result.cost,
+              lodging: result.updatedLodging
+            }));
+            toast.success('Stay Extended', `Extended by ${action.days || 1} night(s). Cost: ${result.cost}g`);
+          } else {
+            toast.error('Extension Failed', result.error);
+          }
+        }
+        break;
+
+      case 'rentProperty':
+        if (lodgingSystemRef.current) {
+          const result = lodgingSystemRef.current.rentProperty(player, action.propertyId);
+          if (result.success) {
+            setPlayer(prev => ({
+              ...prev,
+              gold: prev.gold - result.totalCost,
+              lodging: result.updatedLodging
+            }));
+            toast.success('Property Rented', `First payment: ${result.totalCost}g`);
+          } else {
+            toast.error('Rental Failed', result.error);
+          }
+        }
+        break;
+
+      case 'makeRentPayment':
+        if (lodgingSystemRef.current) {
+          const result = lodgingSystemRef.current.makeRentPayment(player, action.propertyId);
+          if (result.success) {
+            setPlayer(prev => ({
+              ...prev,
+              gold: prev.gold - result.amount,
+              lodging: result.updatedLodging
+            }));
+            toast.success('Rent Paid', `Paid ${result.amount}g`);
+          } else {
+            toast.error('Payment Failed', result.error);
+          }
+        }
+        break;
+
+      case 'cancelRental':
+        if (lodgingSystemRef.current) {
+          const result = lodgingSystemRef.current.cancelRental(player, action.propertyId);
+          if (result.success) {
+            setPlayer(prev => ({
+              ...prev,
+              lodging: result.updatedLodging
+            }));
+            toast.info('Rental Cancelled', 'You have cancelled your rental.');
+          }
+        }
+        break;
+
+      case 'giveGold':
+        const amount = typeof action.amount === 'string'
+          ? parseInt(action.amount.replace('-', ''), 10) * (action.amount.startsWith('-') ? -1 : 1)
+          : action.amount;
+        setPlayer(prev => ({ ...prev, gold: Math.max(0, prev.gold + amount) }));
+        break;
+
+      case 'modifyRelationship':
+        // TODO: Implement relationship system
+        break;
+
+      case 'setFlag':
+        setGameState(prev => ({
+          ...prev,
+          flags: { ...prev.flags, [action.flag]: action.value !== undefined ? action.value : true }
+        }));
+        break;
+
+      case 'giveItem':
+        // TODO: Integrate with inventory system
+        break;
+
+      default:
+        console.warn('Unknown scene action type:', action.type);
+    }
+  }, [player, lodgingSystemRef]);
+
   // Location action handler
   const handleLocationAction = (action, param) => {
     switch (action) {
@@ -7469,9 +7579,13 @@ const Game = () => {
         
       case 'dialogue':
         return (
-          <DialogueScreen
+          <SceneDisplay
             scene={currentScene}
+            player={player}
+            gameState={gameState}
             onComplete={handleSceneComplete}
+            onAction={handleSceneAction}
+            validationSystem={inputValidationSystemRef.current}
           />
         );
         

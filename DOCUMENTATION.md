@@ -1,6 +1,6 @@
 # Furrocity Engine - Complete Documentation
 
-> **Version:** 0.6.0
+> **Version:** 0.7.0-ALPHA
 > **Engine:** Furrocity Engine
 > **Authors:** Cotton Le Sergal & Shluggo
 
@@ -23,19 +23,20 @@
 13. [Fame, Titles & Infamy](#13-fame-titles--infamy)
 14. [Local/Global Reputation & Rumor System](#14-localglobal-reputation--rumor-system)
 15. [Location Services (Church, Clinic, Nursery)](#15-location-services-church-clinic-nursery)
-16. [Public Events, Discovery & Barring System](#16-public-events-discovery--barring-system)
-17. [Creating Items](#17-creating-items)
-18. [Inventory System](#18-inventory-system)
-19. [Loot Tables](#19-loot-tables)
-20. [Effects & Status System](#20-effects--status-system)
-21. [Substance System](#21-substance-system)
-22. [Encounter System](#22-encounter-system)
-23. [Paperdoll System](#23-paperdoll-system)
-24. [Player State Schema](#24-player-state-schema)
-25. [Condition Reference](#25-condition-reference)
-26. [Effect Actions Reference](#26-effect-actions-reference)
-27. [Adding New Content](#27-adding-new-content)
-28. [Performance & Optimization](#28-performance--optimization)
+16. [Lodging System](#16-lodging-system)
+17. [Public Events, Discovery & Barring System](#17-public-events-discovery--barring-system)
+18. [Creating Items](#18-creating-items)
+19. [Inventory System](#19-inventory-system)
+20. [Loot Tables](#20-loot-tables)
+21. [Effects & Status System](#21-effects--status-system)
+22. [Substance System](#22-substance-system)
+23. [Encounter System](#23-encounter-system)
+24. [Paperdoll System](#24-paperdoll-system)
+25. [Player State Schema](#25-player-state-schema)
+26. [Condition Reference](#26-condition-reference)
+27. [Effect Actions Reference](#27-effect-actions-reference)
+28. [Adding New Content](#28-adding-new-content)
+29. [Performance & Optimization](#29-performance--optimization)
 
 ---
 
@@ -90,6 +91,8 @@ furrocity/
 │           ├── LocationTitle.css        # Title animation styles
 │           ├── MedievalClock.jsx        # Day/night clock UI
 │           ├── MedievalClock.css        # Clock animation styles
+│           ├── SceneInputs.jsx          # Scene input components
+│           ├── SceneInputs.css          # Scene input styles
 │           └── RequirementTooltip.jsx   # Unlock requirement display
 │
 ├── engine/                   # Core game systems
@@ -112,6 +115,9 @@ furrocity/
 │   ├── LocationSystem.js     # Travel & region management
 │   ├── ExpeditionSystem.js   # Region-to-region travel
 │   ├── TimeSystem.js         # Day/night cycle & time management
+│   ├── LodgingSystem.js      # Inn rooms & rental properties
+│   ├── ActionRequirementSystem.js  # Action requirement checking
+│   ├── InputValidationSystem.js    # Input validation with formulas
 │   └── SaveSystem.js         # Save/load
 │
 ├── public/
@@ -130,6 +136,8 @@ furrocity/
 │   │       ├── encounter_tables/
 │   │       ├── conditions/
 │   │       ├── sprites/
+│   │       ├── lodging/              # Inn rooms & rental properties
+│   │       │   └── lodging_config.json
 │   │       └── ui/
 │   │           └── location_fonts.json  # Font tags for location titles
 │   │
@@ -389,6 +397,9 @@ Scenes are the core narrative building blocks.
 | `effect` | Apply effects/give items |
 | `combat` | Start combat |
 | `nsfw` | Adult content (tag-gated) |
+| `textInput` | Text field for player input |
+| `numberInput` | Number field with validation |
+| `dropdown` | Selection from list of options |
 | `end` | End scene |
 
 ### Branch Node
@@ -420,6 +431,153 @@ Scenes are the core narrative building blocks.
   "next": "continue"
 }
 ```
+
+### Scene Input Nodes
+
+Scene input nodes allow players to enter custom values. All input nodes save their value to the specified `variable` for use in later nodes.
+
+#### TextInput Node
+```json
+{
+  "type": "textInput",
+  "prompt": "What name for the reservation?",
+  "variable": "reservationName",
+  "placeholder": "Enter name...",
+  "defaultValue": "{player.name}",
+  "validation": {
+    "required": true,
+    "minLength": 2,
+    "maxLength": 30,
+    "pattern": "^[a-zA-Z\\s'-]+$",
+    "customMessage": "Please enter a valid name"
+  },
+  "goto": 5
+}
+```
+
+#### NumberInput Node
+```json
+{
+  "type": "numberInput",
+  "prompt": "How many nights would you like to stay?",
+  "variable": "stayDuration",
+  "validation": {
+    "type": "int",
+    "min": 1,
+    "dynamicMax": "Math.min(14, Math.floor(player.gold / 10))",
+    "mustBeInteger": true
+  },
+  "showCost": true,
+  "costFormula": "value * 10",
+  "costLabel": "Total: {cost}g",
+  "showSlider": true,
+  "goto": 6
+}
+```
+
+#### Dropdown Node
+```json
+{
+  "type": "dropdown",
+  "prompt": "Which room would you prefer?",
+  "variable": "selectedRoom",
+  "options": [
+    { "value": "standard", "label": "Standard Room (10g)", "cost": 10 },
+    { "value": "deluxe", "label": "Deluxe Room (25g)", "cost": 25 },
+    {
+      "value": "suite",
+      "label": "Innkeeper's Suite (50g)",
+      "cost": 50,
+      "showIf": { "type": "stat", "stat": "charisma", "value": 8 }
+    }
+  ],
+  "goto": 7
+}
+```
+
+### InputType in Choices
+
+Choices can embed inputs directly using the `inputType` property:
+
+| inputType | Description |
+|-----------|-------------|
+| `button` | Standard button (default) |
+| `textInput` | Text field embedded in choice |
+| `numberInput` | Number field with cost preview |
+| `dropdown` | Dropdown selection |
+
+```json
+{
+  "type": "choice",
+  "prompt": "The innkeeper waits.",
+  "choices": [
+    {
+      "id": "rent_tonight",
+      "text": "Rent for tonight (10g)",
+      "inputType": "button",
+      "enableIf": { "type": "hasGold", "amount": 10 },
+      "disabledReason": "Not enough gold",
+      "goto": 10
+    },
+    {
+      "id": "rent_multi",
+      "text": "Rent multiple nights:",
+      "inputType": "numberInput",
+      "inputConfig": {
+        "variable": "nightsToRent",
+        "placeholder": "Nights",
+        "defaultValue": 1,
+        "validation": {
+          "type": "int",
+          "min": 1,
+          "dynamicMax": "Math.min(7, Math.floor(player.gold / 10))"
+        },
+        "showCost": true,
+        "costFormula": "value * 10",
+        "costLabel": "Total: {cost}g"
+      },
+      "goto": 10
+    },
+    {
+      "id": "room_type",
+      "text": "Choose room:",
+      "inputType": "dropdown",
+      "inputConfig": {
+        "variable": "roomChoice",
+        "options": [
+          { "value": "standard", "label": "Standard (10g)" },
+          { "value": "deluxe", "label": "Deluxe (25g)" }
+        ]
+      },
+      "goto": 12
+    }
+  ]
+}
+```
+
+### Input Validation
+
+All input nodes support validation rules:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `required` | boolean | Value must be provided |
+| `type` | string | `"int"`, `"string"`, `"number"`, `"any"` |
+| `min` | number | Minimum value |
+| `max` | number | Maximum value |
+| `dynamicMin` | string | Formula for minimum (e.g., `"1"`) |
+| `dynamicMax` | string | Formula for maximum (e.g., `"player.gold"`) |
+| `minLength` | number | Minimum string length |
+| `maxLength` | number | Maximum string length |
+| `pattern` | string | Regex pattern for text validation |
+| `constraint` | string | Expression like `"value <= player.gold"` |
+| `mustBeInteger` | boolean | Value must be whole number |
+| `customMessage` | string | Error message on validation failure |
+
+Dynamic formulas have access to:
+- `player` - Full player state object
+- `game` - Game state object
+- `Math` - JavaScript Math object
 
 ---
 
@@ -1179,6 +1337,42 @@ Players can sleep to skip time:
 | Sleep to Morning | 07:00 (7 AM) | Always advances to next day |
 
 Sleeping restores stamina and health.
+
+#### Sleep Requirements
+
+Sleep is only allowed when certain conditions are met. The player must have ONE of the following:
+
+| Requirement | Description |
+|-------------|-------------|
+| Safe Location | Location has `safe` tag |
+| Inn Room | At an inn with a valid room rental |
+| Rented Property | Has access to a rented property |
+| Camping Supplies | Has `camping_supplies` item in inventory |
+| Sleep-Enabled Location | Location has `can_sleep`, `shelter`, `camp_spot`, or `rest_area` tag |
+
+#### Location Tags for Sleeping
+
+These tags allow sleeping at any location, even dangerous ones:
+
+| Tag | Use Case | Example |
+|-----|----------|---------|
+| `can_sleep` | Generic sleep permission | Any location where sleeping is allowed |
+| `shelter` | Natural shelters | Caves, overhangs, dense canopy clearings |
+| `camp_spot` | Designated camping | Marked campsites, ranger stations |
+| `rest_area` | Rest stops | Roadside waypoints, caravan stops |
+
+**Example Location:**
+```json
+{
+  "id": "forest_clearing",
+  "name": "Mossy Clearing",
+  "description": "A small clearing with soft moss and thick canopy overhead.",
+  "tags": ["dangerous", "forest", "shelter"],
+  "encounterChance": 0.3
+}
+```
+
+This location is dangerous (night encounters apply) but players CAN sleep there due to the `shelter` tag.
 
 ### Medieval Clock UI
 
@@ -2062,7 +2256,134 @@ Add service triggers through scene effects:
 
 ---
 
-## 16. Public Events, Discovery & Barring System
+## 16. Lodging System
+
+The lodging system manages inn room rentals and rental properties.
+
+### Inn Room Rentals
+
+Inn rooms are short-term accommodations rented for one or more nights. Rooms automatically expire at the end of the rental period.
+
+#### Lodging Configuration
+
+```json
+{
+  "innRooms": {
+    "weary_traveler_standard": {
+      "id": "weary_traveler_standard",
+      "locationId": "starting_inn",
+      "name": "Standard Room",
+      "description": "A simple but clean room with a bed and nightstand.",
+      "pricePerNight": 10,
+      "quality": "standard",
+      "maxDays": 7,
+      "bonuses": { "restQuality": 1.0 }
+    },
+    "weary_traveler_deluxe": {
+      "id": "weary_traveler_deluxe",
+      "locationId": "starting_inn",
+      "name": "Deluxe Room",
+      "description": "A comfortable room with a fireplace and writing desk.",
+      "pricePerNight": 25,
+      "quality": "deluxe",
+      "maxDays": 14,
+      "bonuses": { "restQuality": 1.2, "staminaRecovery": 1.1 }
+    }
+  }
+}
+```
+
+#### Room Quality Tiers
+
+| Quality | Rest Bonus | Description |
+|---------|------------|-------------|
+| `basic` | 0.8x | Minimal accommodations |
+| `standard` | 1.0x | Clean and functional |
+| `deluxe` | 1.2x | Comfortable with amenities |
+| `luxury` | 1.5x | Premium accommodations |
+
+#### Scene Actions for Lodging
+
+```json
+{
+  "type": "action",
+  "actions": [
+    { "type": "rentRoom", "roomId": "weary_traveler_standard", "days": 1 },
+    { "type": "rentRoom", "roomId": "weary_traveler_standard", "days": "{nightsToRent}" },
+    { "type": "extendStay", "roomId": "weary_traveler_standard", "days": "{extendDays}" }
+  ]
+}
+```
+
+### Rental Properties
+
+Rental properties are ongoing rentals with periodic payments. Miss a payment and you may be evicted.
+
+```json
+{
+  "rentalProperties": {
+    "small_cottage": {
+      "id": "small_cottage",
+      "locationId": "crossroads_cottage",
+      "name": "Small Cottage",
+      "description": "A cozy cottage on the edge of town.",
+      "rentPerPeriod": 100,
+      "rentPeriodDays": 7,
+      "deposit": 200,
+      "maxMissedPayments": 2
+    }
+  }
+}
+```
+
+#### Property Actions
+
+```json
+{
+  "type": "action",
+  "actions": [
+    { "type": "rentProperty", "propertyId": "small_cottage" },
+    { "type": "makeRentPayment", "propertyId": "small_cottage" },
+    { "type": "cancelRental", "propertyId": "small_cottage" }
+  ]
+}
+```
+
+### Player Lodging State
+
+The player's lodging state tracks all active rentals:
+
+```javascript
+lodging: {
+  innRooms: {
+    // roomId: { roomId, locationId, checkInDay, expirationDay, daysRented, quality, isActive }
+  },
+  rentedProperties: {
+    // propertyId: { propertyId, locationId, startDay, nextPaymentDay, rentAmount,
+    //               missedPayments, maxMissedPayments, isActive, accessGranted }
+  },
+  history: [],
+  stats: {
+    totalNightsAtInns: 0,
+    totalNightsAtRentals: 0,
+    totalGoldOnLodging: 0,
+    evictionCount: 0,
+    currentHomeProperty: null
+  }
+}
+```
+
+### Day Processing
+
+On each new day, the lodging system:
+1. Checks for expired inn room rentals
+2. Checks for missed rental property payments
+3. Handles evictions for too many missed payments
+4. Updates lodging history and statistics
+
+---
+
+## 17. Public Events, Discovery & Barring System
 
 This system handles what happens when NSFW events occur in public, hidden location tags, and location access restrictions.
 
@@ -2305,7 +2626,7 @@ discoveryProgress: {
 
 ---
 
-## 17. Creating Items
+## 18. Creating Items
 
 ### Item Types
 
@@ -2414,7 +2735,7 @@ discoveryProgress: {
 
 ---
 
-## 18. Inventory System
+## 19. Inventory System
 
 ### Item User Flags
 
@@ -2465,7 +2786,7 @@ class InventorySystem {
 
 ---
 
-## 19. Loot Tables
+## 20. Loot Tables
 
 ### Basic Loot Table
 
@@ -2525,7 +2846,7 @@ class InventorySystem {
 
 ---
 
-## 20. Effects & Status System
+## 21. Effects & Status System
 
 All effects use turn-based or action-based durations (no real-time).
 
@@ -2633,7 +2954,7 @@ All effects use turn-based or action-based durations (no real-time).
 
 ---
 
-## 21. Substance System
+## 22. Substance System
 
 All substance timing uses turn-based durations (actions, turns, days) rather than real-time milliseconds.
 
@@ -2718,7 +3039,7 @@ All substance timing uses turn-based durations (actions, turns, days) rather tha
 
 ---
 
-## 22. Encounter System
+## 23. Encounter System
 
 ### Encounter Types
 
@@ -2764,7 +3085,7 @@ All substance timing uses turn-based durations (actions, turns, days) rather tha
 
 ---
 
-## 23. Paperdoll System
+## 24. Paperdoll System
 
 ### Body Regions
 
@@ -2808,7 +3129,7 @@ All substance timing uses turn-based durations (actions, turns, days) rather tha
 
 ---
 
-## 24. Player State Schema
+## 25. Player State Schema
 
 ```javascript
 const playerState = {
@@ -2861,7 +3182,7 @@ const playerState = {
 
 ---
 
-## 25. Condition Reference
+## 26. Condition Reference
 
 ### Stat Conditions
 ```json
@@ -2911,7 +3232,7 @@ const playerState = {
 
 ---
 
-## 26. Effect Actions Reference
+## 27. Effect Actions Reference
 
 ### Stat Modifications
 ```json
@@ -2952,7 +3273,7 @@ const playerState = {
 
 ---
 
-## 27. Adding New Content
+## 28. Adding New Content
 
 ### Step-by-Step: Adding a New Merchant
 
@@ -3028,7 +3349,7 @@ const playerState = {
 
 ---
 
-## 28. Performance & Optimization
+## 29. Performance & Optimization
 
 ### Best Practices
 

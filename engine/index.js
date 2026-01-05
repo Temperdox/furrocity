@@ -17,7 +17,7 @@
 export { DataRegistry, getRegistry, initRegistry } from './DataRegistry.js';
 export { DataPackManager, CONTENT_TYPES } from './DataPackManager.js';
 export { EffectSystem, TRIGGERS, STACK_BEHAVIOR, DURATION_TYPE, MOD_OPERATION } from './EffectSystem.js';
-export { SceneRunner, NODE_TYPES } from './SceneRunner.js';
+export { SceneRunner, NODE_TYPES, INPUT_TYPES } from './SceneRunner.js';
 export { CombatSystem, COMBAT_ACTIONS, COMBAT_PHASE, DAMAGE_TYPES } from './CombatSystem.js';
 export { SaveSystem } from './SaveSystem.js';
 
@@ -39,6 +39,21 @@ export { UnlockSystem } from './UnlockSystem.js';
 export { LocationServices } from './LocationServices.js';
 export { LocationDiscoverySystem } from './LocationDiscoverySystem.js';
 export { LocationBarringSystem } from './LocationBarringSystem.js';
+
+// =============================================================================
+// TRAVEL & TIME SYSTEMS
+// =============================================================================
+
+export { ExpeditionSystem } from './ExpeditionSystem.js';
+export { TimeSystem, DEFAULT_TIME_COSTS, TIME_PERIODS } from './TimeSystem.js';
+
+// =============================================================================
+// LODGING & ACTION REQUIREMENTS
+// =============================================================================
+
+export { LodgingSystem } from './LodgingSystem.js';
+export { ActionRequirementSystem } from './ActionRequirementSystem.js';
+export { InputValidationSystem } from './InputValidationSystem.js';
 
 // =============================================================================
 // REPUTATION & SOCIAL SYSTEMS

@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Action Requirements System**: Lock actions (like sleep) until requirements are met
-  - Sleep now requires appropriate conditions: safe location, inn room, rented property, or camping supplies
+  - Sleep now requires appropriate conditions: safe location, inn room, rented property, camping supplies, or location-specific tags
+  - Location tags that enable sleeping: `can_sleep`, `shelter`, `camp_spot`, `rest_area`
+  - Dangerous locations can still allow sleep via these tags (with increased encounter risk)
   - Complex condition logic with AND/OR/NOT operators
   - Custom requirement handlers for extensibility
   - Contextual failure messages based on location and lodging state

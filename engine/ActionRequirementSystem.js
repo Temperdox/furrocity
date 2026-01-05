@@ -32,8 +32,11 @@ const DEFAULT_ACTION_REQUIREMENTS = {
       { type: 'has_lodging', lodgingType: 'rented_property' },
       // Can sleep anywhere with camping supplies
       { type: 'has_item', itemId: 'camping_supplies' },
-      // Can sleep if location explicitly allows it
-      { type: 'location_tag', tag: 'can_sleep' }
+      // Can sleep if location explicitly allows it (multiple tag options)
+      { type: 'location_tag', tag: 'can_sleep' },
+      { type: 'location_tag', tag: 'shelter' },
+      { type: 'location_tag', tag: 'camp_spot' },
+      { type: 'location_tag', tag: 'rest_area' }
     ],
     failureMessage: 'You cannot sleep here.',
     failureMessages: {
