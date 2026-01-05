@@ -168,55 +168,81 @@ Datapacks are modular content packages. Each datapack has a `pack.json` manifest
   "contentTypes": {
     "sprites": {
       "path": "sprites/",
-      "files": ["spritesheets.json"]
-    },
-    "conditions": {
-      "path": "conditions/",
-      "files": ["encounter_conditions.json", "loot_conditions.json"]
-    },
-    "loot_tables": {
-      "path": "loot_tables/",
-      "files": ["forest_loot.json", "town_loot.json"]
-    },
-    "encounter_tables": {
-      "path": "encounter_tables/",
-      "files": ["forest_encounters.json"]
+      "autoLoad": true
     },
     "items": {
       "path": "items/",
-      "files": ["weapons_armor.json", "consumables.json"]
+      "autoLoad": true
     },
     "enemies": {
       "path": "enemies/",
-      "files": ["forest_enemies.json"]
+      "autoLoad": true
     },
     "locations": {
       "path": "locations/",
-      "files": ["world_locations.json"]
-    },
-    "effects": {
-      "path": "effects/",
-      "files": ["core_effects.json"]
-    },
-    "substances": {
-      "path": "substances/",
-      "files": ["core_substances.json"]
+      "autoLoad": true
     },
     "scenes": {
       "path": "scenes/",
-      "files": ["intro_scenes.json"]
+      "autoLoad": true
     },
     "merchants": {
       "path": "merchants/",
-      "files": ["merchants.json", "shop_inventories.json"]
-    },
-    "titles": {
-      "path": "titles/",
-      "files": ["titles.json"]
+      "autoLoad": true
     }
   }
 }
 ```
+
+### Auto-Discovery System
+
+The datapack system supports automatic file discovery at build time. Instead of listing every JSON file manually, use `autoLoad: true`:
+
+**Automatic (recommended):**
+```json
+{
+  "items": {
+    "path": "items/",
+    "autoLoad": true
+  }
+}
+```
+
+**Manual (for precise control):**
+```json
+{
+  "items": {
+    "path": "items/",
+    "files": ["weapons.json", "armor.json", "consumables.json"]
+  }
+}
+```
+
+#### How Auto-Discovery Works
+
+1. During `npm run dev` or `npm run build`, a Vite plugin scans each content directory
+2. All `.json` files found (including subdirectories) are automatically added
+3. The generated `pack.json` in `dist/` contains explicit file lists
+4. Add new JSON files to any directory - they're picked up automatically on next build
+
+#### Supported Content Types
+
+| Type | Description |
+|------|-------------|
+| `sprites` | Sprite sheet definitions |
+| `conditions` | Condition definitions for encounters/loot |
+| `loot_tables` | Loot drop tables |
+| `encounter_tables` | Random encounter tables |
+| `items` | Weapons, armor, consumables, etc. |
+| `enemies` | Enemy definitions |
+| `locations` | World locations and regions |
+| `effects` | Buffs, debuffs, status effects |
+| `substances` | Drugs, potions, addiction mechanics |
+| `scenes` | Dialogue and narrative scenes |
+| `merchants` | NPC merchants and shop inventories |
+| `titles` | Player titles and achievements |
+| `rumors` | Rumor templates for reputation system |
+| `services` | Location service definitions (church, clinic, nursery) |
 
 ### Adding a New Datapack
 
@@ -2008,6 +2034,22 @@ class InventorySystem {
 
 ## 18. Effects & Status System
 
+All effects use turn-based or action-based durations (no real-time).
+
+### Duration Types
+
+| Type | Description | Tick Event |
+|------|-------------|------------|
+| `turns` | X combat turns | End of each turn |
+| `actions` | X player actions (explore, talk, etc.) | Each action |
+| `days` | X rest cycles | On rest |
+| `locationChanges` | X location transitions | On travel |
+| `permanent` | Until manually removed | Never |
+| `untilRest` | Removed when resting | On rest |
+| `untilCombatEnd` | Removed after combat | Combat end |
+| `untilCondition` | Removed when condition met | Checked each tick |
+| `uses` | X uses then removed | On use |
+
 ### Buff Effect
 
 ```json
@@ -2017,7 +2059,7 @@ class InventorySystem {
   "icon": "💪",
   "type": "buff",
 
-  "duration": { "type": "time", "value": 300000 },
+  "duration": { "type": "turns", "value": 5 },
 
   "modifiers": [
     { "stat": "strength", "operation": "percent", "value": 25 }
@@ -2036,17 +2078,34 @@ class InventorySystem {
   "icon": "☠️",
   "type": "debuff",
 
-  "duration": {
-    "type": "time",
-    "value": 60000,
-    "tickInterval": 5000
-  },
+  "duration": { "type": "turns", "value": 3 },
 
-  "onTick": {
-    "damage": { "type": "poison", "value": 5 }
+  "triggers": {
+    "onTurnEnd": [
+      {
+        "action": { "type": "damage", "amount": 5, "damageType": "poison" }
+      }
+    ]
   },
 
   "stacking": { "behavior": "stack", "maxStacks": 5 }
+}
+```
+
+### Long-Term Effect
+
+```json
+{
+  "id": "blessed",
+  "name": "Blessed",
+  "icon": "✨",
+  "type": "buff",
+
+  "duration": { "type": "days", "value": 3 },
+
+  "modifiers": [
+    { "stat": "luck", "operation": "flat", "value": 5 }
+  ]
 }
 ```
 
@@ -2057,6 +2116,9 @@ class InventorySystem {
   "id": "rope_bound",
   "name": "Bound",
   "type": "restraint",
+
+  "duration": { "type": "untilCondition" },
+  "removeCondition": { "type": "statGreaterThan", "stat": "escapeProgress", "value": 100 },
 
   "restrictions": {
     "canMove": false,

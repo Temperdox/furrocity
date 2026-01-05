@@ -49,15 +49,17 @@ export const STACK_BEHAVIOR = {
   INTENSIFY: 'intensify'   // Increase intensity/potency
 };
 
-// Duration types
+// Duration types (all turn-based/action-based, no real-time)
 export const DURATION_TYPE = {
-  TURNS: 'turns',          // X combat turns
-  SECONDS: 'seconds',      // Real-time seconds
-  PERMANENT: 'permanent',  // Until manually removed
-  UNTIL_REST: 'untilRest', // Removed on rest
-  UNTIL_COMBAT_END: 'untilCombatEnd',
+  TURNS: 'turns',                    // X combat turns
+  ACTIONS: 'actions',                // X player actions (explore, rest, talk, etc.)
+  DAYS: 'days',                      // X rest cycles / days
+  LOCATION_CHANGES: 'locationChanges', // X location transitions
+  PERMANENT: 'permanent',            // Until manually removed
+  UNTIL_REST: 'untilRest',           // Removed on rest
+  UNTIL_COMBAT_END: 'untilCombatEnd', // Removed when combat ends
   UNTIL_CONDITION: 'untilCondition', // Removed when condition met
-  USES: 'uses'             // X uses then removed
+  USES: 'uses'                       // X uses then removed
 };
 
 // Modifier operation types
@@ -542,7 +544,15 @@ export class EffectSystem {
    */
   createEffectInstance(effectId, definition, options = {}) {
     const durationType = definition.duration?.type || DURATION_TYPE.PERMANENT;
-    
+
+    // Determine if this duration type uses a counter
+    const counterBasedTypes = [
+      DURATION_TYPE.TURNS,
+      DURATION_TYPE.ACTIONS,
+      DURATION_TYPE.DAYS,
+      DURATION_TYPE.LOCATION_CHANGES
+    ];
+
     return {
       id: effectId,
       instanceId: `${effectId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -550,18 +560,17 @@ export class EffectSystem {
       stacks: options.stacks || 1,
       intensity: options.intensity || 1,
       source: options.source?.id || null,
-      
+
       // Duration tracking
       durationType,
-      remainingDuration: durationType === DURATION_TYPE.TURNS || 
-                         durationType === DURATION_TYPE.SECONDS
+      remainingDuration: counterBasedTypes.includes(durationType)
                          ? definition.duration.value : null,
-      remainingUses: durationType === DURATION_TYPE.USES 
+      remainingUses: durationType === DURATION_TYPE.USES
                      ? definition.duration.value : null,
-      
+
       // Cached modifier values for quick stat calculation
       modifiers: definition.modifiers || [],
-      
+
       // Custom data
       customData: options.customData || {}
     };
@@ -660,32 +669,95 @@ export class EffectSystem {
   }
 
   /**
-   * Update effect durations (call each turn or tick)
+   * Update effect durations based on game events
+   * @param {Object} target - The entity with effects
+   * @param {string} tickType - Type of tick: 'turn', 'action', 'day', 'locationChange', 'rest', 'combatEnd'
+   * @param {Object} context - Additional context
    */
   async tickEffects(target, tickType = 'turn', context = {}) {
     const results = [];
     const toRemove = [];
-    
+
     if (!target.activeEffects) return results;
-    
+
     for (const effect of target.activeEffects) {
       const definition = await this.getEffectDefinition(effect.id);
-      
-      // Check duration expiry
-      if (effect.durationType === DURATION_TYPE.TURNS && tickType === 'turn') {
-        effect.remainingDuration--;
-        if (effect.remainingDuration <= 0) {
-          toRemove.push(effect.id);
-        }
-      } else if (effect.durationType === DURATION_TYPE.SECONDS && tickType === 'second') {
+      let shouldDecrement = false;
+      let triggerType = null;
+
+      // Determine if this tick type affects this effect's duration
+      switch (effect.durationType) {
+        case DURATION_TYPE.TURNS:
+          if (tickType === 'turn') {
+            shouldDecrement = true;
+            triggerType = TRIGGERS.ON_TURN_END;
+          }
+          break;
+
+        case DURATION_TYPE.ACTIONS:
+          if (tickType === 'action') {
+            shouldDecrement = true;
+          }
+          break;
+
+        case DURATION_TYPE.DAYS:
+          if (tickType === 'day' || tickType === 'rest') {
+            shouldDecrement = true;
+            triggerType = TRIGGERS.ON_REST;
+          }
+          break;
+
+        case DURATION_TYPE.LOCATION_CHANGES:
+          if (tickType === 'locationChange') {
+            shouldDecrement = true;
+            triggerType = TRIGGERS.ON_ENTER_LOCATION;
+          }
+          break;
+
+        case DURATION_TYPE.UNTIL_REST:
+          if (tickType === 'rest') {
+            toRemove.push(effect.id);
+          }
+          break;
+
+        case DURATION_TYPE.UNTIL_COMBAT_END:
+          if (tickType === 'combatEnd') {
+            toRemove.push(effect.id);
+          }
+          break;
+
+        case DURATION_TYPE.UNTIL_CONDITION:
+          // Check condition
+          if (definition?.removeCondition) {
+            const ctx = { target, gameState: context.gameState, effectData: effect };
+            if (evaluateCondition(definition.removeCondition, ctx)) {
+              toRemove.push(effect.id);
+            }
+          }
+          break;
+      }
+
+      // Decrement duration if applicable
+      if (shouldDecrement && effect.remainingDuration !== null) {
         effect.remainingDuration--;
         if (effect.remainingDuration <= 0) {
           toRemove.push(effect.id);
         }
       }
-      
-      // Process tick triggers
-      const triggerType = tickType === 'turn' ? TRIGGERS.ON_TURN_END : null;
+
+      // Process tick triggers based on tick type
+      if (!triggerType) {
+        // Map tick types to trigger types
+        const tickToTrigger = {
+          'turn': TRIGGERS.ON_TURN_END,
+          'combatStart': TRIGGERS.ON_COMBAT_START,
+          'combatEnd': TRIGGERS.ON_COMBAT_END,
+          'rest': TRIGGERS.ON_REST,
+          'locationChange': TRIGGERS.ON_ENTER_LOCATION
+        };
+        triggerType = tickToTrigger[tickType];
+      }
+
       if (triggerType && definition?.triggers?.[triggerType]) {
         const ctx = {
           target,
@@ -693,7 +765,7 @@ export class EffectSystem {
           effectData: effect,
           registry: this.registry
         };
-        
+
         for (const trigger of definition.triggers[triggerType]) {
           if (evaluateCondition(trigger.condition, ctx)) {
             results.push(...executeAction(trigger.action, ctx));
@@ -701,12 +773,12 @@ export class EffectSystem {
         }
       }
     }
-    
+
     // Remove expired effects
     for (const effectId of toRemove) {
       results.push(...this.removeEffectImmediate(target, effectId, { ...context }));
     }
-    
+
     return results;
   }
 

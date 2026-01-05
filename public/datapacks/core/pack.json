@@ -10,60 +10,59 @@
   "contentTypes": {
     "sprites": {
       "path": "sprites/",
-      "files": ["spritesheets.json"]
+      "autoLoad": true
     },
     "conditions": {
       "path": "conditions/",
-      "files": ["encounter_conditions.json", "loot_conditions.json"]
+      "autoLoad": true
     },
     "loot_tables": {
       "path": "loot_tables/",
-      "files": [
-        "forest_loot.json",
-        "town_loot.json",
-        "dungeon_loot.json",
-        "global_loot.json"
-      ]
+      "autoLoad": true
     },
     "encounter_tables": {
       "path": "encounter_tables/",
-      "files": [
-        "forest_encounters.json",
-        "town_encounters.json",
-        "dungeon_encounters.json"
-      ]
+      "autoLoad": true
     },
     "items": {
       "path": "items/",
-      "files": ["weapons_armor.json", "clothing_paperdoll.json", "consumables.json"]
+      "autoLoad": true
     },
     "enemies": {
       "path": "enemies/",
-      "files": ["forest_enemies.json", "town_enemies.json", "dungeon_enemies.json"]
+      "autoLoad": true
     },
     "locations": {
       "path": "locations/",
-      "files": ["world_locations.json"]
+      "autoLoad": true
     },
     "effects": {
       "path": "effects/",
-      "files": ["core_effects.json"]
+      "autoLoad": true
     },
     "substances": {
       "path": "substances/",
-      "files": ["core_substances.json"]
+      "autoLoad": true
     },
     "scenes": {
       "path": "scenes/",
-      "files": ["intro_scenes.json"]
+      "autoLoad": true
     },
     "merchants": {
       "path": "merchants/",
-      "files": ["merchants.json", "shop_inventories.json"]
+      "autoLoad": true
     },
     "titles": {
       "path": "titles/",
-      "files": ["titles.json"]
+      "autoLoad": true
+    },
+    "rumors": {
+      "path": "rumors/",
+      "autoLoad": true
+    },
+    "services": {
+      "path": "services/",
+      "autoLoad": true
     }
   }
 }

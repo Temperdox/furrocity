@@ -54,7 +54,11 @@ const CONTENT_TYPES = [
   'locations',
   'effects',
   'substances',
-  'scenes'
+  'scenes',
+  'merchants',
+  'titles',
+  'rumors',
+  'services'
 ];
 
 class DataPackManager {
