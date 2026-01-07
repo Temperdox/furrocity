@@ -251,11 +251,99 @@ const STATS_LIST = [
   'speed', 'evasion', 'charm', 'luck',
 ];
 
+// Interpolation tags for madlib text replacement
+const INTERPOLATION_TAGS = {
+  player: {
+    label: 'Player',
+    color: '#4a7c4a',
+    tags: [
+      { tag: '{player_name}', label: 'Name', desc: "Player's name" },
+      { tag: '{player_possessive}', label: 'Possessive', desc: 'your/his/her/their' },
+      { tag: '{pronoun_subject}', label: 'Subject', desc: 'he/she/they' },
+      { tag: '{pronoun_object}', label: 'Object', desc: 'him/her/them' },
+      { tag: '{pronoun_possessive}', label: 'Poss. Pronoun', desc: 'his/her/their' },
+      { tag: '{pronoun_reflexive}', label: 'Reflexive', desc: 'himself/herself/themself' },
+    ],
+  },
+  enemy: {
+    label: 'Enemy',
+    color: '#7c4a4a',
+    tags: [
+      { tag: '{enemy_name}', label: 'Name', desc: 'The wolf / Zander (capitalized)' },
+      { tag: '{enemy_name_mid}', label: 'Name (mid)', desc: 'the wolf (lowercase for mid-sentence)' },
+      { tag: '{enemy_possessive}', label: 'Possessive', desc: "the wolf's / Zander's" },
+      { tag: '{enemy_possessive_mid}', label: 'Poss. (mid)', desc: "the wolf's (lowercase)" },
+      { tag: '{enemy_type}', label: 'Type', desc: 'creature/humanoid/etc.' },
+    ],
+  },
+  body: {
+    label: 'Body Parts',
+    color: '#7c4a7c',
+    tags: [
+      { tag: '{chest_descriptor}', label: 'Chest', desc: 'Contextual chest description' },
+      { tag: '{dick_descriptor}', label: 'Dick', desc: 'Penis descriptor' },
+      { tag: '{pussy_descriptor}', label: 'Pussy', desc: 'Vagina descriptor' },
+      { tag: '{ass_descriptor}', label: 'Ass', desc: 'Buttocks descriptor' },
+      { tag: '{balls_descriptor}', label: 'Balls', desc: 'Testicle descriptor' },
+      { tag: '{mouth_descriptor}', label: 'Mouth', desc: 'Mouth descriptor' },
+      { tag: '{thighs_descriptor}', label: 'Thighs', desc: 'Thighs descriptor' },
+      { tag: '{nipples_descriptor}', label: 'Nipples', desc: 'Nipples descriptor' },
+      { tag: '{anus_descriptor}', label: 'Anus', desc: 'Rear entrance descriptor' },
+    ],
+  },
+  state: {
+    label: 'States',
+    color: '#4a4a7c',
+    tags: [
+      { tag: '{arousal_state}', label: 'Arousal', desc: 'calm/flushed/aroused/overwhelmed' },
+      { tag: '{lust_state}', label: 'Lust', desc: 'Lust level description' },
+      { tag: '{corruption_state}', label: 'Corruption', desc: 'pure/tainted/corrupted' },
+    ],
+  },
+  checks: {
+    label: 'Body Checks',
+    color: '#7c7c4a',
+    tags: [
+      { tag: '{has_dick}', label: 'Has Dick', desc: 'true/false' },
+      { tag: '{has_pussy}', label: 'Has Pussy', desc: 'true/false' },
+      { tag: '{has_breasts}', label: 'Has Breasts', desc: 'true/false' },
+      { tag: '{has_balls}', label: 'Has Balls', desc: 'true/false' },
+      { tag: '{is_naked}', label: 'Is Naked', desc: 'true/false' },
+      { tag: '{chest_exposure}', label: 'Chest Exposed', desc: 'exposed/covered' },
+      { tag: '{groin_exposure}', label: 'Groin Exposed', desc: 'exposed/covered' },
+    ],
+  },
+  equipment: {
+    label: 'Equipment',
+    color: '#4a7c7c',
+    tags: [
+      { tag: '{has_plug}', label: 'Has Plug', desc: 'true/false' },
+      { tag: '{plug_name}', label: 'Plug Name', desc: 'Name of equipped plug' },
+      { tag: '{has_nipple_toys}', label: 'Has Nipple Toys', desc: 'true/false' },
+      { tag: '{has_chastity}', label: 'Has Chastity', desc: 'true/false' },
+      { tag: '{has_collar}', label: 'Has Collar', desc: 'true/false' },
+    ],
+  },
+  conditionals: {
+    label: 'Conditionals',
+    color: '#6a6a6a',
+    tags: [
+      { tag: '{if condition}', label: 'If', desc: 'Start conditional block' },
+      { tag: '{else}', label: 'Else', desc: 'Else branch' },
+      { tag: '{/if}', label: 'End If', desc: 'End conditional block' },
+      { tag: '{if has_dick}', label: 'If Has Dick', desc: 'Example: check body part' },
+      { tag: '{if arousal >= 50}', label: 'If Arousal >= 50', desc: 'Example: stat comparison' },
+    ],
+  },
+};
+
 const DEFAULT_SCENE = {
   id: '',
   name: '',
   description: '',
   tags: [],
+  isNSFW: false,
+  nsfwActionType: '', // For enemy NSFW actions: grope, fondle, penetrate, etc.
   location: '',
   onEnter: [],
   nodes: [],
@@ -312,6 +400,21 @@ const DEFAULT_END_NODE = {
   outcome: '',
 };
 
+// NSFW Action types for scene categorization
+const NSFW_ACTION_CATEGORIES = [
+  { value: '', label: 'Not an NSFW Action Scene' },
+  { value: 'grope', label: 'Grope' },
+  { value: 'fondle', label: 'Fondle' },
+  { value: 'kiss', label: 'Kiss' },
+  { value: 'lick', label: 'Lick' },
+  { value: 'penetrate', label: 'Penetrate' },
+  { value: 'oral', label: 'Oral' },
+  { value: 'breed', label: 'Breed' },
+  { value: 'corrupt', label: 'Corrupt' },
+  { value: 'restrain', label: 'Restrain' },
+  { value: 'hypnotize', label: 'Hypnotize' },
+];
+
 const SceneCreator = ({
   items = [],
   allContent,
@@ -327,6 +430,9 @@ const SceneCreator = ({
   const [tagInput, setTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
   const [expandedNodes, setExpandedNodes] = useState({});
+  const [activeTagCategory, setActiveTagCategory] = useState(null);
+  const [activeTextareaRef, setActiveTextareaRef] = useState(null);
+  const descriptionRef = React.useRef(null);
 
   // Load editing item when it changes
   useEffect(() => {
@@ -334,12 +440,44 @@ const SceneCreator = ({
       setFormData({
         ...DEFAULT_SCENE,
         ...editingItem,
+        isNSFW: editingItem.isNSFW || false,
+        nsfwActionType: editingItem.nsfwActionType || '',
         nodes: editingItem.nodes || [],
       });
     } else {
       setFormData({ ...DEFAULT_SCENE });
     }
   }, [editingItem]);
+
+  // Insert tag at cursor position in active textarea
+  const insertTag = (tag) => {
+    if (activeTextareaRef && activeTextareaRef.current) {
+      const textarea = activeTextareaRef.current;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const newText = text.substring(0, start) + tag + text.substring(end);
+
+      // Update the form data based on which textarea is active
+      if (activeTextareaRef === descriptionRef) {
+        handleChange('description', newText);
+      }
+      // For node textareas, we'll handle it differently
+
+      // Restore cursor position after the inserted tag
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + tag.length, start + tag.length);
+      }, 0);
+    }
+  };
+
+  // Insert tag into a specific node's text field
+  const insertTagIntoNode = (nodeIndex, field, tag) => {
+    const node = formData.nodes[nodeIndex];
+    const currentValue = node[field] || '';
+    updateNode(nodeIndex, { [field]: currentValue + tag });
+  };
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -1023,8 +1161,10 @@ const SceneCreator = ({
           <label style={styles.label}>Description</label>
           <textarea
             style={styles.textarea}
+            ref={descriptionRef}
             value={formData.description}
             onChange={(e) => handleChange('description', e.target.value)}
+            onFocus={() => setActiveTextareaRef(descriptionRef)}
             placeholder="Scene description for reference..."
           />
         </div>
@@ -1037,6 +1177,125 @@ const SceneCreator = ({
             onChange={(e) => handleChange('location', e.target.value)}
             placeholder="location_id"
           />
+        </div>
+
+        {/* NSFW Settings */}
+        <div style={styles.subsection}>
+          <div style={styles.subsectionTitle}>NSFW Settings</div>
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={formData.isNSFW}
+                onChange={(e) => handleChange('isNSFW', e.target.checked)}
+                style={{ width: '18px', height: '18px' }}
+              />
+              <span style={{ color: formData.isNSFW ? '#ff6b9d' : '#a0a0c0' }}>
+                Mark as NSFW Scene
+              </span>
+            </label>
+            <div style={{ fontSize: '11px', color: '#808090', marginTop: '4px', marginLeft: '26px' }}>
+              NSFW scenes can be linked to enemy NSFW actions
+            </div>
+          </div>
+
+          {formData.isNSFW && (
+            <div style={styles.formGroup}>
+              <label style={styles.label}>NSFW Action Category</label>
+              <input
+                style={styles.input}
+                value={formData.nsfwActionType}
+                onChange={(e) => handleChange('nsfwActionType', e.target.value.toLowerCase().replace(/\s+/g, '_'))}
+                placeholder="Enter action type (e.g., grope, penetrate, custom_action)"
+              />
+              <div style={{ fontSize: '11px', color: '#808090', marginTop: '4px', marginBottom: '8px' }}>
+                Type a custom action or click a common one below
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {NSFW_ACTION_CATEGORIES.filter(cat => cat.value).map(cat => (
+                  <button
+                    key={cat.value}
+                    style={{
+                      ...styles.smallButton,
+                      backgroundColor: formData.nsfwActionType === cat.value ? '#7c4a6a' : '#3a3a5a',
+                      color: formData.nsfwActionType === cat.value ? '#ff9dbd' : '#a0a0c0',
+                      padding: '4px 10px',
+                    }}
+                    onClick={() => handleChange('nsfwActionType', cat.value)}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Text Tag Insertion Toolbar */}
+        <div style={styles.subsection}>
+          <div style={styles.subsectionTitle}>Insert Text Tags (Madlib Variables)</div>
+          <div style={{ fontSize: '11px', color: '#808090', marginBottom: '10px' }}>
+            Click a category to expand, then click a tag to insert it. Tags are replaced with dynamic values at runtime.
+          </div>
+
+          {/* Category buttons */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+            {Object.entries(INTERPOLATION_TAGS).map(([key, category]) => (
+              <button
+                key={key}
+                style={{
+                  ...styles.smallButton,
+                  backgroundColor: activeTagCategory === key ? category.color : '#3a3a5a',
+                  color: 'white',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                }}
+                onClick={() => setActiveTagCategory(activeTagCategory === key ? null : key)}
+              >
+                {category.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Expanded tag list */}
+          {activeTagCategory && INTERPOLATION_TAGS[activeTagCategory] && (
+            <div style={{
+              backgroundColor: '#1a1a2e',
+              borderRadius: '6px',
+              padding: '10px',
+              border: `1px solid ${INTERPOLATION_TAGS[activeTagCategory].color}`,
+            }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {INTERPOLATION_TAGS[activeTagCategory].tags.map((tagInfo, idx) => (
+                  <button
+                    key={idx}
+                    style={{
+                      ...styles.smallButton,
+                      backgroundColor: '#252540',
+                      color: '#d0d0e0',
+                      padding: '4px 8px',
+                      border: '1px solid #4a4a6a',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      minWidth: '100px',
+                    }}
+                    onClick={() => insertTag(tagInfo.tag)}
+                    title={tagInfo.desc}
+                  >
+                    <span style={{ color: INTERPOLATION_TAGS[activeTagCategory].color, fontSize: '11px', fontFamily: 'monospace' }}>
+                      {tagInfo.tag}
+                    </span>
+                    <span style={{ fontSize: '10px', color: '#808090' }}>{tagInfo.label}</span>
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: '10px', color: '#606080', marginTop: '8px', fontStyle: 'italic' }}>
+                Click a tag to copy it. Paste into dialogue text fields in nodes below.
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tags */}
@@ -1141,9 +1400,22 @@ const SceneCreator = ({
             >
               <div style={styles.listItemName}>
                 📜 {item.name}
+                {item.isNSFW && (
+                  <span style={{
+                    marginLeft: '8px',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '10px',
+                    backgroundColor: '#7c4a6a',
+                    color: '#ff9dbd',
+                  }}>
+                    NSFW
+                  </span>
+                )}
               </div>
               <div style={styles.listItemDetails}>
                 ID: {item.id} | Nodes: {item.nodes?.length || 0}
+                {item.nsfwActionType && ` | Action: ${item.nsfwActionType}`}
               </div>
               <div style={{ marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
                 {(item.tags || []).slice(0, 4).map(tag => (

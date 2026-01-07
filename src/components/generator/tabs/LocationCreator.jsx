@@ -367,6 +367,20 @@ const LOCATION_TYPES = [
   { value: 'building', label: 'Building' },
   { value: 'forest', label: 'Forest' },
   { value: 'water', label: 'Water/Beach' },
+  { value: 'region', label: 'Region (World Map)' },
+];
+
+const LOCATION_SCOPES = [
+  { value: 'region', label: 'Region', description: 'A large area on the world map containing multiple locations' },
+  { value: 'local', label: 'Local', description: 'A location within a region, shown on the local map' },
+  { value: 'sub', label: 'Sub-location', description: 'A location inside another location (e.g., cellar, upper floor)' },
+];
+
+const ENEMY_VARIANTS = [
+  { value: 'weak', label: 'Weak', modifier: 0.7, color: '#6a9a6a' },
+  { value: 'normal', label: 'Normal', modifier: 1.0, color: '#a0a0c0' },
+  { value: 'strong', label: 'Strong', modifier: 1.3, color: '#ca8a4a' },
+  { value: 'elite', label: 'Elite', modifier: 1.6, color: '#ca6a6a' },
 ];
 
 const SERVICES = [
@@ -412,26 +426,31 @@ const DEFAULT_LOCATION = {
   id: '',
   name: '',
   description: '',
-  regionId: '',
+  parentRegion: '', // For local locations - which region they belong to
   type: 'outdoor',
   dangerLevel: 1,
   tags: [],
   hidden: false,
   services: [],
-  npcs: [],
-  enemies: [],
-  encounters: [],
+  npcs: [], // Array of NPC IDs
+  // Enemy encounter configuration
+  encounterChance: 0, // 0-100 percentage
+  maxEnemyCount: 1, // 1-5 max enemies per encounter
+  enemyTables: [], // Array of { enemyId, weight, variantChances: { weak, normal, strong, elite } }
   onEnter: [],
   requirements: null,
   background: '',
   ambientSound: '',
   // Navigation to sub-locations
   navigation: {},
-  parentLocation: '',
-  locationType: 'local', // 'local' or 'sub'
+  parentLocation: '', // For sub-locations - which location they're inside
+  locationType: 'local', // 'region', 'local', or 'sub'
+  // For regions - child locations
+  childLocations: [],
+  neighborRegions: [],
   // Map placement properties
   mapPlacement: {
-    mapType: null, // 'local' or 'global'
+    mapType: null, // 'local' or 'world'
     x: 0,
     y: 0,
   },
@@ -695,7 +714,8 @@ const IconSelectorModal = ({
 const LocationCreator = ({
   items = [],
   allContent = {},
-  regions = [],
+  npcs = [],
+  enemies = [],
   onAdd,
   onUpdate,
   onDelete,
@@ -707,13 +727,19 @@ const LocationCreator = ({
   const [formData, setFormData] = useState({ ...DEFAULT_LOCATION });
   const [tagInput, setTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
-  const [npcInput, setNpcInput] = useState('');
-  const [enemyInput, setEnemyInput] = useState('');
   const [mapTab, setMapTab] = useState('local');
   const [iconModalOpen, setIconModalOpen] = useState(false);
+  const [selectedNpc, setSelectedNpc] = useState('');
+  const [selectedEnemy, setSelectedEnemy] = useState('');
   const mapRef = useRef(null);
 
   const sprites = allContent.sprites || [];
+
+  // Get regions from items (locations with locationType === 'region')
+  const regions = items.filter(loc => loc.locationType === 'region');
+
+  // Get local locations (for parent location selection)
+  const localLocations = items.filter(loc => loc.locationType === 'local' || loc.locationType === 'region');
 
   // Placeholder map images - in real app these would come from game data
   const LOCAL_MAP = '/maps/local_map.png';
@@ -726,10 +752,15 @@ const LocationCreator = ({
         ...editingItem,
         services: editingItem.services || [],
         npcs: editingItem.npcs || [],
-        enemies: editingItem.enemies || [],
+        enemyTables: editingItem.enemyTables || [],
+        encounterChance: editingItem.encounterChance || 0,
+        maxEnemyCount: editingItem.maxEnemyCount || 1,
         navigation: editingItem.navigation || {},
         parentLocation: editingItem.parentLocation || '',
+        parentRegion: editingItem.parentRegion || '',
         locationType: editingItem.locationType || 'local',
+        childLocations: editingItem.childLocations || [],
+        neighborRegions: editingItem.neighborRegions || [],
         mapPlacement: editingItem.mapPlacement || { mapType: null, x: 0, y: 0 },
         icon: editingItem.icon || { type: 'default', data: null },
       });
@@ -771,14 +802,15 @@ const LocationCreator = ({
     }));
   };
 
-  const handleAddNpc = () => {
-    if (npcInput && !formData.npcs.includes(npcInput)) {
+  // NPC handlers - using selectable list
+  const handleAddNpc = (npcId) => {
+    if (npcId && !formData.npcs.includes(npcId)) {
       setFormData(prev => ({
         ...prev,
-        npcs: [...prev.npcs, npcInput],
+        npcs: [...prev.npcs, npcId],
       }));
     }
-    setNpcInput('');
+    setSelectedNpc('');
   };
 
   const handleRemoveNpc = (npc) => {
@@ -788,20 +820,54 @@ const LocationCreator = ({
     }));
   };
 
-  const handleAddEnemy = () => {
-    if (enemyInput && !formData.enemies.includes(enemyInput)) {
-      setFormData(prev => ({
-        ...prev,
-        enemies: [...prev.enemies, enemyInput],
-      }));
-    }
-    setEnemyInput('');
-  };
+  // Enemy table handlers - weighted encounter system
+  const handleAddEnemyToTable = (enemyId) => {
+    if (!enemyId) return;
+    // Check if enemy is already in the table
+    if (formData.enemyTables.some(e => e.enemyId === enemyId)) return;
 
-  const handleRemoveEnemy = (enemy) => {
+    const newEntry = {
+      enemyId,
+      weight: 50, // Default weight
+      variantChances: {
+        weak: 15,
+        normal: 60,
+        strong: 20,
+        elite: 5,
+      },
+    };
+
     setFormData(prev => ({
       ...prev,
-      enemies: prev.enemies.filter(e => e !== enemy),
+      enemyTables: [...prev.enemyTables, newEntry],
+    }));
+    setSelectedEnemy('');
+  };
+
+  const handleRemoveEnemyFromTable = (enemyId) => {
+    setFormData(prev => ({
+      ...prev,
+      enemyTables: prev.enemyTables.filter(e => e.enemyId !== enemyId),
+    }));
+  };
+
+  const handleUpdateEnemyWeight = (enemyId, weight) => {
+    setFormData(prev => ({
+      ...prev,
+      enemyTables: prev.enemyTables.map(e =>
+        e.enemyId === enemyId ? { ...e, weight: Math.max(1, Math.min(100, parseInt(weight) || 1)) } : e
+      ),
+    }));
+  };
+
+  const handleUpdateVariantChance = (enemyId, variant, chance) => {
+    setFormData(prev => ({
+      ...prev,
+      enemyTables: prev.enemyTables.map(e =>
+        e.enemyId === enemyId
+          ? { ...e, variantChances: { ...e.variantChances, [variant]: Math.max(0, Math.min(100, parseInt(chance) || 0)) } }
+          : e
+      ),
     }));
   };
 
@@ -952,17 +1018,19 @@ const LocationCreator = ({
         <div style={styles.row}>
           <div style={styles.halfWidth}>
             <div style={styles.formGroup}>
-              <label style={styles.label}>Region</label>
+              <label style={styles.label}>Location Scope</label>
               <select
                 style={styles.select}
-                value={formData.regionId}
-                onChange={(e) => handleChange('regionId', e.target.value)}
+                value={formData.locationType}
+                onChange={(e) => handleChange('locationType', e.target.value)}
               >
-                <option value="">Select Region</option>
-                {regions.map(r => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
+                {LOCATION_SCOPES.map(s => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
+              <div style={{ fontSize: '11px', color: '#808090', marginTop: '4px' }}>
+                {LOCATION_SCOPES.find(s => s.value === formData.locationType)?.description}
+              </div>
             </div>
           </div>
           <div style={styles.halfWidth}>
@@ -980,6 +1048,23 @@ const LocationCreator = ({
             </div>
           </div>
         </div>
+
+        {/* Parent Region (for local locations) */}
+        {formData.locationType === 'local' && (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Parent Region</label>
+            <select
+              style={styles.select}
+              value={formData.parentRegion}
+              onChange={(e) => handleChange('parentRegion', e.target.value)}
+            >
+              <option value="">Select Parent Region...</option>
+              {regions.map(r => (
+                <option key={r.id} value={r.id}>{r.name} ({r.id})</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div style={styles.row}>
           <div style={styles.halfWidth}>
@@ -1122,38 +1207,22 @@ const LocationCreator = ({
             Link directions to other locations. Players can navigate using these directions when at this location.
           </div>
 
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Location Type</label>
-                <select
-                  style={styles.select}
-                  value={formData.locationType}
-                  onChange={(e) => handleChange('locationType', e.target.value)}
-                >
-                  <option value="local">Local (Main location)</option>
-                  <option value="sub">Sub-location (Inside another location)</option>
-                </select>
-              </div>
+          {/* Parent Location (for sub-locations) */}
+          {formData.locationType === 'sub' && (
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Parent Location</label>
+              <select
+                style={styles.select}
+                value={formData.parentLocation}
+                onChange={(e) => handleChange('parentLocation', e.target.value)}
+              >
+                <option value="">Select parent location...</option>
+                {localLocations.filter(loc => loc.id !== formData.id).map(loc => (
+                  <option key={loc.id} value={loc.id}>{loc.name} ({loc.id})</option>
+                ))}
+              </select>
             </div>
-            {formData.locationType === 'sub' && (
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Parent Location</label>
-                  <select
-                    style={styles.select}
-                    value={formData.parentLocation}
-                    onChange={(e) => handleChange('parentLocation', e.target.value)}
-                  >
-                    <option value="">Select parent location...</option>
-                    {items.filter(loc => loc.id !== formData.id).map(loc => (
-                      <option key={loc.id} value={loc.id}>{loc.name} ({loc.id})</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
 
           <div style={{
             display: 'grid',
@@ -1220,40 +1289,230 @@ const LocationCreator = ({
         {/* NPCs */}
         <div style={styles.subsection}>
           <div style={styles.subsectionTitle}>NPCs at this Location</div>
-          <div style={styles.tagInput}>
-            {formData.npcs.map(npc => (
-              <span key={npc} style={styles.tag}>
-                👤 {npc}
-                <span style={styles.tagRemove} onClick={() => handleRemoveNpc(npc)}>×</span>
-              </span>
-            ))}
-            <input
-              style={{ ...styles.input, border: 'none', backgroundColor: 'transparent', flex: 1, minWidth: '100px', padding: '2px' }}
-              value={npcInput}
-              onChange={(e) => setNpcInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddNpc()}
-              placeholder="Add NPC ID..."
-            />
+          <div style={{ marginBottom: '10px', fontSize: '12px', color: '#808090' }}>
+            Select NPCs that can be found at this location. Create NPCs in the NPCs tab first.
           </div>
+
+          {/* NPC Selection */}
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+            <select
+              style={{ ...styles.select, flex: 1 }}
+              value={selectedNpc}
+              onChange={(e) => setSelectedNpc(e.target.value)}
+            >
+              <option value="">Select an NPC to add...</option>
+              {npcs.filter(npc => !formData.npcs.includes(npc.id)).map(npc => (
+                <option key={npc.id} value={npc.id}>{npc.name} ({npc.id})</option>
+              ))}
+            </select>
+            <button
+              style={{ ...styles.button, ...styles.primaryButton, padding: '8px 16px' }}
+              onClick={() => handleAddNpc(selectedNpc)}
+              disabled={!selectedNpc}
+            >
+              + Add
+            </button>
+          </div>
+
+          {/* Selected NPCs */}
+          {formData.npcs.length > 0 ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {formData.npcs.map(npcId => {
+                const npcData = npcs.find(n => n.id === npcId);
+                return (
+                  <div key={npcId} style={{
+                    ...styles.tag,
+                    padding: '6px 10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span>👤</span>
+                    <span>{npcData?.name || npcId}</span>
+                    <span
+                      style={{ ...styles.tagRemove, marginLeft: '4px', cursor: 'pointer' }}
+                      onClick={() => handleRemoveNpc(npcId)}
+                    >×</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ color: '#606080', fontSize: '12px', fontStyle: 'italic' }}>
+              No NPCs added. {npcs.length === 0 && 'Create NPCs in the NPCs tab first.'}
+            </div>
+          )}
         </div>
 
-        {/* Enemies */}
+        {/* Enemy Encounters */}
         <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Enemies (for random encounters)</div>
-          <div style={styles.tagInput}>
-            {formData.enemies.map(enemy => (
-              <span key={enemy} style={styles.tag}>
-                👹 {enemy}
-                <span style={styles.tagRemove} onClick={() => handleRemoveEnemy(enemy)}>×</span>
-              </span>
-            ))}
-            <input
-              style={{ ...styles.input, border: 'none', backgroundColor: 'transparent', flex: 1, minWidth: '100px', padding: '2px' }}
-              value={enemyInput}
-              onChange={(e) => setEnemyInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddEnemy()}
-              placeholder="Add Enemy ID..."
-            />
+          <div style={styles.subsectionTitle}>Enemy Encounters</div>
+          <div style={{ marginBottom: '15px', fontSize: '12px', color: '#808090' }}>
+            Configure random enemy encounters. Set encounter chance, max enemies, and weighted enemy spawn tables.
+          </div>
+
+          {/* Encounter Settings */}
+          <div style={styles.row}>
+            <div style={styles.halfWidth}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Encounter Chance (%)</label>
+                <input
+                  style={styles.input}
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={formData.encounterChance}
+                  onChange={(e) => handleChange('encounterChance', Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
+                />
+                <div style={{ fontSize: '11px', color: '#808090', marginTop: '4px' }}>
+                  0 = No encounters, 100 = Always encounter
+                </div>
+              </div>
+            </div>
+            <div style={styles.halfWidth}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Max Enemies per Encounter</label>
+                <input
+                  style={styles.input}
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={formData.maxEnemyCount}
+                  onChange={(e) => handleChange('maxEnemyCount', Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
+                />
+                <div style={{ fontSize: '11px', color: '#808090', marginTop: '4px' }}>
+                  Random between 1 and this value
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Enemy Selection */}
+          <div style={{ marginTop: '15px' }}>
+            <label style={styles.label}>Enemy Spawn Table</label>
+            <div style={{ marginBottom: '10px', fontSize: '12px', color: '#808090' }}>
+              Add enemies with weights (higher weight = more likely to spawn). Create enemies in the Enemies tab first.
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+              <select
+                style={{ ...styles.select, flex: 1 }}
+                value={selectedEnemy}
+                onChange={(e) => setSelectedEnemy(e.target.value)}
+              >
+                <option value="">Select an enemy to add...</option>
+                {enemies.filter(e => !formData.enemyTables.some(et => et.enemyId === e.id)).map(enemy => (
+                  <option key={enemy.id} value={enemy.id}>{enemy.name} ({enemy.id})</option>
+                ))}
+              </select>
+              <button
+                style={{ ...styles.button, ...styles.primaryButton, padding: '8px 16px' }}
+                onClick={() => handleAddEnemyToTable(selectedEnemy)}
+                disabled={!selectedEnemy}
+              >
+                + Add Enemy
+              </button>
+            </div>
+
+            {/* Enemy Table */}
+            {formData.enemyTables.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {formData.enemyTables.map(entry => {
+                  const enemyData = enemies.find(e => e.id === entry.enemyId);
+                  const totalVariantChance = Object.values(entry.variantChances).reduce((a, b) => a + b, 0);
+                  return (
+                    <div key={entry.enemyId} style={{
+                      backgroundColor: '#1a1a2e',
+                      border: '1px solid #4a4a6a',
+                      borderRadius: '6px',
+                      padding: '12px',
+                    }}>
+                      {/* Enemy Header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '18px' }}>👹</span>
+                          <span style={{ color: '#ffd700', fontWeight: 'bold' }}>{enemyData?.name || entry.enemyId}</span>
+                        </div>
+                        <button
+                          style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white', padding: '4px 8px' }}
+                          onClick={() => handleRemoveEnemyFromTable(entry.enemyId)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+
+                      {/* Weight */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                        <label style={{ ...styles.label, marginBottom: 0, minWidth: '100px' }}>Spawn Weight:</label>
+                        <input
+                          style={{ ...styles.input, width: '80px' }}
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={entry.weight}
+                          onChange={(e) => handleUpdateEnemyWeight(entry.enemyId, e.target.value)}
+                        />
+                        <span style={{ fontSize: '12px', color: '#808090' }}>Higher = more likely</span>
+                      </div>
+
+                      {/* Variant Chances */}
+                      <div>
+                        <label style={{ ...styles.label, marginBottom: '8px' }}>
+                          Variant Chances (total: {totalVariantChance}%)
+                          {totalVariantChance !== 100 && (
+                            <span style={{ color: '#ca6a6a', marginLeft: '8px' }}>Should equal 100%</span>
+                          )}
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                          {ENEMY_VARIANTS.map(variant => (
+                            <div key={variant.value} style={{ textAlign: 'center' }}>
+                              <div style={{ fontSize: '11px', color: variant.color, marginBottom: '4px' }}>
+                                {variant.label}
+                              </div>
+                              <input
+                                style={{ ...styles.input, width: '60px', textAlign: 'center', padding: '4px' }}
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={entry.variantChances[variant.value]}
+                                onChange={(e) => handleUpdateVariantChance(entry.enemyId, variant.value, e.target.value)}
+                              />
+                              <div style={{ fontSize: '10px', color: '#606080', marginTop: '2px' }}>
+                                {variant.modifier}x stats
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Total Weight Summary */}
+                <div style={styles.infoBox}>
+                  <strong>Spawn Probabilities:</strong>
+                  <div style={{ marginTop: '5px' }}>
+                    {(() => {
+                      const totalWeight = formData.enemyTables.reduce((sum, e) => sum + e.weight, 0);
+                      return formData.enemyTables.map(entry => {
+                        const enemyData = enemies.find(e => e.id === entry.enemyId);
+                        const percentage = totalWeight > 0 ? ((entry.weight / totalWeight) * 100).toFixed(1) : 0;
+                        return (
+                          <div key={entry.enemyId} style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px' }}>
+                            <span style={{ color: '#a0a0c0' }}>{enemyData?.name || entry.enemyId}:</span>
+                            <span style={{ color: '#ffd700' }}>{percentage}%</span>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ color: '#606080', fontSize: '12px', fontStyle: 'italic', padding: '10px', textAlign: 'center' }}>
+                No enemies in spawn table. {enemies.length === 0 ? 'Create enemies in the Enemies tab first.' : 'Add enemies above.'}
+              </div>
+            )}
           </div>
         </div>
 
@@ -1355,9 +1614,20 @@ const LocationCreator = ({
                 🏠 {item.name}
               </div>
               <div style={styles.listItemDetails}>
-                ID: {item.id} | Type: {item.type} | Danger: {item.dangerLevel}
-                {item.locationType === 'sub' && ' | Sub-location'}
+                ID: {item.id} | Type: {item.type} | Scope: {item.locationType || 'local'}
+                {item.locationType === 'sub' && item.parentLocation && ` (in ${item.parentLocation})`}
+                {item.locationType === 'local' && item.parentRegion && ` (${item.parentRegion})`}
               </div>
+              {item.encounterChance > 0 && (
+                <div style={{ ...styles.listItemDetails, color: '#ca6a6a' }}>
+                  ⚔️ {item.encounterChance}% encounter | Max {item.maxEnemyCount} enemies | {item.enemyTables?.length || 0} enemy types
+                </div>
+              )}
+              {item.npcs?.length > 0 && (
+                <div style={{ ...styles.listItemDetails, color: '#6aca8a' }}>
+                  👤 NPCs: {item.npcs.length}
+                </div>
+              )}
               {item.mapPlacement?.mapType && (
                 <div style={{ ...styles.listItemDetails, color: '#4a7c4a' }}>
                   📍 {item.mapPlacement.mapType} map ({item.mapPlacement.x.toFixed(1)}%, {item.mapPlacement.y.toFixed(1)}%)

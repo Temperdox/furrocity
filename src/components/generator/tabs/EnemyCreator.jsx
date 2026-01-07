@@ -275,6 +275,7 @@ const DEFAULT_NSFW_ACTION = {
   id: '',
   type: 'grope',
   name: '',
+  sceneId: '', // Link to an NSFW scene
   arousalDamage: 5,
   corruptionDamage: 0,
   weight: 1,
@@ -284,6 +285,7 @@ const DEFAULT_NSFW_ACTION = {
 
 const EnemyCreator = ({
   items = [],
+  scenes = [],
   onAdd,
   onUpdate,
   onDelete,
@@ -292,6 +294,15 @@ const EnemyCreator = ({
   editingItem,
   onCancelEdit,
 }) => {
+  // Get NSFW scenes filtered by action type
+  const getNsfwScenesForType = (actionType) => {
+    return scenes.filter(scene =>
+      scene.isNSFW && (scene.nsfwActionType === actionType || !scene.nsfwActionType)
+    );
+  };
+
+  // Get all NSFW scenes
+  const allNsfwScenes = scenes.filter(scene => scene.isNSFW);
   const [formData, setFormData] = useState({ ...DEFAULT_ENEMY });
   const [tagInput, setTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
@@ -698,7 +709,13 @@ const EnemyCreator = ({
               </div>
 
               <div style={styles.subsectionTitle}>NSFW Actions</div>
-              {formData.nsfwActionData.actions.map((action, index) => (
+              <div style={{ fontSize: '11px', color: '#808090', marginBottom: '10px' }}>
+                Link actions to NSFW scenes created in the Scenes tab. Scenes with matching action types are shown first.
+              </div>
+              {formData.nsfwActionData.actions.map((action, index) => {
+                const matchingScenes = getNsfwScenesForType(action.type);
+                const otherScenes = allNsfwScenes.filter(s => s.nsfwActionType !== action.type && s.nsfwActionType);
+                return (
                 <div key={index} style={styles.actionItem}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span style={{ color: '#ffd700', fontSize: '12px' }}>Action #{index + 1}</span>
@@ -710,37 +727,109 @@ const EnemyCreator = ({
                     </button>
                   </div>
                   <div style={styles.row}>
-                    <div style={styles.thirdWidth}>
-                      <select
-                        style={styles.select}
+                    <div style={styles.halfWidth}>
+                      <label style={styles.label}>Action Type</label>
+                      <input
+                        style={styles.input}
                         value={action.type}
-                        onChange={(e) => handleUpdateNsfwAction(index, { type: e.target.value })}
-                      >
+                        onChange={(e) => handleUpdateNsfwAction(index, { type: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
+                        placeholder="grope, penetrate, custom_action..."
+                      />
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '5px' }}>
                         {NSFW_ACTION_TYPES.map(t => (
-                          <option key={t.value} value={t.value}>{t.label}</option>
+                          <button
+                            key={t.value}
+                            style={{
+                              ...styles.smallButton,
+                              backgroundColor: action.type === t.value ? '#7c4a6a' : '#2a2a4a',
+                              color: action.type === t.value ? '#ff9dbd' : '#808090',
+                              padding: '2px 6px',
+                              fontSize: '10px',
+                            }}
+                            onClick={() => handleUpdateNsfwAction(index, { type: t.value })}
+                          >
+                            {t.label}
+                          </button>
                         ))}
-                      </select>
+                      </div>
                     </div>
-                    <div style={styles.thirdWidth}>
+                    <div style={styles.halfWidth}>
+                      <label style={styles.label}>Action Name</label>
                       <input
                         style={styles.input}
                         value={action.name}
                         onChange={(e) => handleUpdateNsfwAction(index, { name: e.target.value })}
                         placeholder="Action Name"
                       />
-                    </div>
-                    <div style={styles.thirdWidth}>
-                      <input
-                        style={styles.input}
-                        type="number"
-                        value={action.arousalDamage}
-                        onChange={(e) => handleUpdateNsfwAction(index, { arousalDamage: parseInt(e.target.value) || 5 })}
-                        placeholder="Arousal"
-                      />
+                      <div style={styles.row}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ ...styles.label, fontSize: '11px', marginTop: '5px' }}>Arousal</label>
+                          <input
+                            style={{ ...styles.input, padding: '6px' }}
+                            type="number"
+                            value={action.arousalDamage}
+                            onChange={(e) => handleUpdateNsfwAction(index, { arousalDamage: parseInt(e.target.value) || 5 })}
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ ...styles.label, fontSize: '11px', marginTop: '5px' }}>Corruption</label>
+                          <input
+                            style={{ ...styles.input, padding: '6px' }}
+                            type="number"
+                            value={action.corruptionDamage}
+                            onChange={(e) => handleUpdateNsfwAction(index, { corruptionDamage: parseInt(e.target.value) || 0 })}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Scene Selection */}
+                  <div style={{ ...styles.formGroup, marginTop: '10px' }}>
+                    <label style={styles.label}>
+                      Linked Scene
+                      {action.sceneId && (
+                        <span style={{ marginLeft: '8px', color: '#4a7c4a' }}>
+                          (Scene linked)
+                        </span>
+                      )}
+                    </label>
+                    <select
+                      style={{
+                        ...styles.select,
+                        borderColor: action.sceneId ? '#4a7c4a' : '#4a4a6a',
+                      }}
+                      value={action.sceneId || ''}
+                      onChange={(e) => handleUpdateNsfwAction(index, { sceneId: e.target.value })}
+                    >
+                      <option value="">-- No scene linked --</option>
+                      {matchingScenes.length > 0 && (
+                        <optgroup label={`Matching: ${action.type}`}>
+                          {matchingScenes.map(scene => (
+                            <option key={scene.id} value={scene.id}>
+                              {scene.name} ({scene.id})
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {otherScenes.length > 0 && (
+                        <optgroup label="Other NSFW Scenes">
+                          {otherScenes.map(scene => (
+                            <option key={scene.id} value={scene.id}>
+                              {scene.name} ({scene.nsfwActionType || 'untyped'})
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {allNsfwScenes.length === 0 && (
+                        <option disabled>No NSFW scenes available - create in Scenes tab</option>
+                      )}
+                    </select>
+                  </div>
+
                   <div style={{ ...styles.row, marginTop: '8px' }}>
                     <div style={styles.halfWidth}>
+                      <label style={styles.label}>Corruption Dmg</label>
                       <input
                         style={styles.input}
                         type="number"
@@ -750,7 +839,7 @@ const EnemyCreator = ({
                       />
                     </div>
                     <div style={styles.halfWidth}>
-                      <label style={styles.label}>
+                      <label style={{ ...styles.label, display: 'flex', alignItems: 'center', marginTop: '20px' }}>
                         <input
                           type="checkbox"
                           checked={action.requiresGrapple}
@@ -762,13 +851,19 @@ const EnemyCreator = ({
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
               <button
                 style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white', marginTop: '10px' }}
                 onClick={handleAddNsfwAction}
               >
                 + Add NSFW Action
               </button>
+              {allNsfwScenes.length === 0 && (
+                <div style={{ fontSize: '11px', color: '#ca8a4a', marginTop: '8px' }}>
+                  Tip: Create NSFW scenes in the Scenes tab to link them to actions
+                </div>
+              )}
             </>
           )}
         </div>

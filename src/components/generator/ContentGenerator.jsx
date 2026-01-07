@@ -11,7 +11,6 @@ import ImportWarningsModal from './ImportWarningsModal';
 import ItemCreator from './tabs/ItemCreator';
 import SceneCreator from './tabs/SceneCreator';
 import LocationCreator from './tabs/LocationCreator';
-import RegionCreator from './tabs/RegionCreator';
 import NPCCreator from './tabs/NPCCreator';
 import EnemyCreator from './tabs/EnemyCreator';
 import EffectCreator from './tabs/EffectCreator';
@@ -184,7 +183,6 @@ const TABS = [
   { id: 'items', label: 'Items', icon: '⚔️' },
   { id: 'scenes', label: 'Scenes', icon: '📜' },
   { id: 'locations', label: 'Locations', icon: '🏠' },
-  { id: 'regions', label: 'Regions', icon: '🗺️' },
   { id: 'npcs', label: 'NPCs', icon: '👤' },
   { id: 'enemies', label: 'Enemies', icon: '👹' },
   { id: 'effects', label: 'Effects', icon: '✨' },
@@ -209,7 +207,6 @@ const ContentGenerator = ({ onClose }) => {
     items: [],
     scenes: [],
     locations: [],
-    regions: [],
     npcs: [],
     enemies: [],
     effects: [],
@@ -382,7 +379,6 @@ const ContentGenerator = ({ onClose }) => {
         items: [],
         scenes: [],
         locations: [],
-        regions: [],
         npcs: [],
         enemies: [],
         effects: [],
@@ -455,17 +451,6 @@ const ContentGenerator = ({ onClose }) => {
       });
       locationsFolder.file('custom_locations.json', JSON.stringify(cleanLocations, null, 2));
       packJson.content.locations = { path: 'locations/', autoLoad: true };
-    }
-
-    // Regions
-    if (content.regions.length > 0) {
-      const cleanRegions = content.regions.map(region => {
-        const clean = { ...region };
-        delete clean._id;
-        return clean;
-      });
-      const locationsFolder = datapack.folder('locations') || datapack.folder('locations');
-      locationsFolder.file('custom_regions.json', JSON.stringify(cleanRegions, null, 2));
     }
 
     // NPCs/Merchants
@@ -562,13 +547,11 @@ const ContentGenerator = ({ onClose }) => {
       case 'scenes':
         return <SceneCreator {...commonProps} />;
       case 'locations':
-        return <LocationCreator {...commonProps} regions={content.regions} />;
-      case 'regions':
-        return <RegionCreator {...commonProps} />;
+        return <LocationCreator {...commonProps} npcs={content.npcs} enemies={content.enemies} />;
       case 'npcs':
         return <NPCCreator {...commonProps} locations={content.locations} />;
       case 'enemies':
-        return <EnemyCreator {...commonProps} />;
+        return <EnemyCreator {...commonProps} scenes={content.scenes} />;
       case 'effects':
         return <EffectCreator {...commonProps} />;
       case 'characters':
@@ -683,7 +666,8 @@ const ContentGenerator = ({ onClose }) => {
             Scenes: {content.scenes.length} |
             Locations: {content.locations.length} |
             NPCs: {content.npcs.length} |
-            Enemies: {content.enemies.length}
+            Enemies: {content.enemies.length} |
+            Effects: {content.effects.length}
           </span>
         </div>
 
