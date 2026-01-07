@@ -1,7 +1,11 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+
+// Import system
+import { ImportSystem } from './ImportSystem';
+import ImportWarningsModal from './ImportWarningsModal';
 
 // Import tab components (we'll create these)
 import ItemCreator from './tabs/ItemCreator';
@@ -144,6 +148,36 @@ const styles = {
     fontSize: '11px',
     marginLeft: '8px',
   },
+  importButton: {
+    backgroundColor: '#3a5a7a',
+    color: 'white',
+  },
+  dropZone: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(74, 124, 74, 0.9)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column',
+    zIndex: 100,
+    border: '4px dashed #90ff90',
+    borderRadius: '12px',
+  },
+  dropZoneText: {
+    color: '#ffffff',
+    fontSize: '24px',
+    fontWeight: 'bold',
+    marginBottom: '10px',
+    textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+  },
+  dropZoneSubtext: {
+    color: '#c0ffc0',
+    fontSize: '14px',
+  },
 };
 
 const TABS = [
@@ -161,6 +195,14 @@ const TABS = [
 const ContentGenerator = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('items');
   const [hoveredTab, setHoveredTab] = useState(null);
+
+  // Import system state
+  const [isDragging, setIsDragging] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importedData, setImportedData] = useState(null);
+  const fileInputRef = useRef(null);
+  const importSystem = useRef(new ImportSystem());
 
   // Content storage for all types
   const [content, setContent] = useState({
@@ -195,6 +237,91 @@ const ContentGenerator = ({ onClose }) => {
   useEffect(() => {
     localStorage.setItem('contentGenerator_data', JSON.stringify(content));
   }, [content]);
+
+  // Import handling
+  const handleImportFiles = useCallback(async (files) => {
+    const result = await importSystem.current.importFiles(files);
+    setImportResult(result);
+
+    // Prepare the imported data for editing
+    setImportedData({
+      items: result.items,
+      characters: result.characters,
+      locations: result.locations,
+      enemies: result.enemies,
+      scenes: result.scenes,
+    });
+
+    setShowImportModal(true);
+  }, []);
+
+  const handleApplyImport = useCallback(() => {
+    if (!importedData) return;
+
+    setContent(prev => ({
+      ...prev,
+      items: [...prev.items, ...importedData.items.map(item => ({ ...item, _id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }))],
+      characters: [...prev.characters, ...importedData.characters.map(char => ({ ...char, _id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }))],
+      locations: [...prev.locations, ...importedData.locations.map(loc => ({ ...loc, _id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }))],
+      enemies: [...prev.enemies, ...importedData.enemies.map(enemy => ({ ...enemy, _id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }))],
+      scenes: [...prev.scenes, ...importedData.scenes.map(scene => ({ ...scene, _id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }))],
+    }));
+
+    setShowImportModal(false);
+    setImportResult(null);
+    setImportedData(null);
+  }, [importedData]);
+
+  const handleCancelImport = useCallback(() => {
+    setShowImportModal(false);
+    setImportResult(null);
+    setImportedData(null);
+  }, []);
+
+  // File input change handler
+  const handleFileInputChange = useCallback((e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      handleImportFiles(files);
+    }
+    // Reset input so same file can be selected again
+    e.target.value = '';
+  }, [handleImportFiles]);
+
+  // Drag and drop handlers
+  const handleDragEnter = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set false if leaving the container
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files).filter(
+      file => file.name.endsWith('.json') || file.name.endsWith('.zip')
+    );
+
+    if (files.length > 0) {
+      handleImportFiles(files);
+    }
+  }, [handleImportFiles]);
 
   // Add new content item
   const handleAddContent = useCallback((type, item) => {
@@ -455,11 +582,42 @@ const ContentGenerator = ({ onClose }) => {
 
   return createPortal(
     <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.container} onClick={e => e.stopPropagation()}>
+      <div
+        style={{ ...styles.container, position: 'relative' }}
+        onClick={e => e.stopPropagation()}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {/* Drag and Drop Overlay */}
+        {isDragging && (
+          <div style={styles.dropZone}>
+            <div style={styles.dropZoneText}>Drop files to import</div>
+            <div style={styles.dropZoneSubtext}>Supports .json and .zip files</div>
+          </div>
+        )}
+
+        {/* Hidden File Input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          accept=".json,.zip"
+          multiple
+          onChange={handleFileInputChange}
+        />
+
         {/* Header */}
         <div style={styles.header}>
           <h2 style={styles.title}>🛠️ Content Generator</h2>
           <div style={styles.headerButtons}>
+            <button
+              style={{ ...styles.button, ...styles.importButton }}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              📥 Import
+            </button>
             <button
               style={{ ...styles.button, ...styles.secondaryButton }}
               onClick={handleClearAll}
@@ -517,7 +675,7 @@ const ContentGenerator = ({ onClose }) => {
         {/* Status Bar */}
         <div style={styles.statusBar}>
           <span>
-            Content auto-saved to browser storage
+            Content auto-saved to browser storage | Drag & drop files to import
           </span>
           <span>
             Total: {getTotalCount()} items |
@@ -528,6 +686,16 @@ const ContentGenerator = ({ onClose }) => {
             Enemies: {content.enemies.length}
           </span>
         </div>
+
+        {/* Import Warnings Modal */}
+        <ImportWarningsModal
+          isOpen={showImportModal}
+          onClose={handleCancelImport}
+          importResult={importResult}
+          onApplyImport={handleApplyImport}
+          importedData={importedData}
+          setImportedData={setImportedData}
+        />
       </div>
     </div>,
     document.body

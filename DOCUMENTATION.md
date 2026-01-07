@@ -1,6 +1,6 @@
 # Furrocity Engine - Complete Documentation
 
-> **Version:** 0.8.0-ALPHA
+> **Version:** 0.8.1-ALPHA
 > **Engine:** Furrocity Engine
 > **Authors:** Cotton Le Sergal, Shluggo & Winded
 
@@ -37,6 +37,8 @@
 27. [Effect Actions Reference](#27-effect-actions-reference)
 28. [Adding New Content](#28-adding-new-content)
 29. [Performance & Optimization](#29-performance--optimization)
+30. [Character System](#30-character-system)
+31. [Content Generator](#31-content-generator)
 
 ---
 
@@ -86,14 +88,24 @@ furrocity/
 │       │   ├── MapView.jsx              # Local/World map renderer
 │       │   ├── LocationMarker.jsx       # Clickable map markers
 │       │   └── RegionOverlay.jsx        # World map regions
-│       └── ui/
-│           ├── LocationTitle.jsx        # Animated location titles
-│           ├── LocationTitle.css        # Title animation styles
-│           ├── MedievalClock.jsx        # Day/night clock UI
-│           ├── MedievalClock.css        # Clock animation styles
-│           ├── SceneInputs.jsx          # Scene input components
-│           ├── SceneInputs.css          # Scene input styles
-│           └── RequirementTooltip.jsx   # Unlock requirement display
+│       ├── ui/
+│       │   ├── LocationTitle.jsx        # Animated location titles
+│       │   ├── LocationTitle.css        # Title animation styles
+│       │   ├── MedievalClock.jsx        # Day/night clock UI
+│       │   ├── MedievalClock.css        # Clock animation styles
+│       │   ├── SceneInputs.jsx          # Scene input components
+│       │   ├── SceneInputs.css          # Scene input styles
+│       │   └── RequirementTooltip.jsx   # Unlock requirement display
+│       └── generator/
+│           ├── ContentGenerator.jsx     # Main content generator UI
+│           ├── ImportSystem.js          # Import logic & schema migration
+│           ├── ImportWarningsModal.jsx  # Import results modal
+│           └── tabs/                    # Content type editors
+│               ├── ItemCreator.jsx
+│               ├── SceneCreator.jsx
+│               ├── LocationCreator.jsx
+│               ├── CharacterCreator.jsx
+│               └── ...
 │
 ├── engine/                   # Core game systems
 │   ├── index.js              # Engine exports
@@ -118,6 +130,7 @@ furrocity/
 │   ├── LodgingSystem.js      # Inn rooms & rental properties
 │   ├── ActionRequirementSystem.js  # Action requirement checking
 │   ├── InputValidationSystem.js    # Input validation with formulas
+│   ├── CharacterSystem.js    # Playable character management
 │   └── SaveSystem.js         # Save/load
 │
 ├── public/
@@ -136,6 +149,7 @@ furrocity/
 │   │       ├── encounter_tables/
 │   │       ├── conditions/
 │   │       ├── sprites/
+│   │       ├── characters/           # Playable character definitions
 │   │       ├── lodging/              # Inn rooms & rental properties
 │   │       │   └── lodging_config.json
 │   │       └── ui/
@@ -2877,8 +2891,7 @@ discoveryProgress: {
 | `pussy` | Labia piercings, spreaders | Yes |
 | `clitoris` | Clit piercings, vibrators | Yes |
 | `urethra` | Urethral sounds, plugs | Yes |
-| `ass` | Anal piercings, tail plugs | Yes |
-| `plug` | Anal/vaginal plugs | No |
+| `ass` | Anal piercings, tail plugs, anal toys | Yes |
 | `chastity` | Chastity devices | No |
 | `genital` | Generic genital slot | Yes |
 
@@ -3394,6 +3407,47 @@ All substance timing uses turn-based durations (actions, turns, days) rather tha
 
 ### Item Paperdoll Definition
 
+#### New Format (Recommended)
+
+For equippable items, use the `paperdoll` object with `folder` and `filename`:
+
+```json
+{
+  "isEquippable": true,
+  "equipSlots": ["chest"],
+  "paperdoll": {
+    "enabled": true,
+    "folder": "clothing/dresses",
+    "filename": "red_silk_dress",
+    "layer": "shirt",
+    "zIndexOffset": 0
+  }
+}
+```
+
+This resolves to: `/images/equipment/clothing/dresses/red_silk_dress.png`
+
+#### Available Layers
+
+| Layer | Z-Index | Description |
+|-------|---------|-------------|
+| `base` | 0 | Base body layer |
+| `skin_details` | 1 | Freckles, markings |
+| `scars` | 2 | Scar overlays |
+| `tattoos` | 3 | Tattoo overlays |
+| `underwear_bottom` | 10 | Panties, boxers |
+| `underwear_top` | 11 | Bras, undershirts |
+| `pants` | 13 | Pants, skirts |
+| `shirt` | 14 | Shirts, dresses |
+| `chest_armor` | 20 | Armor overlays |
+| `helmet` | 25 | Head equipment |
+| `effects_overlay` | 28 | Visual effects |
+| `restraints` | 29 | Bondage gear |
+
+#### Legacy Format (Backwards Compatible)
+
+The old `paperdollImages` format is still supported:
+
 ```json
 {
   "paperdollType": "dress",
@@ -3677,6 +3731,212 @@ The DataRegistry automatically caches:
 
 ---
 
+## 30. Character System
+
+The Character System manages playable characters loaded from datapacks.
+
+### Character Definition
+
+```json
+{
+  "id": "ceraph",
+  "name": "Ceraph",
+  "description": "A curious fox with a talent for getting into trouble.",
+  "species": "fox",
+  "gender": "female",
+  "bodyType": "lithe",
+  "paperdollFolder": "ceraph",
+
+  "baseStats": {
+    "strength": 4,
+    "vitality": 5,
+    "intelligence": 7,
+    "willpower": 4,
+    "speed": 8,
+    "charm": 7,
+    "luck": 6
+  },
+
+  "paperdoll": {
+    "startingBase": 0,
+    "hasBreasts": true,
+    "startingCupSize": "b",
+    "maxCupSize": "dd",
+    "genitaliaType": "vagina",
+    "faceStyle": "default",
+    "faceVariants": 3
+  },
+
+  "appearance": {
+    "furColor": "#d4742c",
+    "hairColor": "#8b4513",
+    "eyeColor": "#4a90d9"
+  },
+
+  "startingEquipment": ["simple_dress", "worn_sandals"],
+  "startingItems": ["health_potion", "torch"],
+  "backstory": "Once a scholar's assistant...",
+  "portrait": "/images/characters/ceraph_portrait.png"
+}
+```
+
+### Paperdoll Folder Structure
+
+Each character has a dedicated folder in `public/images/paperdoll/{characterId}/`:
+
+```
+public/images/paperdoll/ceraph/
+├── masc_0.png       # Most masculine body
+├── masc_1.png
+├── ...
+├── masc_10.png
+├── fem_1.png        # Feminine bodies
+├── fem_2.png
+├── ...
+├── fem_10.png       # Most feminine body
+├── chest/
+│   ├── flat.png
+│   ├── a.png
+│   ├── b.png
+│   ├── c.png
+│   ├── d.png
+│   └── dd.png
+├── genitalia/
+│   ├── vagina.png
+│   ├── penis_small.png
+│   ├── penis_medium.png
+│   ├── penis_large.png
+│   └── both.png
+└── face/
+    ├── default_1.png
+    ├── default_2.png
+    └── default_3.png
+```
+
+### CharacterSystem API
+
+```javascript
+import { CharacterSystem } from './engine';
+
+const characterSystem = new CharacterSystem(registry);
+characterSystem.initialize();
+
+// Get character data
+const ceraph = characterSystem.getCharacter('ceraph');
+
+// Get all available characters
+const allCharacters = characterSystem.getAllCharacters();
+
+// Get paperdoll images
+const baseBody = characterSystem.getBaseBodyImage('ceraph', 5); // feminization level 0-10
+const chest = characterSystem.getChestImage('ceraph', 'c');
+const genitalia = characterSystem.getGenitaliaImage('ceraph', 'vagina');
+const face = characterSystem.getFaceImage('ceraph', 'default', 1);
+
+// Initialize full paperdoll state
+const paperdollState = characterSystem.initializePaperdoll('ceraph');
+```
+
+---
+
+## 31. Content Generator
+
+The Content Generator is a built-in tool for creating game content without manually editing JSON files.
+
+### Accessing the Generator
+
+The Content Generator is available from the game's main menu or can be triggered programmatically.
+
+### Supported Content Types
+
+| Tab | Content Type | Output |
+|-----|--------------|--------|
+| Items | Weapons, armor, consumables, toys | `items/*.json` |
+| Scenes | Dialogue trees, events | `scenes/*.json` |
+| Locations | Towns, dungeons, areas | `locations/*.json` |
+| Regions | World map regions | `locations/*.json` |
+| NPCs | Merchants, quest givers | `merchants/*.json` |
+| Enemies | Monsters, bosses | `enemies/*.json` |
+| Effects | Buffs, debuffs, status effects | `effects/*.json` |
+| Characters | Playable characters | `characters/*.json` |
+| Sprites | Sprite sheet definitions | `sprites/*.json` |
+
+### Import System
+
+The Content Generator supports importing existing content files with backwards compatibility.
+
+#### Import Methods
+
+1. **Import Button** - Click the "Import" button in the header
+2. **Drag & Drop** - Drag `.json` or `.zip` files onto the Content Generator window
+
+#### Supported File Types
+
+- Individual `.json` files
+- Multiple `.json` files (batch import)
+- `.zip` archives containing JSON files
+
+#### Automatic Field Migration
+
+Old content formats are automatically migrated to the current schema:
+
+| Old Field | New Field |
+|-----------|-----------|
+| `slot` | `equipSlots[]` |
+| `equipSlot` | `equipSlots[]` |
+| `paperdollImage` | `paperdoll.folder` + `paperdoll.filename` |
+| `equippable` | `isEquippable` |
+| `base_stats` | `baseStats` |
+| `stat_bonuses` | `baseStats` |
+
+#### Import Results Modal
+
+After importing, a modal displays:
+
+- **Summary Cards** - Count of imported items, warnings, errors, unmapped fields
+- **Unmapped Fields Tab** - Fields that couldn't be automatically mapped
+  - Map to a new field using the dropdown
+  - Copy the value to clipboard
+  - Ignore the field
+- **Warnings Tab** - Non-critical issues (auto-migrated fields)
+- **Errors Tab** - Critical issues preventing import
+
+#### Example Import Workflow
+
+1. Click "Import" or drag files onto the window
+2. Review the import results modal
+3. Resolve any unmapped fields by mapping or ignoring
+4. Click "Apply Import" to add content to the generator
+5. Edit imported content as needed
+6. Export as a datapack ZIP
+
+### Export System
+
+Click "Export ZIP" to download a complete datapack:
+
+```
+custom_datapack/
+├── pack.json           # Datapack manifest
+├── items/
+│   └── custom_*.json
+├── scenes/
+│   └── custom_scenes.json
+├── locations/
+│   └── custom_locations.json
+├── enemies/
+│   └── custom_enemies.json
+├── effects/
+│   └── custom_effects.json
+└── characters/
+    └── custom_characters.json
+```
+
+### Auto-Save
+
+Content is automatically saved to browser localStorage. Closing and reopening the generator preserves your work.
+
+---
+
 ## Quick Reference
 
 ### Content Type → File Location
@@ -3691,6 +3951,7 @@ The DataRegistry automatically caches:
 | Scenes | `datapacks/core/scenes/` |
 | Locations | `datapacks/core/locations/` |
 | Loot Tables | `datapacks/core/loot_tables/` |
+| Characters | `datapacks/core/characters/` |
 
 ### Common Tags
 

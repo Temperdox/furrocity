@@ -502,7 +502,6 @@ export const comprehensivePlayerState = {
     ass: null,           // Anal piercings (rare), tail plugs
 
     // NSFW equipment slots - Special
-    plug: null,          // Anal/vaginal plugs
     chastity: null,      // Chastity devices (belt, cage)
     genital: null        // Generic genital slot for universal items
   },

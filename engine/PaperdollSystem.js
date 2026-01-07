@@ -501,7 +501,19 @@ export class PaperdollSystem {
    * Get image path for an item's paperdoll layer
    */
   getItemImagePath(item, region, layer, state = 'default') {
-    // Check if item has specific paperdoll images defined
+    // Check if item has direct paperdoll configuration (new format with folder/filename)
+    if (item.paperdoll?.enabled) {
+      if (item.paperdoll.folder && item.paperdoll.filename) {
+        // New format: folder + filename
+        return `/images/equipment/${item.paperdoll.folder}/${item.paperdoll.filename}.png`;
+      }
+      if (item.paperdoll.imagePath) {
+        // Legacy format: direct imagePath
+        return `/images/${item.paperdoll.imagePath}`;
+      }
+    }
+
+    // Check if item has specific paperdoll images defined (legacy format)
     if (item.paperdollImages) {
       const regionImages = item.paperdollImages[region];
       if (regionImages) {
@@ -515,7 +527,7 @@ export class PaperdollSystem {
         }
       }
     }
-    
+
     // Generate path from convention
     // e.g., /images/paperdoll/items/briefs/fullBody_underwear_bottom.png
     const itemType = item.paperdollType || item.type;
@@ -523,23 +535,99 @@ export class PaperdollSystem {
   }
 
   /**
+   * Check if an item has paperdoll display enabled
+   */
+  hasPaperdollDisplay(item) {
+    // New format with folder/filename
+    if (item.paperdoll?.enabled && item.paperdoll.folder && item.paperdoll.filename && item.paperdoll.layer) {
+      return true;
+    }
+    // Legacy format with imagePath
+    if (item.paperdoll?.enabled && item.paperdoll.imagePath && item.paperdoll.layer) {
+      return true;
+    }
+    // Legacy formats
+    if (item.paperdollImages) return true;
+    if (item.paperdollType || ITEM_LAYER_MAPPING[item.type]) return true;
+    return false;
+  }
+
+  /**
    * Equip an item to the paperdoll
    */
   async equipItem(paperdollState, item, options = {}) {
+    const changedLayers = [];
+
+    // Check for direct paperdoll configuration (new format with folder/filename or legacy imagePath)
+    const hasFolderFilename = item.paperdoll?.enabled && item.paperdoll.folder && item.paperdoll.filename && item.paperdoll.layer;
+    const hasImagePath = item.paperdoll?.enabled && item.paperdoll.imagePath && item.paperdoll.layer;
+
+    if (hasFolderFilename || hasImagePath) {
+      // Build image path based on format
+      const imagePath = hasFolderFilename
+        ? `/images/equipment/${item.paperdoll.folder}/${item.paperdoll.filename}.png`
+        : `/images/${item.paperdoll.imagePath}`;
+      const layerId = item.paperdoll.layer;
+
+      // Apply to fullBody region by default, and specific region if layer matches
+      const regionsToApply = ['fullBody'];
+
+      // Find which regions have this layer
+      for (const [regionId, regionDef] of Object.entries(BODY_REGIONS)) {
+        const hasLayer = regionDef.layers.some(l => l.id === layerId);
+        if (hasLayer && !regionsToApply.includes(regionId)) {
+          regionsToApply.push(regionId);
+        }
+      }
+
+      for (const regionId of regionsToApply) {
+        // Check if layer exists in this region
+        const regionDef = BODY_REGIONS[regionId];
+        const layerExists = regionDef?.layers.some(l => l.id === layerId);
+
+        if (layerExists) {
+          // Check if layer is already occupied
+          const existingLayer = paperdollState.getLayer(regionId, layerId);
+          if (existingLayer?.itemId && existingLayer.itemId !== item.id) {
+            if (this.callbacks.onLayerReplace) {
+              await this.callbacks.onLayerReplace(regionId, layerId, existingLayer.itemId, item.id);
+            }
+          }
+
+          paperdollState.setLayer(regionId, layerId, imagePath, item.id);
+
+          // Apply z-index offset if specified
+          if (item.paperdoll.zIndexOffset) {
+            const layer = paperdollState.getLayer(regionId, layerId);
+            if (layer) {
+              layer.zIndexOffset = item.paperdoll.zIndexOffset;
+            }
+          }
+
+          changedLayers.push({ regionId, layerId, imagePath });
+        }
+      }
+
+      if (this.callbacks.onEquip) {
+        await this.callbacks.onEquip(item, changedLayers);
+      }
+
+      return { success: true, changedLayers };
+    }
+
+    // Fall back to type-based layer mapping (legacy format)
     const itemType = item.paperdollType || item.type;
     const layerMapping = ITEM_LAYER_MAPPING[itemType];
-    
+
     if (!layerMapping) {
-      console.warn(`No layer mapping for item type: ${itemType}`);
-      return { success: false, reason: 'No layer mapping' };
+      // No paperdoll display for this item type - this is fine, not an error
+      return { success: true, changedLayers: [], reason: 'No paperdoll configuration' };
     }
-    
-    const changedLayers = [];
-    
+
     // Apply to each mapped region/layer
     for (const [regionId, layerId] of Object.entries(layerMapping)) {
       const imagePath = this.getItemImagePath(item, regionId, layerId);
-      
+
       // Check if layer is already occupied
       const existingLayer = paperdollState.getLayer(regionId, layerId);
       if (existingLayer?.itemId && existingLayer.itemId !== item.id) {
@@ -548,15 +636,15 @@ export class PaperdollSystem {
           await this.callbacks.onLayerReplace(regionId, layerId, existingLayer.itemId, item.id);
         }
       }
-      
+
       paperdollState.setLayer(regionId, layerId, imagePath, item.id);
       changedLayers.push({ regionId, layerId, imagePath });
     }
-    
+
     if (this.callbacks.onEquip) {
       await this.callbacks.onEquip(item, changedLayers);
     }
-    
+
     return { success: true, changedLayers };
   }
 
@@ -564,30 +652,55 @@ export class PaperdollSystem {
    * Unequip an item from the paperdoll
    */
   async unequipItem(paperdollState, item) {
+    const clearedLayers = [];
+
+    // Check for direct paperdoll configuration (new format)
+    if (item.paperdoll?.enabled && item.paperdoll.layer) {
+      const layerId = item.paperdoll.layer;
+
+      // Clear from all regions that have this layer
+      for (const [regionId, regionDef] of Object.entries(BODY_REGIONS)) {
+        const hasLayer = regionDef.layers.some(l => l.id === layerId);
+        if (hasLayer) {
+          const layer = paperdollState.getLayer(regionId, layerId);
+          if (layer?.itemId === item.id) {
+            paperdollState.clearLayer(regionId, layerId);
+            clearedLayers.push({ regionId, layerId });
+          }
+        }
+      }
+
+      if (this.callbacks.onUnequip) {
+        await this.callbacks.onUnequip(item, clearedLayers);
+      }
+
+      return { success: true, clearedLayers };
+    }
+
+    // Fall back to type-based layer mapping (legacy format)
     const itemType = item.paperdollType || item.type;
     const layerMapping = ITEM_LAYER_MAPPING[itemType];
-    
+
     if (!layerMapping) {
-      return { success: false, reason: 'No layer mapping' };
+      // No paperdoll display for this item type
+      return { success: true, clearedLayers: [], reason: 'No paperdoll configuration' };
     }
-    
-    const clearedLayers = [];
-    
+
     // Clear each mapped region/layer
     for (const [regionId, layerId] of Object.entries(layerMapping)) {
       const layer = paperdollState.getLayer(regionId, layerId);
-      
+
       // Only clear if this item owns the layer
       if (layer?.itemId === item.id) {
         paperdollState.clearLayer(regionId, layerId);
         clearedLayers.push({ regionId, layerId });
       }
     }
-    
+
     if (this.callbacks.onUnequip) {
       await this.callbacks.onUnequip(item, clearedLayers);
     }
-    
+
     return { success: true, clearedLayers };
   }
 

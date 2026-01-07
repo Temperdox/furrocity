@@ -1,0 +1,188 @@
+{
+  "characters": [
+    {
+      "id": "ceraph",
+      "name": "Ceraph",
+      "description": "A curious adventurer with a talent for getting into trouble. Her natural charm and quick wit have gotten her out of more dangerous situations than she'd care to admit.",
+      "species": "human",
+      "gender": "female",
+      "bodyType": "average",
+
+      "paperdollFolder": "ceraph",
+
+      "baseStats": {
+        "strength": 4,
+        "vitality": 5,
+        "intelligence": 6,
+        "willpower": 4,
+        "speed": 6,
+        "charm": 7,
+        "luck": 6
+      },
+
+      "paperdoll": {
+        "startingBase": 0,
+        "hasBreasts": true,
+        "startingCupSize": "b",
+        "maxCupSize": "dd",
+        "genitaliaType": "vagina",
+        "faceStyle": "default",
+        "faceVariants": 3
+      },
+
+      "appearance": {
+        "skinColor": "#e8c4a0",
+        "hairColor": "#8b4513",
+        "eyeColor": "#4a90d9",
+        "furColor": null
+      },
+
+      "startingEquipment": ["basic_clothing"],
+      "startingItems": ["health_potion", "torch"],
+
+      "backstory": "Born to a family of traveling merchants, Ceraph learned early that the world was full of wonders and dangers in equal measure. When her caravan was attacked by bandits, she found herself alone in a strange land, armed only with her wits and an insatiable curiosity.",
+
+      "personality": "Cheerful and optimistic, but with a mischievous streak. Tends to act first and think later.",
+
+      "portrait": "/images/characters/ceraph/portrait.png"
+    },
+    {
+      "id": "marcus",
+      "name": "Marcus the Bold",
+      "description": "A seasoned warrior who has seen countless battles. His strength and resilience are matched only by his unwavering sense of honor.",
+      "species": "human",
+      "gender": "male",
+      "bodyType": "muscular",
+
+      "paperdollFolder": "marcus",
+
+      "baseStats": {
+        "strength": 8,
+        "vitality": 7,
+        "intelligence": 4,
+        "willpower": 6,
+        "speed": 4,
+        "charm": 5,
+        "luck": 4
+      },
+
+      "paperdoll": {
+        "startingBase": 0,
+        "hasBreasts": false,
+        "startingCupSize": "flat",
+        "maxCupSize": "flat",
+        "genitaliaType": "penis",
+        "faceStyle": "fierce",
+        "faceVariants": 2
+      },
+
+      "appearance": {
+        "skinColor": "#d4a574",
+        "hairColor": "#2c2c2c",
+        "eyeColor": "#8b4513",
+        "furColor": null
+      },
+
+      "startingEquipment": ["iron_sword", "leather_armor"],
+      "startingItems": ["health_potion"],
+
+      "backstory": "Once a captain in the King's Guard, Marcus left his post after uncovering corruption within the ranks. Now he wanders the land as a sellsword, seeking to right wrongs wherever he finds them.",
+
+      "personality": "Stoic and honorable. Speaks little but means every word. Has a soft spot for those in need.",
+
+      "portrait": "/images/characters/marcus/portrait.png"
+    },
+    {
+      "id": "shade",
+      "name": "Shade",
+      "description": "A mysterious rogue whose past is shrouded in shadows. Quick, cunning, and deadly when cornered.",
+      "species": "human",
+      "gender": "nonbinary",
+      "bodyType": "slender",
+
+      "paperdollFolder": "shade",
+
+      "baseStats": {
+        "strength": 4,
+        "vitality": 4,
+        "intelligence": 6,
+        "willpower": 5,
+        "speed": 8,
+        "charm": 6,
+        "luck": 7
+      },
+
+      "paperdoll": {
+        "startingBase": 5,
+        "hasBreasts": true,
+        "startingCupSize": "flat",
+        "maxCupSize": "c",
+        "genitaliaType": "both",
+        "faceStyle": "mysterious",
+        "faceVariants": 2
+      },
+
+      "appearance": {
+        "skinColor": "#f5e6d3",
+        "hairColor": "#1a1a2e",
+        "eyeColor": "#9932cc",
+        "furColor": null
+      },
+
+      "startingEquipment": ["daggers", "dark_cloak"],
+      "startingItems": ["lockpick_set", "smoke_bomb"],
+
+      "backstory": "No one knows where Shade came from or even their real name. They appeared one day in the underworld of the capital city and quickly made a name for themselves as someone who could acquire anything - for the right price.",
+
+      "personality": "Enigmatic and calculating. Trusts no one but keeps their word once given.",
+
+      "portrait": "/images/characters/shade/portrait.png"
+    },
+    {
+      "id": "luna",
+      "name": "Luna Silverpaw",
+      "description": "A wolf-kin priestess who communes with the spirits of nature. Her healing magic and connection to the wild make her invaluable in the untamed lands.",
+      "species": "wolf",
+      "gender": "female",
+      "bodyType": "curvy",
+
+      "paperdollFolder": "luna",
+
+      "baseStats": {
+        "strength": 3,
+        "vitality": 5,
+        "intelligence": 7,
+        "willpower": 8,
+        "speed": 5,
+        "charm": 6,
+        "luck": 5
+      },
+
+      "paperdoll": {
+        "startingBase": 8,
+        "hasBreasts": true,
+        "startingCupSize": "c",
+        "maxCupSize": "ff",
+        "genitaliaType": "vagina",
+        "faceStyle": "cute",
+        "faceVariants": 3
+      },
+
+      "appearance": {
+        "skinColor": "#f5e6d3",
+        "hairColor": "#c0c0c0",
+        "eyeColor": "#ffd700",
+        "furColor": "#808080"
+      },
+
+      "startingEquipment": ["priestess_robes", "wooden_staff"],
+      "startingItems": ["healing_herbs", "spirit_charm"],
+
+      "backstory": "Raised in a secluded forest temple, Luna was taught from birth to listen to the whispers of the ancient spirits. When a blight began spreading across the land, the spirits told her she must venture forth to find its source.",
+
+      "personality": "Gentle and nurturing, but fiercely protective of nature and the innocent. Can be naive about the ways of civilization.",
+
+      "portrait": "/images/characters/luna/portrait.png"
+    }
+  ]
+}

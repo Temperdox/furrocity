@@ -70,7 +70,6 @@ export const EQUIPMENT_SLOTS = {
   ASS: 'ass',
 
   // NSFW equipment slots - Special
-  PLUG: 'plug',
   CHASTITY: 'chastity',
   GENITAL: 'genital'            // Generic genital slot for universal items
 };

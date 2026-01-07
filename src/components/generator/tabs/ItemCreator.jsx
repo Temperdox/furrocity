@@ -266,7 +266,6 @@ const EQUIPMENT_SLOTS = [
   { value: 'ass', label: 'Ass/Anus', category: 'nsfw' },
 
   // NSFW Special slots
-  { value: 'plug', label: 'Plug (Anal/Vaginal)', category: 'nsfw' },
   { value: 'chastity', label: 'Chastity Device', category: 'nsfw' },
   { value: 'genital', label: 'Genital (Generic)', category: 'nsfw' },
 ];
@@ -284,6 +283,51 @@ const COMMON_TAGS = [
   'chastity', 'collar', 'leash', 'blindfold', 'clamps',
 ];
 
+// Paperdoll layer options for equipment rendering
+const PAPERDOLL_LAYERS = [
+  { value: '', label: 'None (No paperdoll display)' },
+  // Body/Clothing
+  { value: 'underwear_bottom', label: 'Underwear (Bottom)' },
+  { value: 'underwear_top', label: 'Underwear (Top)' },
+  { value: 'pants', label: 'Pants/Skirt' },
+  { value: 'shirt', label: 'Shirt/Top' },
+  { value: 'jacket', label: 'Jacket/Coat' },
+  { value: 'socks', label: 'Socks/Stockings' },
+  { value: 'shoes', label: 'Footwear' },
+  { value: 'gloves', label: 'Gloves' },
+  { value: 'belt', label: 'Belt' },
+  { value: 'cape', label: 'Cape/Cloak' },
+  // Armor
+  { value: 'armor_chest', label: 'Chest Armor' },
+  { value: 'armor_legs', label: 'Leg Armor' },
+  { value: 'armor_arms', label: 'Arm Armor' },
+  { value: 'helmet', label: 'Helmet' },
+  { value: 'mask', label: 'Mask' },
+  // Accessories
+  { value: 'accessories', label: 'Accessories' },
+  { value: 'necklace', label: 'Necklace' },
+  { value: 'earrings', label: 'Earrings' },
+  { value: 'glasses', label: 'Glasses' },
+  { value: 'collar', label: 'Collar' },
+  // NSFW
+  { value: 'chastity', label: 'Chastity Device', category: 'nsfw' },
+  { value: 'genital_piercings', label: 'Genital Piercings', category: 'nsfw' },
+  { value: 'piercings_body', label: 'Body Piercings', category: 'nsfw' },
+  { value: 'lewd_accessories', label: 'Lewd Accessories', category: 'nsfw' },
+  { value: 'pasties', label: 'Pasties', category: 'nsfw' },
+  { value: 'harness', label: 'Harness', category: 'nsfw' },
+  { value: 'cock_ring', label: 'Cock Ring', category: 'nsfw' },
+  { value: 'plug', label: 'Plug (Anal/Vaginal)', category: 'nsfw' },
+  { value: 'tail', label: 'Tail Plug', category: 'nsfw' },
+  // Restraints
+  { value: 'restraints', label: 'Restraints', category: 'nsfw' },
+  { value: 'gag', label: 'Gag', category: 'nsfw' },
+  { value: 'blindfold', label: 'Blindfold', category: 'nsfw' },
+  // Effects
+  { value: 'effects', label: 'Visual Effects' },
+  { value: 'fluids', label: 'Fluids', category: 'nsfw' },
+];
+
 const DEFAULT_ITEM = {
   id: '',
   name: '',
@@ -293,12 +337,21 @@ const DEFAULT_ITEM = {
   value: 10,
   stackable: false,
   maxStack: 1,
-  equipSlots: [],  // Array of slots this item can be equipped in
+  isEquippable: false,   // Whether this item can be equipped
+  equipSlots: [],        // Array of slots this item can be equipped in
   tags: [],
   icon: {
     type: 'sprite',
     sheetId: 'items',
     iconId: 'default',
+  },
+  // Paperdoll configuration for equipped items
+  paperdoll: {
+    enabled: false,
+    folder: '',          // Subfolder in public/images/equipment/ (e.g., "chastity", "armor", "toys")
+    filename: '',        // Image filename without extension (e.g., "steel_cage", "leather_armor")
+    layer: '',           // Which layer to render on (e.g., "chastity", "plug", "armor_chest")
+    zIndexOffset: 0,     // Optional z-index adjustment
   },
   baseStats: {
     attack: 0,
@@ -341,10 +394,41 @@ const ItemCreator = ({
         equipSlots = [editingItem.equipSlot];
       }
 
+      // Determine if item is equippable
+      const isEquippable = editingItem.isEquippable || equipSlots.length > 0;
+
+      // Handle legacy paperdollImage conversion to paperdoll object
+      let paperdoll = { ...DEFAULT_ITEM.paperdoll };
+      if (editingItem.paperdoll) {
+        paperdoll = { ...DEFAULT_ITEM.paperdoll, ...editingItem.paperdoll };
+        // Convert legacy imagePath to folder/filename
+        if (editingItem.paperdoll.imagePath && !editingItem.paperdoll.folder) {
+          const parts = editingItem.paperdoll.imagePath.split('/');
+          if (parts.length > 1) {
+            paperdoll.folder = parts.slice(0, -1).join('/');
+            paperdoll.filename = parts[parts.length - 1].replace(/\.[^/.]+$/, '');
+          } else {
+            paperdoll.filename = parts[0].replace(/\.[^/.]+$/, '');
+          }
+        }
+      } else if (editingItem.paperdollImage) {
+        // Legacy support for simple paperdollImage field
+        const parts = editingItem.paperdollImage.split('/');
+        paperdoll = {
+          enabled: true,
+          folder: parts.length > 1 ? parts.slice(0, -1).join('/') : '',
+          filename: parts[parts.length - 1].replace(/\.[^/.]+$/, ''),
+          layer: editingItem.paperdollLayer || '',
+          zIndexOffset: 0,
+        };
+      }
+
       setFormData({
         ...DEFAULT_ITEM,
         ...editingItem,
+        isEquippable,
         equipSlots,
+        paperdoll,
         baseStats: { ...DEFAULT_ITEM.baseStats, ...editingItem.baseStats },
         icon: { ...DEFAULT_ITEM.icon, ...editingItem.icon },
         requirements: { ...DEFAULT_ITEM.requirements, ...editingItem.requirements },
@@ -532,7 +616,45 @@ const ItemCreator = ({
           )}
         </div>
 
-        {/* Equipment Slots - Multi-select */}
+        {/* Equippable Item Checkbox */}
+        <div style={{
+          ...styles.subsection,
+          backgroundColor: formData.isEquippable ? '#1e2e1e' : '#1e1e35',
+          borderLeft: formData.isEquippable ? '3px solid #4a7c4a' : '3px solid transparent',
+        }}>
+          <div style={styles.formGroup}>
+            <label style={{
+              ...styles.label,
+              fontSize: '14px',
+              fontWeight: 'bold',
+              color: formData.isEquippable ? '#90ff90' : '#a0a0c0',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+            }}>
+              <input
+                type="checkbox"
+                checked={formData.isEquippable}
+                onChange={(e) => {
+                  handleChange('isEquippable', e.target.checked);
+                  // Clear equipment slots if unchecking
+                  if (!e.target.checked) {
+                    handleChange('equipSlots', []);
+                    handleNestedChange('paperdoll', 'enabled', false);
+                  }
+                }}
+                style={{ marginRight: '10px', width: '18px', height: '18px' }}
+              />
+              Equippable Item
+            </label>
+            <div style={{ fontSize: '12px', color: '#808090', marginTop: '5px', marginLeft: '28px' }}>
+              Check this if the item can be equipped by the player (weapons, armor, accessories, toys, etc.)
+            </div>
+          </div>
+        </div>
+
+        {/* Equipment Slots - Multi-select (only shown when isEquippable) */}
+        {formData.isEquippable && (
         <div style={styles.subsection}>
           <div style={styles.subsectionTitle}>
             Equipment Slots
@@ -543,7 +665,7 @@ const ItemCreator = ({
             )}
           </div>
           <div style={{ fontSize: '12px', color: '#808090', marginBottom: '15px' }}>
-            Select all slots where this item can be equipped. Leave empty if not equippable.
+            Select all slots where this item can be equipped.
           </div>
 
           {/* Slot chip styles */}
@@ -717,6 +839,7 @@ const ItemCreator = ({
             </button>
           )}
         </div>
+        )}
 
         {/* Icon */}
         <div style={styles.subsection}>
@@ -747,6 +870,145 @@ const ItemCreator = ({
             </div>
           </div>
         </div>
+
+        {/* Paperdoll Configuration - Only show for equippable items */}
+        {formData.isEquippable && (
+          <div style={styles.subsection}>
+            <div style={styles.subsectionTitle}>
+              Equipment Image (Paperdoll)
+              <span style={{
+                fontWeight: 'normal',
+                fontSize: '11px',
+                color: formData.paperdoll.enabled ? '#90ff90' : '#808090',
+                marginLeft: '10px'
+              }}>
+                {formData.paperdoll.enabled ? '(Enabled)' : '(Disabled)'}
+              </span>
+            </div>
+            <div style={{ fontSize: '12px', color: '#808090', marginBottom: '15px' }}>
+              Configure the image that will be overlayed on the character portrait when this item is equipped.
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={{
+                ...styles.label,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+              }}>
+                <input
+                  type="checkbox"
+                  checked={formData.paperdoll.enabled}
+                  onChange={(e) => handleNestedChange('paperdoll', 'enabled', e.target.checked)}
+                  style={{ marginRight: '8px' }}
+                />
+                Show on Character Portrait
+              </label>
+            </div>
+
+            {formData.paperdoll.enabled && (
+              <>
+                <div style={styles.row}>
+                  <div style={styles.halfWidth}>
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Image Folder</label>
+                      <div style={{ fontSize: '11px', color: '#808090', marginBottom: '5px' }}>
+                        Subfolder in public/images/equipment/
+                      </div>
+                      <input
+                        style={styles.input}
+                        value={formData.paperdoll.folder}
+                        onChange={(e) => handleNestedChange('paperdoll', 'folder', e.target.value.toLowerCase().replace(/\s/g, '_'))}
+                        placeholder="chastity, armor, toys, etc."
+                      />
+                    </div>
+                  </div>
+                  <div style={styles.halfWidth}>
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Image Filename</label>
+                      <div style={{ fontSize: '11px', color: '#808090', marginBottom: '5px' }}>
+                        Without file extension (.png added automatically)
+                      </div>
+                      <input
+                        style={styles.input}
+                        value={formData.paperdoll.filename}
+                        onChange={(e) => handleNestedChange('paperdoll', 'filename', e.target.value.toLowerCase().replace(/\s/g, '_'))}
+                        placeholder="steel_cage, leather_armor, etc."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div style={styles.row}>
+                  <div style={styles.halfWidth}>
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Render Layer</label>
+                      <div style={{ fontSize: '11px', color: '#808090', marginBottom: '5px' }}>
+                        Which paperdoll layer to render on
+                      </div>
+                      <select
+                        style={styles.select}
+                        value={formData.paperdoll.layer}
+                        onChange={(e) => handleNestedChange('paperdoll', 'layer', e.target.value)}
+                      >
+                        {PAPERDOLL_LAYERS.filter(l => !l.category).map(layer => (
+                          <option key={layer.value} value={layer.value}>{layer.label}</option>
+                        ))}
+                        <optgroup label="NSFW Layers" style={{ color: '#ff9999' }}>
+                          {PAPERDOLL_LAYERS.filter(l => l.category === 'nsfw').map(layer => (
+                            <option key={layer.value} value={layer.value}>{layer.label}</option>
+                          ))}
+                        </optgroup>
+                      </select>
+                    </div>
+                  </div>
+                  <div style={styles.halfWidth}>
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Z-Index Offset</label>
+                      <div style={{ fontSize: '11px', color: '#808090', marginBottom: '5px' }}>
+                        Adjust rendering order (+/-)
+                      </div>
+                      <input
+                        style={styles.input}
+                        type="number"
+                        value={formData.paperdoll.zIndexOffset}
+                        onChange={(e) => handleNestedChange('paperdoll', 'zIndexOffset', parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Image Path Preview */}
+                <div style={{
+                  marginTop: '10px',
+                  padding: '12px',
+                  backgroundColor: '#1a1a2e',
+                  borderRadius: '4px',
+                  border: '1px solid #3a3a5a',
+                }}>
+                  <div style={{ fontSize: '11px', color: '#808090', marginBottom: '5px' }}>
+                    Full Image Path:
+                  </div>
+                  <div style={{
+                    fontSize: '13px',
+                    color: (formData.paperdoll.folder && formData.paperdoll.filename) ? '#90ff90' : '#ff9999',
+                    fontFamily: 'monospace',
+                    wordBreak: 'break-all',
+                  }}>
+                    {(formData.paperdoll.folder && formData.paperdoll.filename)
+                      ? `/images/equipment/${formData.paperdoll.folder}/${formData.paperdoll.filename}.png`
+                      : '(Please enter folder and filename)'}
+                  </div>
+                  {formData.paperdoll.layer && (
+                    <div style={{ fontSize: '11px', color: '#a0a0c0', marginTop: '8px' }}>
+                      <strong>Render Layer:</strong> {formData.paperdoll.layer}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Tags */}
         <div style={styles.subsection}>

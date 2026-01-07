@@ -67,6 +67,10 @@
     "nsfw": {
       "path": "nsfw/",
       "autoLoad": true
+    },
+    "characters": {
+      "path": "characters/",
+      "autoLoad": true
     }
   }
 }

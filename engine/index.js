@@ -119,6 +119,17 @@ export {
 } from './NSFWCombatSceneSystem.js';
 
 // =============================================================================
+// CHARACTER SYSTEM
+// =============================================================================
+
+export {
+  CharacterSystem,
+  DEFAULT_CHARACTER,
+  BASE_IMAGE_STAGES,
+  CUP_SIZE_ORDER
+} from './CharacterSystem.js';
+
+// =============================================================================
 // PLAYER STATE
 // =============================================================================
 
@@ -184,6 +195,7 @@ export async function initGameEngine(manifestUrl, options = {}) {
   const { SaveSystem } = await import('./SaveSystem.js');
   const { InventorySystem } = await import('./InventorySystem.js');
   const { PaperdollSystem } = await import('./PaperdollSystem.js');
+  const { CharacterSystem } = await import('./CharacterSystem.js');
   const { SubstanceSystem } = await import('./SubstanceSystem.js');
   const { EncounterSystem } = await import('./EncounterSystem.js');
   const { FameSystem } = await import('./FameSystem.js');
@@ -240,6 +252,11 @@ export async function initGameEngine(manifestUrl, options = {}) {
     callbacks: options.paperdollCallbacks || {}
   });
 
+  const characterSystem = new CharacterSystem(registry, {
+    imagesBasePath: options.characterImagesBasePath || '/images/characters'
+  });
+  characterSystem.initialize();
+
   const substanceSystem = new SubstanceSystem(registry, effectSystem, {
     gameTimeProvider,
     safeLocations: options.safeLocations || [],
@@ -280,9 +297,10 @@ export async function initGameEngine(manifestUrl, options = {}) {
     combatSystem,
     saveSystem,
 
-    // Inventory
+    // Inventory & Character
     inventorySystem,
     paperdollSystem,
+    characterSystem,
     merchantSystem,
 
     // Location
