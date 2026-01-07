@@ -294,11 +294,17 @@ const EnemyCreator = ({
   editingItem,
   onCancelEdit,
 }) => {
-  // Get NSFW scenes filtered by action type
+  // Get NSFW scenes filtered by action type (supports both old single value and new array format)
   const getNsfwScenesForType = (actionType) => {
-    return scenes.filter(scene =>
-      scene.isNSFW && (scene.nsfwActionType === actionType || !scene.nsfwActionType)
-    );
+    return scenes.filter(scene => {
+      if (!scene.isNSFW) return false;
+      // Handle new array format
+      if (scene.nsfwActionTypes?.length > 0) {
+        return scene.nsfwActionTypes.includes(actionType);
+      }
+      // Handle old single value format (backwards compatibility)
+      return scene.nsfwActionType === actionType || !scene.nsfwActionType;
+    });
   };
 
   // Get all NSFW scenes
@@ -714,7 +720,14 @@ const EnemyCreator = ({
               </div>
               {formData.nsfwActionData.actions.map((action, index) => {
                 const matchingScenes = getNsfwScenesForType(action.type);
-                const otherScenes = allNsfwScenes.filter(s => s.nsfwActionType !== action.type && s.nsfwActionType);
+                const otherScenes = allNsfwScenes.filter(s => {
+                  // Handle new array format
+                  if (s.nsfwActionTypes?.length > 0) {
+                    return !s.nsfwActionTypes.includes(action.type);
+                  }
+                  // Handle old single value format
+                  return s.nsfwActionType !== action.type && s.nsfwActionType;
+                });
                 return (
                 <div key={index} style={styles.actionItem}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -816,7 +829,7 @@ const EnemyCreator = ({
                         <optgroup label="Other NSFW Scenes">
                           {otherScenes.map(scene => (
                             <option key={scene.id} value={scene.id}>
-                              {scene.name} ({scene.nsfwActionType || 'untyped'})
+                              {scene.name} ({scene.nsfwActionTypes?.join(', ') || scene.nsfwActionType || 'untyped'})
                             </option>
                           ))}
                         </optgroup>

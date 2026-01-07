@@ -343,7 +343,7 @@ const DEFAULT_SCENE = {
   description: '',
   tags: [],
   isNSFW: false,
-  nsfwActionType: '', // For enemy NSFW actions: grope, fondle, penetrate, etc.
+  nsfwActionTypes: [], // For enemy NSFW actions: grope, fondle, penetrate, etc.
   location: '',
   onEnter: [],
   nodes: [],
@@ -428,20 +428,25 @@ const SceneCreator = ({
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_SCENE });
   const [tagInput, setTagInput] = useState('');
+  const [nsfwActionInput, setNsfwActionInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
   const [expandedNodes, setExpandedNodes] = useState({});
   const [activeTagCategory, setActiveTagCategory] = useState(null);
-  const [activeTextareaRef, setActiveTextareaRef] = useState(null);
-  const descriptionRef = React.useRef(null);
+  const [activeNodeIndex, setActiveNodeIndex] = useState(null);
 
   // Load editing item when it changes
   useEffect(() => {
     if (editingItem) {
+      // Handle migration from old nsfwActionType string to new nsfwActionTypes array
+      let nsfwActionTypes = editingItem.nsfwActionTypes || [];
+      if (!nsfwActionTypes.length && editingItem.nsfwActionType) {
+        nsfwActionTypes = [editingItem.nsfwActionType];
+      }
       setFormData({
         ...DEFAULT_SCENE,
         ...editingItem,
         isNSFW: editingItem.isNSFW || false,
-        nsfwActionType: editingItem.nsfwActionType || '',
+        nsfwActionTypes,
         nodes: editingItem.nodes || [],
       });
     } else {
@@ -449,27 +454,24 @@ const SceneCreator = ({
     }
   }, [editingItem]);
 
-  // Insert tag at cursor position in active textarea
-  const insertTag = (tag) => {
-    if (activeTextareaRef && activeTextareaRef.current) {
-      const textarea = activeTextareaRef.current;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const text = textarea.value;
-      const newText = text.substring(0, start) + tag + text.substring(end);
-
-      // Update the form data based on which textarea is active
-      if (activeTextareaRef === descriptionRef) {
-        handleChange('description', newText);
-      }
-      // For node textareas, we'll handle it differently
-
-      // Restore cursor position after the inserted tag
-      setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(start + tag.length, start + tag.length);
-      }, 0);
+  // Add NSFW action type tag
+  const handleAddNsfwAction = (actionType) => {
+    const normalizedAction = actionType.toLowerCase().replace(/\s+/g, '_');
+    if (normalizedAction && !formData.nsfwActionTypes.includes(normalizedAction)) {
+      setFormData(prev => ({
+        ...prev,
+        nsfwActionTypes: [...prev.nsfwActionTypes, normalizedAction],
+      }));
     }
+    setNsfwActionInput('');
+  };
+
+  // Remove NSFW action type tag
+  const handleRemoveNsfwAction = (actionToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      nsfwActionTypes: prev.nsfwActionTypes.filter(a => a !== actionToRemove),
+    }));
   };
 
   // Insert tag into a specific node's text field
@@ -732,11 +734,70 @@ const SceneCreator = ({
             <div style={styles.formGroup}>
               <label style={styles.label}>Dialogue Text *</label>
               <textarea
-                style={styles.textarea}
+                style={{ ...styles.textarea, minHeight: '120px' }}
                 value={node.text || ''}
                 onChange={(e) => updateNode(index, { text: e.target.value })}
-                placeholder="What the character says..."
+                onFocus={() => setActiveNodeIndex(index)}
+                placeholder="What the character says... Use tags like {player_name} for dynamic text."
               />
+
+              {/* Text Tag Insertion Toolbar */}
+              <div style={{ marginTop: '8px', padding: '10px', backgroundColor: '#1a1a2e', borderRadius: '6px', border: '1px solid #3a3a5a' }}>
+                <div style={{ fontSize: '11px', color: '#808090', marginBottom: '8px' }}>
+                  Insert Tags: Click a category, then click a tag to append it to the text above
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+                  {Object.entries(INTERPOLATION_TAGS).map(([key, category]) => (
+                    <button
+                      key={key}
+                      style={{
+                        ...styles.smallButton,
+                        backgroundColor: activeTagCategory === key && activeNodeIndex === index ? category.color : '#3a3a5a',
+                        color: 'white',
+                        padding: '4px 8px',
+                        fontSize: '11px',
+                      }}
+                      onClick={() => {
+                        setActiveNodeIndex(index);
+                        setActiveTagCategory(activeTagCategory === key && activeNodeIndex === index ? null : key);
+                      }}
+                    >
+                      {category.label}
+                    </button>
+                  ))}
+                </div>
+
+                {activeTagCategory && activeNodeIndex === index && INTERPOLATION_TAGS[activeTagCategory] && (
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '4px',
+                    padding: '8px',
+                    backgroundColor: '#252540',
+                    borderRadius: '4px',
+                    border: `1px solid ${INTERPOLATION_TAGS[activeTagCategory].color}`,
+                  }}>
+                    {INTERPOLATION_TAGS[activeTagCategory].tags.map((tagInfo, idx) => (
+                      <button
+                        key={idx}
+                        style={{
+                          ...styles.smallButton,
+                          backgroundColor: '#1e1e35',
+                          color: INTERPOLATION_TAGS[activeTagCategory].color,
+                          padding: '3px 6px',
+                          fontSize: '10px',
+                          fontFamily: 'monospace',
+                          border: '1px solid #4a4a6a',
+                        }}
+                        onClick={() => insertTagIntoNode(index, 'text', tagInfo.tag)}
+                        title={tagInfo.desc}
+                      >
+                        {tagInfo.tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div style={styles.row}>
               <div style={styles.halfWidth}>
@@ -1161,10 +1222,8 @@ const SceneCreator = ({
           <label style={styles.label}>Description</label>
           <textarea
             style={styles.textarea}
-            ref={descriptionRef}
             value={formData.description}
             onChange={(e) => handleChange('description', e.target.value)}
-            onFocus={() => setActiveTextareaRef(descriptionRef)}
             placeholder="Scene description for reference..."
           />
         </div>
@@ -1201,98 +1260,40 @@ const SceneCreator = ({
 
           {formData.isNSFW && (
             <div style={styles.formGroup}>
-              <label style={styles.label}>NSFW Action Category</label>
-              <input
-                style={styles.input}
-                value={formData.nsfwActionType}
-                onChange={(e) => handleChange('nsfwActionType', e.target.value.toLowerCase().replace(/\s+/g, '_'))}
-                placeholder="Enter action type (e.g., grope, penetrate, custom_action)"
-              />
+              <label style={styles.label}>NSFW Action Categories</label>
+              <div style={styles.tagInput}>
+                {formData.nsfwActionTypes.map(action => (
+                  <span key={action} style={{ ...styles.tag, backgroundColor: '#7c4a6a', color: '#ff9dbd' }}>
+                    {action}
+                    <span style={styles.tagRemove} onClick={() => handleRemoveNsfwAction(action)}>×</span>
+                  </span>
+                ))}
+                <input
+                  style={{ ...styles.input, border: 'none', backgroundColor: 'transparent', flex: 1, minWidth: '120px', padding: '2px' }}
+                  value={nsfwActionInput}
+                  onChange={(e) => setNsfwActionInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddNsfwAction(nsfwActionInput)}
+                  placeholder="Type & press Enter..."
+                />
+              </div>
               <div style={{ fontSize: '11px', color: '#808090', marginTop: '4px', marginBottom: '8px' }}>
-                Type a custom action or click a common one below
+                Press Enter to add action types. A scene can have multiple (e.g., penetrate + infest, hypnotize + breed)
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                {NSFW_ACTION_CATEGORIES.filter(cat => cat.value).map(cat => (
+                {NSFW_ACTION_CATEGORIES.filter(cat => cat.value && !formData.nsfwActionTypes.includes(cat.value)).map(cat => (
                   <button
                     key={cat.value}
                     style={{
                       ...styles.smallButton,
-                      backgroundColor: formData.nsfwActionType === cat.value ? '#7c4a6a' : '#3a3a5a',
-                      color: formData.nsfwActionType === cat.value ? '#ff9dbd' : '#a0a0c0',
+                      backgroundColor: '#3a3a5a',
+                      color: '#a0a0c0',
                       padding: '4px 10px',
                     }}
-                    onClick={() => handleChange('nsfwActionType', cat.value)}
+                    onClick={() => handleAddNsfwAction(cat.value)}
                   >
-                    {cat.label}
+                    + {cat.label}
                   </button>
                 ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Text Tag Insertion Toolbar */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Insert Text Tags (Madlib Variables)</div>
-          <div style={{ fontSize: '11px', color: '#808090', marginBottom: '10px' }}>
-            Click a category to expand, then click a tag to insert it. Tags are replaced with dynamic values at runtime.
-          </div>
-
-          {/* Category buttons */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
-            {Object.entries(INTERPOLATION_TAGS).map(([key, category]) => (
-              <button
-                key={key}
-                style={{
-                  ...styles.smallButton,
-                  backgroundColor: activeTagCategory === key ? category.color : '#3a3a5a',
-                  color: 'white',
-                  padding: '6px 12px',
-                  borderRadius: '4px',
-                }}
-                onClick={() => setActiveTagCategory(activeTagCategory === key ? null : key)}
-              >
-                {category.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Expanded tag list */}
-          {activeTagCategory && INTERPOLATION_TAGS[activeTagCategory] && (
-            <div style={{
-              backgroundColor: '#1a1a2e',
-              borderRadius: '6px',
-              padding: '10px',
-              border: `1px solid ${INTERPOLATION_TAGS[activeTagCategory].color}`,
-            }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {INTERPOLATION_TAGS[activeTagCategory].tags.map((tagInfo, idx) => (
-                  <button
-                    key={idx}
-                    style={{
-                      ...styles.smallButton,
-                      backgroundColor: '#252540',
-                      color: '#d0d0e0',
-                      padding: '4px 8px',
-                      border: '1px solid #4a4a6a',
-                      borderRadius: '4px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      minWidth: '100px',
-                    }}
-                    onClick={() => insertTag(tagInfo.tag)}
-                    title={tagInfo.desc}
-                  >
-                    <span style={{ color: INTERPOLATION_TAGS[activeTagCategory].color, fontSize: '11px', fontFamily: 'monospace' }}>
-                      {tagInfo.tag}
-                    </span>
-                    <span style={{ fontSize: '10px', color: '#808090' }}>{tagInfo.label}</span>
-                  </button>
-                ))}
-              </div>
-              <div style={{ fontSize: '10px', color: '#606080', marginTop: '8px', fontStyle: 'italic' }}>
-                Click a tag to copy it. Paste into dialogue text fields in nodes below.
               </div>
             </div>
           )}
@@ -1415,7 +1416,9 @@ const SceneCreator = ({
               </div>
               <div style={styles.listItemDetails}>
                 ID: {item.id} | Nodes: {item.nodes?.length || 0}
-                {item.nsfwActionType && ` | Action: ${item.nsfwActionType}`}
+                {(item.nsfwActionTypes?.length > 0 || item.nsfwActionType) && (
+                  ` | Actions: ${(item.nsfwActionTypes || [item.nsfwActionType].filter(Boolean)).join(', ')}`
+                )}
               </div>
               <div style={{ marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
                 {(item.tags || []).slice(0, 4).map(tag => (

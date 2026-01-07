@@ -1603,19 +1603,15 @@ const defaultPlayerState = {
     corruption: 0,
     maxCorruption: 100,
     purity: 100,
-    masculinity: 50,
+    gender: 0, // -100 (feminine) to +100 (masculine), 0 = neutral
     dominance: 50,
     
     sensitiveAreas: [],
-    
-    bodyMeasurements: {
-      chestSize: 0,
-      hipSize: 0,
-      rearSize: 0,
-      genitalSize: 5,
-      testicleSize: 3
-    },
-    
+    hypersensitiveAreas: [], // Areas with extreme sensitivity (used by NSFWCombatSceneSystem)
+
+    // Note: Body measurements (chest, hips, etc.) are now calculated from gender
+    // See engine/BodyDescriptorSystem.js calculateBodyMeasurements()
+
     orificeStats: {
       mouth: { penetrationCount: 0, stretchLevel: 0, currentFluids: 0 },
       rear: { penetrationCount: 0, stretchLevel: 0, currentFluids: 0 },
@@ -4890,30 +4886,17 @@ const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, on
       addStat('Corruption', `${player.nsfwStats.corruption}%`, 15, y);
       addStat('Purity', `${player.nsfwStats.purity}%`, 105, y);
       y += 7;
-      addStat('Masculinity', `${player.nsfwStats.masculinity}%`, 15, y);
+      addStat('Gender', `${player.nsfwStats.gender > 0 ? '+' : ''}${player.nsfwStats.gender}`, 15, y);
       addStat('Dominance', `${player.nsfwStats.dominance}%`, 105, y);
       
       // Sensitive Areas
       y = addSection('Sensitive Areas', y + 15);
-      if (player.nsfwStats.sensitiveAreas.length === 0) {
+      if (!player.nsfwStats?.sensitiveAreas?.length) {
         doc.setTextColor(113, 113, 122);
         doc.text('None selected', 15, y);
       } else {
         doc.setTextColor(...lightText);
         doc.text(player.nsfwStats.sensitiveAreas.join(', '), 15, y);
-      }
-      
-      // Body Measurements
-      y = addSection('Body Measurements', y + 15);
-      const bodyEntries = Object.entries(player.nsfwStats.bodyMeasurements);
-      for (let i = 0; i < bodyEntries.length; i += 2) {
-        const [m1, v1] = bodyEntries[i];
-        addStat(m1.replace(/([A-Z])/g, ' $1'), v1, 15, y);
-        if (bodyEntries[i + 1]) {
-          const [m2, v2] = bodyEntries[i + 1];
-          addStat(m2.replace(/([A-Z])/g, ' $1'), v2, 105, y);
-        }
-        y += 7;
       }
       
       // Orifice Stats
@@ -4949,17 +4932,17 @@ const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, on
       doc.setTextColor(239, 68, 68);
       doc.text('Debuffs:', 15, y);
       doc.setTextColor(...lightText);
-      doc.text(player.nsfwStats.debuffs.length ? player.nsfwStats.debuffs.map(d => d.name).join(', ') : 'None', 45, y);
+      doc.text(player.nsfwStats?.debuffs?.length ? player.nsfwStats.debuffs.map(d => d.name).join(', ') : 'None', 45, y);
       y += 7;
       doc.setTextColor(168, 85, 247);
       doc.text('Curses:', 15, y);
       doc.setTextColor(...lightText);
-      doc.text(player.nsfwStats.curses.length ? player.nsfwStats.curses.map(c => c.name).join(', ') : 'None', 45, y);
+      doc.text(player.nsfwStats?.curses?.length ? player.nsfwStats.curses.map(c => c.name).join(', ') : 'None', 45, y);
       y += 7;
       doc.setTextColor(245, 158, 11);
       doc.text('Addictions:', 15, y);
       doc.setTextColor(...lightText);
-      doc.text(player.nsfwStats.addictions.length ? player.nsfwStats.addictions.map(a => `${a.name} (${a.level}%)`).join(', ') : 'None', 50, y);
+      doc.text(player.nsfwStats?.addictions?.length ? player.nsfwStats.addictions.map(a => `${a.name} (${a.level}%)`).join(', ') : 'None', 50, y);
       
       // ===== PAGE 3: Inventory =====
       doc.addPage();
@@ -5188,28 +5171,43 @@ const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, on
                       color="#fbbf24" 
                       label="Purity" 
                     />
-                    <ProgressBar 
-                      value={player.nsfwStats.masculinity} 
-                      max={100} 
-                      color="#3b82f6" 
-                      label="Masculinity" 
-                    />
+                    <div style={{ marginBottom: '0.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <span style={{ color: '#a1a1aa', fontSize: '0.85rem' }}>Gender</span>
+                        <span style={{
+                          color: player.nsfwStats.gender > 0 ? '#3b82f6' : player.nsfwStats.gender < 0 ? '#ec4899' : '#a1a1aa',
+                          fontSize: '0.85rem'
+                        }}>
+                          {player.nsfwStats.gender > 0 ? `+${player.nsfwStats.gender} (Masc)` :
+                           player.nsfwStats.gender < 0 ? `${player.nsfwStats.gender} (Fem)` : '0 (Neutral)'}
+                        </span>
+                      </div>
+                      <div style={{
+                        height: '8px',
+                        background: '#27272a',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
+                        position: 'relative'
+                      }}>
+                        {/* Center marker */}
+                        <div style={{ position: 'absolute', left: '50%', width: '2px', height: '100%', background: '#52525b' }} />
+                        {/* Fill bar */}
+                        <div style={{
+                          position: 'absolute',
+                          left: player.nsfwStats.gender >= 0 ? '50%' : `${50 + (player.nsfwStats.gender / 2)}%`,
+                          width: `${Math.abs(player.nsfwStats.gender) / 2}%`,
+                          height: '100%',
+                          background: player.nsfwStats.gender >= 0 ? '#3b82f6' : '#ec4899',
+                          borderRadius: '4px'
+                        }} />
+                      </div>
+                    </div>
                     <ProgressBar 
                       value={player.nsfwStats.dominance} 
                       max={100} 
                       color="#ef4444" 
                       label="Dominance" 
                     />
-                  </div>
-                  <div style={styles.card}>
-                    <h4 style={{ color: '#ec4899', marginBottom: '1rem' }}>Body Stats</h4>
-                    {Object.entries(player.nsfwStats.bodyMeasurements).map(([part, value]) => (
-                      <StatDisplay 
-                        key={part}
-                        label={part.replace(/([A-Z])/g, ' $1').trim()}
-                        value={value}
-                      />
-                    ))}
                   </div>
                   <div style={styles.card}>
                     <h4 style={{ color: '#ec4899', marginBottom: '1rem' }}>Orifice Stats</h4>
@@ -5263,13 +5261,13 @@ const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, on
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div style={styles.card}>
                   <h4 style={{ color: '#ef4444', marginBottom: '1rem' }}>Active Debuffs</h4>
-                  {player.nsfwStats.debuffs.length === 0 ? (
+                  {!player.nsfwStats?.debuffs?.length ? (
                     <p style={{ color: '#71717a', fontStyle: 'italic' }}>No debuffs</p>
                   ) : (
                     player.nsfwStats.debuffs.map((debuff, i) => (
-                      <div key={i} style={{ 
-                        padding: '0.5rem', 
-                        background: 'rgba(239, 68, 68, 0.1)', 
+                      <div key={i} style={{
+                        padding: '0.5rem',
+                        background: 'rgba(239, 68, 68, 0.1)',
                         borderRadius: '4px',
                         marginBottom: '0.5rem'
                       }}>
@@ -5280,13 +5278,13 @@ const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, on
                 </div>
                 <div style={styles.card}>
                   <h4 style={{ color: '#a855f7', marginBottom: '1rem' }}>Curses</h4>
-                  {player.nsfwStats.curses.length === 0 ? (
+                  {!player.nsfwStats?.curses?.length ? (
                     <p style={{ color: '#71717a', fontStyle: 'italic' }}>No curses</p>
                   ) : (
                     player.nsfwStats.curses.map((curse, i) => (
-                      <div key={i} style={{ 
-                        padding: '0.5rem', 
-                        background: 'rgba(168, 85, 247, 0.1)', 
+                      <div key={i} style={{
+                        padding: '0.5rem',
+                        background: 'rgba(168, 85, 247, 0.1)',
                         borderRadius: '4px',
                         marginBottom: '0.5rem'
                       }}>
@@ -5297,13 +5295,13 @@ const PauseMenu = ({ player, gameState, onResume, onSave, onLoad, onSettings, on
                 </div>
                 <div style={styles.card}>
                   <h4 style={{ color: '#f59e0b', marginBottom: '1rem' }}>Addictions</h4>
-                  {player.nsfwStats.addictions.length === 0 ? (
+                  {!player.nsfwStats?.addictions?.length ? (
                     <p style={{ color: '#71717a', fontStyle: 'italic' }}>No addictions</p>
                   ) : (
                     player.nsfwStats.addictions.map((addiction, i) => (
-                      <div key={i} style={{ 
-                        padding: '0.5rem', 
-                        background: 'rgba(245, 158, 11, 0.1)', 
+                      <div key={i} style={{
+                        padding: '0.5rem',
+                        background: 'rgba(245, 158, 11, 0.1)',
                         borderRadius: '4px',
                         marginBottom: '0.5rem'
                       }}>

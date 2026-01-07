@@ -44,11 +44,81 @@ export const CORRUPTION_LEVELS = {
 };
 
 /**
- * Mapping of body parts to their measurement sources in playerState.nsfwStats.bodyMeasurements
+ * Calculate body measurements from gender level (-100 to +100)
+ *
+ * Scale:
+ * - 0 = neutral starting point (masc_0 paperdoll)
+ * - +1 to +100 = becoming more masculine (masc_1 → masc_10)
+ * - -1 to -100 = becoming more feminine (fem_1 → fem_10)
+ *
+ * @param {number} gender - Gender value -100 to +100 (0 = neutral, +100 = max masc, -100 = max fem)
+ * @returns {Object} Calculated body measurements
+ */
+export function calculateBodyMeasurements(gender = 0) {
+  // Clamp gender to -100 to +100
+  const g = Math.max(-100, Math.min(100, gender));
+
+  // Masculine factor: 0 at neutral/fem, 1 at full masc
+  const mascFactor = Math.max(0, g) / 100;
+
+  // Feminine factor: 0 at neutral/masc, 1 at full fem
+  const femFactor = Math.max(0, -g) / 100;
+
+  return {
+    // Chest/bust: starts small at neutral, grows with femininity
+    // Neutral: 2, Full fem (-100): 10, Full masc (+100): 0
+    chestSize: Math.round(2 - (mascFactor * 2) + (femFactor * 8)),
+
+    // Hips: starts moderate at neutral, grows with femininity
+    // Neutral: 4, Full fem: 10, Full masc: 2
+    hipSize: Math.round(4 - (mascFactor * 2) + (femFactor * 6)),
+
+    // Rear/butt: starts moderate at neutral, grows with femininity
+    // Neutral: 4, Full fem: 10, Full masc: 2
+    rearSize: Math.round(4 - (mascFactor * 2) + (femFactor * 6)),
+
+    // Genital (dick): starts moderate at neutral, grows with masculinity
+    // Neutral: 5, Full masc: 10, Full fem: 0
+    genitalSize: Math.round(5 + (mascFactor * 5) - (femFactor * 5)),
+
+    // Testicles: starts moderate at neutral, grows with masculinity
+    // Neutral: 4, Full masc: 8, Full fem: 0
+    testicleSize: Math.round(4 + (mascFactor * 4) - (femFactor * 4)),
+  };
+}
+
+/**
+ * Convert gender (-100 to +100) to paperdoll feminizationLevel (0-20)
+ *
+ * Mapping:
+ * - gender 0 → level 0 (masc_0, neutral)
+ * - gender +100 → level 10 (masc_10, full masculine)
+ * - gender -100 → level 20 (fem_10, full feminine)
+ *
+ * @param {number} gender - Gender value -100 to +100
+ * @returns {number} Feminization level for paperdoll (0-20)
+ */
+export function genderToFeminizationLevel(gender = 0) {
+  const g = Math.max(-100, Math.min(100, gender));
+
+  if (g >= 0) {
+    // 0 to +100 → 0-10 (masc_0 to masc_10)
+    return Math.round(g / 10);
+  } else {
+    // -1 to -100 → 11-20 (fem_1 to fem_10)
+    return 10 + Math.round(-g / 10);
+  }
+}
+
+// Legacy alias for backwards compatibility
+export const masculinityToFeminizationLevel = genderToFeminizationLevel;
+
+/**
+ * Mapping of body parts to their measurement keys (now calculated from masculinity)
  */
 const BODY_PART_MEASUREMENTS = {
-  chest: 'bustSize',
-  ass: 'buttSize',
+  chest: 'chestSize',
+  ass: 'rearSize',
   dick: 'genitalSize',
   balls: 'testicleSize',
   pussy: 'genitalSize', // Uses same but inverted logic
@@ -172,6 +242,7 @@ export class BodyDescriptorSystem {
 
   /**
    * Get the size tier for a body part
+   * Body sizes are calculated from gender level - not stored separately
    * @param {string} bodyPart - The body part
    * @param {Object} playerState - Player state
    * @returns {string} Size tier (tiny, small, average, large, huge, massive)
@@ -182,13 +253,14 @@ export class BodyDescriptorSystem {
       return SIZE_TIERS.AVERAGE;
     }
 
-    const measurements = playerState?.nsfwStats?.bodyMeasurements || {};
-    const size = measurements[measurementKey] ?? 5;
+    // Calculate measurements from gender (-100 to +100, 0 = neutral)
+    const gender = playerState?.nsfwStats?.gender ?? 0;
+    const calculatedMeasurements = calculateBodyMeasurements(gender);
+    const size = calculatedMeasurements[measurementKey] ?? 5;
 
-    // Special handling for pussy - inverted from genital size if has dick
+    // Special handling for pussy - only significant if feminine (gender < 0)
     if (bodyPart === 'pussy') {
-      const masculinity = playerState?.nsfwStats?.masculinity ?? 50;
-      if (masculinity > 60) {
+      if (gender > 20) {
         return SIZE_TIERS.AVERAGE; // Default if primarily male
       }
     }
@@ -288,30 +360,35 @@ export class BodyDescriptorSystem {
 
   /**
    * Check if player has a specific body part
+   * Body parts are determined by gender level (-100 to +100)
    * @param {string} bodyPart - Body part to check (dick, pussy, breasts)
    * @param {Object} playerState - Player state
    * @returns {boolean} Whether player has the body part
    */
   hasBodyPart(bodyPart, playerState) {
-    const masculinity = playerState?.nsfwStats?.masculinity ?? 50;
-    const measurements = playerState?.nsfwStats?.bodyMeasurements || {};
+    const gender = playerState?.nsfwStats?.gender ?? 0;
+    const measurements = calculateBodyMeasurements(gender);
 
     switch (bodyPart) {
       case 'dick':
       case 'penis':
-        return (measurements.genitalSize ?? 0) > 0 || masculinity > 50;
+        // Has dick if genitalSize > 0 (gender > -100)
+        return measurements.genitalSize > 0;
 
       case 'pussy':
       case 'vagina':
-        return masculinity < 50 || playerState?.nsfwStats?.hasVagina === true;
+        // Has pussy if feminine (gender < 20) or explicitly set
+        return gender < 20 || playerState?.nsfwStats?.hasVagina === true;
 
       case 'breasts':
       case 'chest':
-        return (measurements.bustSize ?? 0) > 2;
+        // Has noticeable breasts if chestSize > 2
+        return measurements.chestSize > 2;
 
       case 'balls':
       case 'testicles':
-        return (measurements.testicleSize ?? 0) > 0 || masculinity > 50;
+        // Has balls if testicleSize > 0
+        return measurements.testicleSize > 0;
 
       default:
         return true; // Most body parts everyone has

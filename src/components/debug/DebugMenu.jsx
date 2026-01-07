@@ -464,11 +464,11 @@ const DebugMenu = ({
                   step="0.5"
                 />
                 <StatInput
-                  label="Masculinity"
-                  value={editedPlayer.nsfwStats?.bodyMods?.masculinity || 50}
-                  onChange={(v) => handleStatChange('nsfwStats.bodyMods.masculinity', parseInt(v) || 50)}
+                  label="Gender (-100 fem / +100 masc)"
+                  value={editedPlayer.nsfwStats?.gender ?? 0}
+                  onChange={(v) => handleStatChange('nsfwStats.gender', parseInt(v) || 0)}
                   type="number"
-                  min={0}
+                  min={-100}
                   max={100}
                 />
               </div>

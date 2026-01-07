@@ -7,6 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.8.2] - 2026-01-06
+
+### Added
+
+#### Content Generator - Scene Creator
+- **Multi-tag NSFW Action Categories** - Scenes can now have multiple action types (e.g., "penetrate + infest", "hypnotize + breed")
+  - Press Enter to add action type as a tag chip
+  - Quick buttons for common action types
+  - Backwards compatible with old single `nsfwActionType` format
+- **Text Tag Toolbar in Scene Nodes** - Moved interpolation tag insertion to dialogue nodes where text is written
+  - Click category (Player, Enemy, Body Parts, etc.) then click tag to insert
+  - Each dialogue node has its own collapsible tag toolbar
+
+#### Gender System
+- **New bidirectional gender scale** (-100 to +100)
+  - `0` = Neutral starting point (paperdoll: masc_0)
+  - `+1` to `+100` = Increasingly masculine (masc_1 → masc_10)
+  - `-1` to `-100` = Increasingly feminine (fem_1 → fem_10)
+- **`genderToFeminizationLevel(gender)`** - Converts gender value to paperdoll 0-20 scale
+- **Bidirectional UI bar** - Pink fills left for feminine, blue fills right for masculine
+
+#### Location Creator
+- **Navigation system** - Link locations with directional navigation (up, down, left, right, forward, back)
+- **Location scopes** - Region, Local, and Sub-location types
+- **Enemy spawn tables** - Weighted enemy selection with variant modifiers (weak, normal, strong, elite)
+- **NPC/Enemy selection** - Dropdown selectors from created content instead of text input
+
+#### Bug Fixes & Stability
+- Added `hypersensitiveAreas` array to player state (was referenced but never initialized)
+- Added optional chaining (`?.`) to array length checks preventing null crashes
+- Fixed SaveSystem serialization for removed `bodyMeasurements`
+
+### Changed
+
+#### Body Measurement System
+- **Body sizes now calculated from gender** - No longer stored separately
+  - `calculateBodyMeasurements(gender)` derives chest, hips, rear, genitals, testicles from gender value
+  - Removed `bodyMeasurements` from player state and save data
+  - Removed "Body Stats" display from stats screen (sizes are implicit from gender)
+
+#### Renamed Properties
+- `nsfwStats.masculinity` → `nsfwStats.gender` (scale changed from 0-100 to -100 to +100)
+- `nsfwActionType` → `nsfwActionTypes` (string → array) in scenes
+
+#### Text Interpolation
+- Updated pronoun selection to use new gender scale:
+  - `gender > 20` = male pronouns (he/him/his)
+  - `gender < -20` = female pronouns (she/her/hers)
+  - `-20` to `+20` = neutral pronouns (they/them/their)
+- Updated `{if is_male}` / `{if is_female}` conditions
+
+### Removed
+
+- **Regions tab** from Content Generator (locations tab handles all location types)
+- **Body Measurements display** from stats screen and PDF export
+- Individual body size sliders (now derived from gender)
+
+---
+
 ## [0.8.1] - 2026-01-06
 
 ### Added

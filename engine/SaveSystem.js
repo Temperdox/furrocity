@@ -189,10 +189,11 @@ export class SaveSystem {
         nsfwStats: gameState.player.nsfwStats ? {
           corruption: gameState.player.nsfwStats.corruption,
           purity: gameState.player.nsfwStats.purity,
-          masculinity: gameState.player.nsfwStats.masculinity,
+          gender: gameState.player.nsfwStats.gender,
           dominance: gameState.player.nsfwStats.dominance,
           sensitiveAreas: [...(gameState.player.nsfwStats.sensitiveAreas || [])],
-          bodyMeasurements: { ...gameState.player.nsfwStats.bodyMeasurements },
+          hypersensitiveAreas: [...(gameState.player.nsfwStats.hypersensitiveAreas || [])],
+          // Note: bodyMeasurements are calculated from gender at runtime
           orificeStats: JSON.parse(JSON.stringify(gameState.player.nsfwStats.orificeStats || {})),
           sexualHistory: { ...gameState.player.nsfwStats.sexualHistory },
           debuffs: (gameState.player.nsfwStats.debuffs || []).map(d => ({

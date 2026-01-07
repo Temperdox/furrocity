@@ -109,7 +109,10 @@ export {
   BodyDescriptorSystem,
   SIZE_TIERS,
   AROUSAL_LEVELS,
-  CORRUPTION_LEVELS
+  CORRUPTION_LEVELS,
+  calculateBodyMeasurements,
+  genderToFeminizationLevel,
+  masculinityToFeminizationLevel // Legacy alias
 } from './BodyDescriptorSystem.js';
 export { EnemyNamingSystem } from './EnemyNamingSystem.js';
 export { NSFWTextInterpolator } from './NSFWTextInterpolator.js';

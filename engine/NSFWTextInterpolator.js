@@ -314,14 +314,15 @@ export class NSFWTextInterpolator {
 
   /**
    * Get the appropriate pronoun based on player gender
+   * Gender scale: -100 (feminine) to +100 (masculine), 0 = neutral
    * @param {Object} player - Player state
    * @param {string} type - Pronoun type (subject, object, possessive, reflexive)
    * @returns {string} The pronoun
    */
   getPronoun(player, type) {
-    const masculinity = player?.nsfwStats?.masculinity ?? 50;
-    const gender = player?.gender ||
-                   (masculinity > 60 ? 'male' : masculinity < 40 ? 'female' : 'neutral');
+    const genderValue = player?.nsfwStats?.gender ?? 0;
+    const genderType = player?.gender ||
+                   (genderValue > 20 ? 'male' : genderValue < -20 ? 'female' : 'neutral');
 
     const pronouns = {
       male: { subject: 'he', object: 'him', possessive: 'his', reflexive: 'himself' },
@@ -329,7 +330,7 @@ export class NSFWTextInterpolator {
       neutral: { subject: 'they', object: 'them', possessive: 'their', reflexive: 'themself' }
     };
 
-    return pronouns[gender]?.[type] || pronouns.neutral[type];
+    return pronouns[genderType]?.[type] || pronouns.neutral[type];
   }
 
   /**
@@ -389,10 +390,10 @@ export class NSFWTextInterpolator {
       );
     }
     if (condition === 'is_male') {
-      return (player?.nsfwStats?.masculinity ?? 50) > 60;
+      return (player?.nsfwStats?.gender ?? 0) > 20;
     }
     if (condition === 'is_female') {
-      return (player?.nsfwStats?.masculinity ?? 50) < 40;
+      return (player?.nsfwStats?.gender ?? 0) < -20;
     }
     if (condition === 'has_dick') {
       return this.bodyDescriptorSystem?.hasBodyPart('dick', player) ?? false;
