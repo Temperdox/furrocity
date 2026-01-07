@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.8.0-ALPHA] - 2026-01-06
+
+### Added
+- **NSFW Equipment Slots**: 15 new intimate body part equipment slots
+  - Body parts: `nipple_left`, `nipple_right`, `nipples`, `mouth`, `ears`, `nose`
+  - Genitals: `dick`, `balls`, `pussy`, `clitoris`, `urethra`, `ass`
+  - Special: `plug`, `chastity`, `genital`
+- **Multi-Slot Items**: Items can now be equipped in multiple possible slots
+  - Use `equipSlots: ["slot1", "slot2"]` array instead of single `slot`
+  - System auto-selects first empty slot when equipping
+  - Returns `requiresSlotChoice: true` with `availableSlots` if all slots occupied
+  - `equipItem()` accepts optional `targetSlot` parameter for explicit slot selection
+- **Piercing Stacking**: Piercings can stack in the same NSFW slot
+  - Items with `piercing` tag or `isPiercing: true` can coexist in same slot
+  - Non-piercing items (toys) replace each other when equipped
+  - Slot contents stored as array for piercings, single item for toys
+- **Sprite Sheet Manager**: New Content Generator tab for sprite sheet management
+  - Upload sprite sheets via click or drag-and-drop
+  - Configure cell size, margins, and offsets
+  - Visual grid overlay for cell selection
+  - Link cells to items or locations via modal with tabs
+- **Location Map Placement**: Enhanced LocationCreator with map placement
+  - Local/global map tabs for placement
+  - Icon upload or sprite sheet cell selection
+  - Click-to-place functionality with percentage coordinates
+  - Size selection (small/medium/large)
+- **Character Paperdoll Config**: Enhanced CharacterCreator
+  - Custom folder paths for character images
+  - Cup size dropdown (Flat through ZZ Cup)
+  - Base image configuration (masc_base_0 through fem_base_10)
+  - Breast, genitalia, and face variant settings
+
+### Changed
+- **Equipment Slot Selector UI**: Redesigned with styled pill/chip interface
+  - Categorized groups: Weapons, Armor, Clothing & Accessories, Special/Implants, NSFW
+  - Visual selected state with green background and checkmarks
+  - NSFW slots highlighted in purple/pink theme
+  - "Clear All Slots" button when slots are selected
+- **Item Schema**: `slot` property replaced with `equipSlots` array
+  - Legacy `slot` property still supported for backwards compatibility
+  - Engine's `getItemSlots()` method handles both formats
+
+### Fixed
+- Equipment stat calculation now properly handles array-based slots (piercing stacking)
+
+---
+
 ## [0.7.0-ALPHA] - 2026-01-05
 
 ### Added

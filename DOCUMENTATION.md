@@ -37,7 +37,6 @@
 27. [Effect Actions Reference](#27-effect-actions-reference)
 28. [Adding New Content](#28-adding-new-content)
 29. [Performance & Optimization](#29-performance--optimization)
-30. [Changelog](#changelog)
 
 ---
 
@@ -3700,45 +3699,6 @@ The DataRegistry automatically caches:
 **Locations:** `safe`, `dangerous`, `town`, `wilderness`, `dungeon`, `shop`, `rest`
 
 **Enemies:** `beast`, `humanoid`, `demon`, `undead`, `boss`
-
----
-
-## Changelog
-
-### Version 0.8.0-ALPHA (2025-01-06)
-
-#### Content Generator Enhancements
-- **Sprite Sheet Manager**: New tab for managing sprite sheets with visual cell selection
-  - Upload sprite sheets with drag-and-drop
-  - Configure cell size, margins, and offsets
-  - Link cells to items or locations via modal
-- **Location Creator**: Map placement system with local/global map tabs
-  - Icon upload or sprite sheet cell selection
-  - Click-to-place functionality with coordinate storage
-  - Size selection (small/medium/large)
-- **Character Creator**: Enhanced paperdoll configuration
-  - Custom folder paths for character images
-  - Cup size selection (Flat through ZZ Cup)
-  - Base image configuration (masc_base_0 through fem_base_10)
-
-#### Equipment System Overhaul
-- **NSFW Equipment Slots**: Added 15 new intimate body part slots
-  - Body parts: nipple_left, nipple_right, nipples, mouth, ears, nose
-  - Genitals: dick, balls, pussy, clitoris, urethra, ass
-  - Special: plug, chastity, genital
-- **Multi-Slot Items**: Items can now be equipped in multiple possible slots
-  - Use `equipSlots: ["slot1", "slot2"]` array instead of single `slot`
-  - System auto-selects empty slot or prompts player to choose
-- **Piercing Stacking**: Piercings can stack in the same slot
-  - Items with `piercing` tag or `isPiercing: true` can coexist
-  - Non-piercing items (toys) replace each other
-
-#### UI Improvements
-- **Equipment Slot Selector**: Redesigned with styled pill/chip UI
-  - Categories: Weapons, Armor, Clothing & Accessories, Special/Implants, NSFW
-  - Visual selected state with checkmarks
-  - NSFW slots highlighted in purple/pink theme
-  - "Clear All Slots" button
 
 ---
 
