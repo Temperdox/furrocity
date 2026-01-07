@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.8.1-ALPHA] - 2026-01-06
+
+### Updated
+- **Updated project architecture to include:**
+  - CharacterSystem.js in engine
+  - Generator components (ContentGenerator.jsx, ImportSystem.js, ImportWarningsModal.jsx)
+  - characters/ folder in datapacks
+  - Removed plug slot from NSFW equipment slots table (line 2880)
+  - Updated Paperdoll section with new folder/filename format and layer reference
+  - Updated Table of Contents with new sections
+  - Character System with paperdoll folder structure
+  - Content Generator import system with drag & drop
+  - Automatic field migration for backwards compatibility
+  - Removed plug equipment slot
+  - Updated paperdoll to use folder/filename format
+
+
+### Added
+- **Added new section 30. Character System with:**
+    - Character JSON schema
+    - Paperdoll folder structure diagram
+    - CharacterSystem API examples
+- **Added new section 31. Content Generator with:**
+  - Supported content types table
+  - Import system documentation (methods, file types, field migration)
+  - Import results modal features
+  - Export system documentation
+- Added Characters to Quick Reference table
+
 ## [0.8.0-ALPHA] - 2026-01-06
 
 ### Added
