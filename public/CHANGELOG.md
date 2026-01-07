@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CharacterSystem.js in engine
   - Generator components (ContentGenerator.jsx, ImportSystem.js, ImportWarningsModal.jsx)
   - characters/ folder in datapacks
-  - Removed plug slot from NSFW equipment slots table (line 2880)
+  - Removed plug slot from NSFW equipment slots table
   - Updated Paperdoll section with new folder/filename format and layer reference
   - Updated Table of Contents with new sections
   - Character System with paperdoll folder structure
