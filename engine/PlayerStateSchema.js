@@ -468,28 +468,43 @@ export const comprehensivePlayerState = {
     feet: null,
     underwear_top: null,
     underwear_bottom: null,
-    
+
     // Weapon slots
     main_hand: null,
     off_hand: null,
-    
+
     // Accessory slots
     accessory_1: null,
     accessory_2: null,
     ring_left: null,
     ring_right: null,
-    
+
     // Special slots
     implant_head: null,
     implant_body: null,
     implant_limbs: null,
-    
-    // Lewd equipment slots
-    nipple_left: null,
-    nipple_right: null,
-    genital: null,
-    plug: null,
-    chastity: null
+
+    // NSFW equipment slots - Body parts
+    // Note: These can be arrays for piercings, or single items for toys
+    nipple_left: null,   // Piercings stack, toys replace
+    nipple_right: null,  // Piercings stack, toys replace
+    nipples: null,       // For items covering both nipples
+    mouth: null,         // Gags, tongue piercings, etc.
+    ears: null,          // Ear piercings, ear plugs
+    nose: null,          // Nose rings, studs
+
+    // NSFW equipment slots - Genitals/intimate
+    dick: null,          // Penis piercings, cock rings, sheaths
+    balls: null,         // Ball stretchers, piercings
+    pussy: null,         // Labia piercings, spreaders
+    clitoris: null,      // Clit piercings, vibrators
+    urethra: null,       // Urethral sounds, plugs
+    ass: null,           // Anal piercings (rare), tail plugs
+
+    // NSFW equipment slots - Special
+    plug: null,          // Anal/vaginal plugs
+    chastity: null,      // Chastity devices (belt, cage)
+    genital: null        // Generic genital slot for universal items
   },
   
   // Clothing integrity

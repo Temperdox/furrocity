@@ -36,6 +36,7 @@
  * @constant {Object.<string, string>}
  */
 export const EQUIPMENT_SLOTS = {
+  // Standard equipment slots
   HEAD: 'head',
   FACE: 'face',
   NECK: 'neck',
@@ -50,8 +51,41 @@ export const EQUIPMENT_SLOTS = {
   ACCESSORY_1: 'accessory1',
   ACCESSORY_2: 'accessory2',
   UNDERWEAR: 'underwear',
-  SPECIAL: 'special'
+  SPECIAL: 'special',
+
+  // NSFW equipment slots - Body parts
+  NIPPLE_LEFT: 'nipple_left',
+  NIPPLE_RIGHT: 'nipple_right',
+  NIPPLES: 'nipples',           // For items that cover both
+  MOUTH: 'mouth',
+  EARS: 'ears',
+  NOSE: 'nose',
+
+  // NSFW equipment slots - Genitals/intimate
+  DICK: 'dick',
+  BALLS: 'balls',
+  PUSSY: 'pussy',
+  CLITORIS: 'clitoris',
+  URETHRA: 'urethra',
+  ASS: 'ass',
+
+  // NSFW equipment slots - Special
+  PLUG: 'plug',
+  CHASTITY: 'chastity',
+  GENITAL: 'genital'            // Generic genital slot for universal items
 };
+
+/**
+ * Slots that can hold multiple piercings simultaneously.
+ * Other items (toys) in these slots will replace each other.
+ * @constant {Array<string>}
+ */
+export const PIERCING_STACKABLE_SLOTS = [
+  'nipple_left', 'nipple_right', 'nipples',
+  'mouth', 'ears', 'nose',
+  'dick', 'balls', 'pussy', 'clitoris', 'urethra',
+  'ass', 'genital'
+];
 
 /**
  * Item category types for filtering and sorting.
@@ -498,26 +532,97 @@ export class InventorySystem {
   }
 
   /**
-   * Equip an item
+   * Check if an item is a piercing (can stack in slot with other piercings)
    */
-  async equipItem(player, inventory, itemIdOrUniqueId) {
+  isPiercing(item) {
+    return item.tags?.includes('piercing') || item.itemType === 'piercing' || item.isPiercing;
+  }
+
+  /**
+   * Check if slot supports piercing stacking
+   */
+  slotSupportsPiercingStacking(slot) {
+    return PIERCING_STACKABLE_SLOTS.includes(slot);
+  }
+
+  /**
+   * Get valid equipment slots for an item
+   * @param {Object} item - The item to check
+   * @returns {Array<string>} Array of valid slot names
+   */
+  getItemSlots(item) {
+    // Support both new equipSlots array and legacy slot property
+    if (item.equipSlots && item.equipSlots.length > 0) {
+      return item.equipSlots;
+    }
+    if (item.slot) {
+      return [item.slot];
+    }
+    return [];
+  }
+
+  /**
+   * Equip an item
+   * @param {Object} player - Player state object
+   * @param {Array} inventory - Player inventory array
+   * @param {string} itemIdOrUniqueId - Item ID or unique ID to equip
+   * @param {string} [targetSlot] - Optional specific slot to equip to (for multi-slot items)
+   */
+  async equipItem(player, inventory, itemIdOrUniqueId, targetSlot = null) {
     // Find item
     let index = inventory.findIndex(i => i.uniqueId === itemIdOrUniqueId);
     if (index === -1) {
       index = inventory.findIndex(i => i.id === itemIdOrUniqueId);
     }
-    
+
     if (index === -1) {
       return { success: false, error: 'Item not found' };
     }
-    
+
     const item = inventory[index];
-    
+
+    // Get valid slots for this item
+    const validSlots = this.getItemSlots(item);
+
     // Check if equippable
-    if (!item.slot) {
+    if (validSlots.length === 0) {
       return { success: false, error: 'Item cannot be equipped' };
     }
-    
+
+    // Determine which slot to use
+    let slot;
+    if (targetSlot) {
+      // Validate target slot is valid for this item
+      if (!validSlots.includes(targetSlot)) {
+        return {
+          success: false,
+          error: `Item cannot be equipped in ${targetSlot}. Valid slots: ${validSlots.join(', ')}`
+        };
+      }
+      slot = targetSlot;
+    } else if (validSlots.length === 1) {
+      // Single slot item, use it
+      slot = validSlots[0];
+    } else {
+      // Multiple slots available - try to find an empty one, or return options
+      const emptySlot = validSlots.find(s => {
+        const current = player.equipment?.[s];
+        return !current || (Array.isArray(current) && current.length === 0);
+      });
+
+      if (emptySlot) {
+        slot = emptySlot;
+      } else {
+        // All slots occupied, return available options for UI to prompt
+        return {
+          success: false,
+          error: 'Choose equipment slot',
+          requiresSlotChoice: true,
+          availableSlots: validSlots
+        };
+      }
+    }
+
     // Check requirements
     if (item.requirements) {
       const meetsRequirements = this.checkRequirements(player, item.requirements);
@@ -525,41 +630,99 @@ export class InventorySystem {
         return { success: false, error: meetsRequirements.reason };
       }
     }
-    
+
     // Initialize equipment if needed
     if (!player.equipment) {
       player.equipment = {};
     }
-    
-    // Unequip current item in slot
-    const currentItem = player.equipment[item.slot];
-    if (currentItem) {
-      await this.unequipItem(player, inventory, item.slot);
+
+    const isPiercingItem = this.isPiercing(item);
+    const slotSupportsPiercings = this.slotSupportsPiercingStacking(slot);
+
+    // Handle piercing stacking in NSFW slots
+    if (slotSupportsPiercings && isPiercingItem) {
+      // Piercings can stack - initialize array if needed
+      if (!player.equipment[slot]) {
+        player.equipment[slot] = [];
+      } else if (!Array.isArray(player.equipment[slot])) {
+        // Convert single item to array
+        player.equipment[slot] = [player.equipment[slot]];
+      }
+
+      // Remove from inventory
+      inventory.splice(index, 1);
+
+      // Add piercing to the slot array
+      player.equipment[slot].push(item);
+
+      // Apply equip effects
+      await this.applyEquipEffects(player, item);
+
+      // Apply stat bonuses
+      this.recalculateEquipmentStats(player);
+
+      // Callback
+      if (this.callbacks.onItemEquipped) {
+        await this.callbacks.onItemEquipped(item, slot);
+      }
+
+      return { success: true, item, slot, stacked: true, totalInSlot: player.equipment[slot].length };
     }
-    
-    // Check for cursed item blocking
-    if (currentItem?.isCursed && !currentItem.curse?.removable) {
-      return { success: false, error: 'Cursed item cannot be removed' };
+
+    // For toys/non-piercings in NSFW slots, or standard equipment
+    // Unequip current item(s) in slot
+    let unequippedItems = [];
+    const currentEquipment = player.equipment[slot];
+
+    if (currentEquipment) {
+      // Check for cursed item blocking
+      if (Array.isArray(currentEquipment)) {
+        // Check all items for curse
+        const cursedItem = currentEquipment.find(i => i?.isCursed && !i.curse?.removable);
+        if (cursedItem) {
+          return { success: false, error: 'Cursed item cannot be removed' };
+        }
+        // Unequip all items in the array
+        for (const equippedItem of currentEquipment) {
+          if (equippedItem) {
+            await this.removeEquipEffects(player, equippedItem);
+            inventory.push(equippedItem);
+            unequippedItems.push(equippedItem);
+          }
+        }
+      } else {
+        if (currentEquipment.isCursed && !currentEquipment.curse?.removable) {
+          return { success: false, error: 'Cursed item cannot be removed' };
+        }
+        await this.removeEquipEffects(player, currentEquipment);
+        inventory.push(currentEquipment);
+        unequippedItems.push(currentEquipment);
+      }
     }
-    
+
     // Remove from inventory
     inventory.splice(index, 1);
-    
+
     // Add to equipment
-    player.equipment[item.slot] = item;
-    
+    player.equipment[slot] = item;
+
     // Apply equip effects
     await this.applyEquipEffects(player, item);
-    
+
     // Apply stat bonuses
     this.recalculateEquipmentStats(player);
-    
+
     // Callback
     if (this.callbacks.onItemEquipped) {
-      await this.callbacks.onItemEquipped(item, item.slot);
+      await this.callbacks.onItemEquipped(item, slot);
     }
-    
-    return { success: true, item, slot: item.slot, unequipped: currentItem };
+
+    return {
+      success: true,
+      item,
+      slot,
+      unequipped: unequippedItems.length === 1 ? unequippedItems[0] : unequippedItems.length > 0 ? unequippedItems : null
+    };
   }
 
   /**
@@ -648,19 +811,26 @@ export class InventorySystem {
    */
   recalculateEquipmentStats(player) {
     const equipmentBonus = {};
-    
-    for (const [slot, item] of Object.entries(player.equipment || {})) {
-      if (!item) continue;
-      
-      const stats = item.finalStats || item.baseStats || {};
-      
-      for (const [stat, value] of Object.entries(stats)) {
-        equipmentBonus[stat] = (equipmentBonus[stat] || 0) + value;
+
+    for (const [slot, slotContent] of Object.entries(player.equipment || {})) {
+      if (!slotContent) continue;
+
+      // Handle array-based slots (piercings)
+      const items = Array.isArray(slotContent) ? slotContent : [slotContent];
+
+      for (const item of items) {
+        if (!item) continue;
+
+        const stats = item.finalStats || item.baseStats || {};
+
+        for (const [stat, value] of Object.entries(stats)) {
+          equipmentBonus[stat] = (equipmentBonus[stat] || 0) + value;
+        }
       }
     }
-    
+
     player.equipmentBonus = equipmentBonus;
-    
+
     // Recalculate derived stats
     this.recalculateDerivedStats(player);
   }

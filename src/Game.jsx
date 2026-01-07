@@ -26,6 +26,8 @@ import RumorConfrontation, { RumorConfrontationResult } from './components/ui/Ru
 import ServiceInteraction, { ServiceResult } from './components/ui/ServiceInteraction.jsx';
 import ChangelogModal from './components/ui/ChangelogModal.jsx';
 import SceneDisplay from './components/ui/SceneDisplay.jsx';
+import DebugMenu from './components/debug/DebugMenu.jsx';
+import ContentGenerator from './components/generator/ContentGenerator.jsx';
 
 // ============================================================================
 // GAME DATA STRUCTURES (JSON-DRIVEN CONTENT)
@@ -3332,7 +3334,7 @@ const CharacterCard = ({ character, isSelected, onSelect }) => (
 // ============================================================================
 
 // Main Menu Screen
-const MainMenuScreen = ({ onStart, onContinue, onLoad, onSettings, onSupport, onChangelog }) => {
+const MainMenuScreen = ({ onStart, onContinue, onLoad, onSettings, onSupport, onChangelog, onDebug, onGenerator }) => {
   const hasAutosave = SaveSystem.hasAutosave();
   
   return (
@@ -3491,8 +3493,10 @@ const MainMenuScreen = ({ onStart, onContinue, onLoad, onSettings, onSupport, on
             { label: 'Load Game', action: onLoad },
             { label: 'Settings', action: onSettings },
             { label: 'Changelog', action: onChangelog },
-            { label: 'Support', action: onSupport }
-          ].map((btn, i) => (
+            { label: 'Support', action: onSupport },
+            { label: '🛠️ Content Generator', action: onGenerator },
+            { label: '🔧 Debug Menu', action: onDebug, debugOnly: true }
+          ].filter(btn => !btn.debugOnly || GameConfig.debug.enabled).map((btn, i) => (
             <button 
               key={i}
               onClick={btn.action}
@@ -5784,6 +5788,10 @@ const Game = () => {
   // Changelog modal state
   const [showChangelog, setShowChangelog] = useState(false);
 
+  // Debug and Content Generator modal state
+  const [showDebugMenu, setShowDebugMenu] = useState(false);
+  const [showContentGenerator, setShowContentGenerator] = useState(false);
+
   // Engine system refs
   const inventorySystemRef = useRef(null);
   const fameSystemRef = useRef(null);
@@ -7537,6 +7545,8 @@ const Game = () => {
             onSettings={() => setScreen('settings')}
             onChangelog={() => setShowChangelog(true)}
             onSupport={() => window.open('https://example.com/support', '_blank')}
+            onDebug={() => setShowDebugMenu(true)}
+            onGenerator={() => setShowContentGenerator(true)}
           />
         );
         
@@ -7840,6 +7850,26 @@ const Game = () => {
         isOpen={showChangelog}
         onClose={() => setShowChangelog(false)}
       />
+
+      {/* Debug Menu Modal */}
+      {showDebugMenu && (
+        <DebugMenu
+          onClose={() => setShowDebugMenu(false)}
+          SaveSystem={SaveSystem}
+          GameData={GameData}
+          onLoadAndEdit={(loadedPlayer) => {
+            setPlayer(loadedPlayer);
+            setShowDebugMenu(false);
+          }}
+        />
+      )}
+
+      {/* Content Generator Modal */}
+      {showContentGenerator && (
+        <ContentGenerator
+          onClose={() => setShowContentGenerator(false)}
+        />
+      )}
 
       {renderScreen()}
       </div>

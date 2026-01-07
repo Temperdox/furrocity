@@ -1,8 +1,8 @@
 # Furrocity Engine - Complete Documentation
 
-> **Version:** 0.7.0-ALPHA
+> **Version:** 0.8.0-ALPHA
 > **Engine:** Furrocity Engine
-> **Authors:** Cotton Le Sergal & Shluggo
+> **Authors:** Cotton Le Sergal, Shluggo & Winded
 
 ---
 
@@ -37,6 +37,7 @@
 27. [Effect Actions Reference](#27-effect-actions-reference)
 28. [Adding New Content](#28-adding-new-content)
 29. [Performance & Optimization](#29-performance--optimization)
+30. [Changelog](#changelog)
 
 ---
 
@@ -2834,6 +2835,89 @@ discoveryProgress: {
 | `consumable` | No | Potions, food |
 | `material` | No | Crafting materials |
 | `quest` | No | Quest items |
+| `toy` | Yes | NSFW toys, vibrators, plugs |
+| `piercing` | Yes | Body piercings (can stack) |
+
+### Equipment Slots
+
+#### Standard Slots
+
+| Slot | Description |
+|------|-------------|
+| `main_hand` | Primary weapon |
+| `off_hand` | Shield or secondary weapon |
+| `head` | Helmets, hats |
+| `face` | Masks, glasses, gags |
+| `neck` | Collars, necklaces |
+| `chest` | Body armor, tops |
+| `back` | Capes, wings |
+| `arms` | Arm guards |
+| `hands` | Gloves, gauntlets |
+| `waist` | Belts |
+| `legs` | Leg armor, pants |
+| `feet` | Boots, shoes |
+| `underwear_top` | Bras, undershirts |
+| `underwear_bottom` | Panties, boxers |
+| `accessory_1` | First accessory slot |
+| `accessory_2` | Second accessory slot |
+| `ring_left` | Left hand ring |
+| `ring_right` | Right hand ring |
+
+#### NSFW Equipment Slots
+
+| Slot | Description | Piercing Stackable |
+|------|-------------|-------------------|
+| `nipple_left` | Left nipple | Yes |
+| `nipple_right` | Right nipple | Yes |
+| `nipples` | Both nipples (single item) | Yes |
+| `mouth` | Gags, tongue piercings | Yes |
+| `ears` | Ear piercings, plugs | Yes |
+| `nose` | Nose rings, studs | Yes |
+| `dick` | Penis piercings, cock rings | Yes |
+| `balls` | Ball stretchers, piercings | Yes |
+| `pussy` | Labia piercings, spreaders | Yes |
+| `clitoris` | Clit piercings, vibrators | Yes |
+| `urethra` | Urethral sounds, plugs | Yes |
+| `ass` | Anal piercings, tail plugs | Yes |
+| `plug` | Anal/vaginal plugs | No |
+| `chastity` | Chastity devices | No |
+| `genital` | Generic genital slot | Yes |
+
+### Multi-Slot Items
+
+Items can be equipped in multiple possible slots using `equipSlots` array:
+
+```json
+{
+  "id": "vibrating_plug",
+  "name": "Vibrating Plug",
+  "type": "toy",
+  "equipSlots": ["ass", "pussy"],
+  "tags": ["toy", "vibrator", "nsfw"]
+}
+```
+
+When equipping multi-slot items:
+- System tries to find an empty slot first
+- If all slots are occupied, player must choose which slot
+- Use `equipItem(player, inventory, itemId, targetSlot)` to specify slot
+
+### Piercing Stacking
+
+Items tagged with `piercing` can stack in NSFW slots:
+
+```json
+{
+  "id": "nipple_ring_gold",
+  "name": "Gold Nipple Ring",
+  "type": "piercing",
+  "equipSlots": ["nipple_left", "nipple_right"],
+  "tags": ["piercing", "jewelry", "nsfw"],
+  "isPiercing": true
+}
+```
+
+Multiple piercings can be equipped in the same slot. Non-piercing items (toys) replace existing items.
 
 ### Basic Weapon
 
@@ -2845,7 +2929,7 @@ discoveryProgress: {
   "image": "/images/items/steel_sword.png",
   "type": "weapon",
   "weaponType": "sword",
-  "slot": "main_hand",
+  "equipSlots": ["main_hand"],
   "rarity": "uncommon",
   "basePrice": 150,
   "tags": ["weapon", "sword", "metal"],
@@ -3619,4 +3703,43 @@ The DataRegistry automatically caches:
 
 ---
 
-*© 2025 Cotton Le Sergal & Shluggo. Furrocity Engine.*
+## Changelog
+
+### Version 0.8.0-ALPHA (2025-01-06)
+
+#### Content Generator Enhancements
+- **Sprite Sheet Manager**: New tab for managing sprite sheets with visual cell selection
+  - Upload sprite sheets with drag-and-drop
+  - Configure cell size, margins, and offsets
+  - Link cells to items or locations via modal
+- **Location Creator**: Map placement system with local/global map tabs
+  - Icon upload or sprite sheet cell selection
+  - Click-to-place functionality with coordinate storage
+  - Size selection (small/medium/large)
+- **Character Creator**: Enhanced paperdoll configuration
+  - Custom folder paths for character images
+  - Cup size selection (Flat through ZZ Cup)
+  - Base image configuration (masc_base_0 through fem_base_10)
+
+#### Equipment System Overhaul
+- **NSFW Equipment Slots**: Added 15 new intimate body part slots
+  - Body parts: nipple_left, nipple_right, nipples, mouth, ears, nose
+  - Genitals: dick, balls, pussy, clitoris, urethra, ass
+  - Special: plug, chastity, genital
+- **Multi-Slot Items**: Items can now be equipped in multiple possible slots
+  - Use `equipSlots: ["slot1", "slot2"]` array instead of single `slot`
+  - System auto-selects empty slot or prompts player to choose
+- **Piercing Stacking**: Piercings can stack in the same slot
+  - Items with `piercing` tag or `isPiercing: true` can coexist
+  - Non-piercing items (toys) replace each other
+
+#### UI Improvements
+- **Equipment Slot Selector**: Redesigned with styled pill/chip UI
+  - Categories: Weapons, Armor, Clothing & Accessories, Special/Implants, NSFW
+  - Visual selected state with checkmarks
+  - NSFW slots highlighted in purple/pink theme
+  - "Clear All Slots" button
+
+---
+
+*© 2025 Cotton Le Sergal, Shluggo & Winded. Furrocity Engine.*
