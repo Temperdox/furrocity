@@ -289,6 +289,65 @@ export class TimeSystem {
   }
 
   /**
+   * Set time to a specific time of day (day or night)
+   * Day increments only when going backwards in time (night->day)
+   * @param {Object} currentTime - Current time object
+   * @param {string} target - 'day' (7:00) or 'night' (21:00)
+   * @returns {Object} Time change result
+   */
+  setTimeOfDay(currentTime, target) {
+    let { day = 1, hour = 8, minute = 0 } = currentTime;
+    const wasNight = this.isNight(hour);
+    const oldPeriod = this.getTimePeriod(hour);
+    let daysAdvanced = 0;
+
+    if (target === 'day') {
+      // Set to 7:00 (start of day)
+      const targetHour = 7;
+
+      // If currently night (21-4) or later in the day (after 7), we're going backwards
+      // Need to increment day
+      if (hour >= targetHour) {
+        // Going backwards in time OR it's already past 7 - go to next day
+        day++;
+        daysAdvanced = 1;
+      }
+      // If currently in early morning (0-6), we're moving forward to 7 - no day increment
+
+      hour = targetHour;
+      minute = 0;
+    } else if (target === 'night') {
+      // Set to 21:00 (start of night)
+      const targetHour = 21;
+
+      // Only increment day if we're going backwards (currently past 21 means we'd wrap)
+      if (hour >= targetHour) {
+        // Currently at or past 21:00 - going to 21:00 tomorrow
+        day++;
+        daysAdvanced = 1;
+      }
+      // If current hour < 21, we're moving forward in time - no day increment
+
+      hour = targetHour;
+      minute = 0;
+    }
+
+    const newTime = { day, hour, minute };
+    const newPeriod = this.getTimePeriod(hour);
+
+    return {
+      newTime,
+      daysAdvanced,
+      dayChanged: daysAdvanced > 0,
+      periodChanged: oldPeriod.name !== newPeriod.name,
+      becameNight: !wasNight && this.isNight(hour),
+      becameDay: wasNight && !this.isNight(hour),
+      period: newPeriod,
+      target
+    };
+  }
+
+  /**
    * Calculate night encounter modifier for a location
    * @param {Array|Object} locationTags - Location tags or location object
    * @param {number} hour - Current hour

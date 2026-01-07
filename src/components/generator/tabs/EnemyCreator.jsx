@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { collectTags } from '../DatapackLoader';
 
 const styles = {
   container: {
@@ -202,26 +203,19 @@ const styles = {
   },
 };
 
-const ENEMY_TYPES = [
-  { value: 'humanoid', label: 'Humanoid' },
-  { value: 'beast', label: 'Beast' },
-  { value: 'demon', label: 'Demon' },
-  { value: 'undead', label: 'Undead' },
-  { value: 'plant', label: 'Plant/Tentacle' },
-  { value: 'elemental', label: 'Elemental' },
-  { value: 'construct', label: 'Construct' },
-  { value: 'dragon', label: 'Dragon' },
-  { value: 'slime', label: 'Slime/Ooze' },
+// Suggested enemy types - users can also type custom values
+const SUGGESTED_ENEMY_TYPES = [
+  'humanoid', 'beast', 'demon', 'undead', 'plant', 'elemental',
+  'construct', 'dragon', 'slime', 'insect', 'aquatic', 'aberration',
 ];
 
-const ENEMY_VARIANTS = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'elite', label: 'Elite' },
-  { value: 'boss', label: 'Boss' },
-  { value: 'miniboss', label: 'Mini-Boss' },
+// Suggested variants - users can also type custom values
+const SUGGESTED_VARIANTS = [
+  'normal', 'elite', 'boss', 'miniboss', 'champion', 'legendary', 'swarm',
 ];
 
-const COMMON_TAGS = [
+// Fallback tags when no dynamic tags available
+const FALLBACK_TAGS = [
   'humanoid', 'beast', 'demon', 'undead', 'boss', 'elite',
   'nsfw', 'corruption', 'male', 'female', 'futa',
   'wolf', 'goblin', 'orc', 'tentacle', 'slime',
@@ -293,10 +287,17 @@ const EnemyCreator = ({
   onEdit,
   editingItem,
   onCancelEdit,
+  datapackContent = {},
+  datapackLoading = false,
 }) => {
+  // Combine datapack scenes with user-created scenes
+  const allScenes = [...(datapackContent.scenes || []), ...scenes];
+  // Combine datapack items with user-created items (for loot drops)
+  const allItems = [...(datapackContent.items || [])];
+
   // Get NSFW scenes filtered by action type (supports both old single value and new array format)
   const getNsfwScenesForType = (actionType) => {
-    return scenes.filter(scene => {
+    return allScenes.filter(scene => {
       if (!scene.isNSFW) return false;
       // Handle new array format
       if (scene.nsfwActionTypes?.length > 0) {
@@ -308,11 +309,21 @@ const EnemyCreator = ({
   };
 
   // Get all NSFW scenes
-  const allNsfwScenes = scenes.filter(scene => scene.isNSFW);
+  const allNsfwScenes = allScenes.filter(scene => scene.isNSFW);
   const [formData, setFormData] = useState({ ...DEFAULT_ENEMY });
   const [tagInput, setTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
   const [dropInput, setDropInput] = useState({ itemId: '', chance: 0.1 });
+
+  // Compute dynamic tag suggestions from datapack content and user-created enemies
+  const suggestedTags = useMemo(() => {
+    return collectTags({
+      datapackContent,
+      userContent: items,
+      commonTags: FALLBACK_TAGS,
+      contentType: 'enemies',
+    });
+  }, [datapackContent, items]);
 
   useEffect(() => {
     if (editingItem) {
@@ -507,29 +518,35 @@ const EnemyCreator = ({
           <div style={styles.thirdWidth}>
             <div style={styles.formGroup}>
               <label style={styles.label}>Type</label>
-              <select
-                style={styles.select}
+              <input
+                style={styles.input}
+                list="enemy-type-suggestions"
                 value={formData.type}
                 onChange={(e) => handleChange('type', e.target.value)}
-              >
-                {ENEMY_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
+                placeholder="e.g., humanoid, beast, demon"
+              />
+              <datalist id="enemy-type-suggestions">
+                {SUGGESTED_ENEMY_TYPES.map(type => (
+                  <option key={type} value={type} />
                 ))}
-              </select>
+              </datalist>
             </div>
           </div>
           <div style={styles.thirdWidth}>
             <div style={styles.formGroup}>
               <label style={styles.label}>Variant</label>
-              <select
-                style={styles.select}
+              <input
+                style={styles.input}
+                list="enemy-variant-suggestions"
                 value={formData.variant}
                 onChange={(e) => handleChange('variant', e.target.value)}
-              >
-                {ENEMY_VARIANTS.map(v => (
-                  <option key={v.value} value={v.value}>{v.label}</option>
+                placeholder="e.g., normal, elite, boss"
+              />
+              <datalist id="enemy-variant-suggestions">
+                {SUGGESTED_VARIANTS.map(variant => (
+                  <option key={variant} value={variant} />
                 ))}
-              </select>
+              </datalist>
             </div>
           </div>
           <div style={styles.thirdWidth}>
@@ -629,9 +646,11 @@ const EnemyCreator = ({
           </div>
 
           <div style={styles.subsectionTitle}>Item Drops</div>
-          {formData.rewards.drops.map((drop, index) => (
+          {formData.rewards.drops.map((drop, index) => {
+            const itemData = allItems.find(i => i.id === drop.itemId);
+            return (
             <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
-              <span style={{ color: '#a0a0c0' }}>{drop.itemId}</span>
+              <span style={{ color: '#a0a0c0' }}>{itemData?.name || drop.itemId}</span>
               <span style={{ color: '#808090' }}>({(drop.chance * 100).toFixed(0)}%)</span>
               <button
                 style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
@@ -640,15 +659,31 @@ const EnemyCreator = ({
                 ×
               </button>
             </div>
-          ))}
+            );
+          })}
           <div style={styles.row}>
             <div style={styles.halfWidth}>
-              <input
-                style={styles.input}
-                value={dropInput.itemId}
-                onChange={(e) => setDropInput(prev => ({ ...prev, itemId: e.target.value }))}
-                placeholder="item_id"
-              />
+              {allItems.length > 0 ? (
+                <select
+                  style={styles.select}
+                  value={dropInput.itemId}
+                  onChange={(e) => setDropInput(prev => ({ ...prev, itemId: e.target.value }))}
+                >
+                  <option value="">Select item to drop...</option>
+                  {allItems.map(item => (
+                    <option key={item.id} value={item.id}>
+                      {item.name || item.id} ({item.type || 'item'})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  style={styles.input}
+                  value={dropInput.itemId}
+                  onChange={(e) => setDropInput(prev => ({ ...prev, itemId: e.target.value }))}
+                  placeholder="item_id"
+                />
+              )}
             </div>
             <div style={styles.halfWidth}>
               <input
@@ -900,7 +935,7 @@ const EnemyCreator = ({
             />
           </div>
           <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {COMMON_TAGS.filter(t => !formData.tags.includes(t)).slice(0, 12).map(tag => (
+            {suggestedTags.filter(t => !formData.tags.includes(t)).slice(0, 20).map(tag => (
               <button
                 key={tag}
                 style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}

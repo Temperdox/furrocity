@@ -88,6 +88,34 @@ export class MerchantSystem {
      * @type {Map<string, {stock: Array, timestamp: number}>}
      */
     this.stockCache = new Map();
+
+    /**
+     * NPCLocationSystem for dynamic NPC locations
+     * @type {NPCLocationSystem|null}
+     */
+    this.npcLocationSystem = null;
+
+    /**
+     * Current game time for schedule-based location checks
+     * @type {Object|null}
+     */
+    this.currentTime = null;
+  }
+
+  /**
+   * Set the NPCLocationSystem for dynamic location tracking
+   * @param {NPCLocationSystem} npcLocationSystem - The NPC location system instance
+   */
+  setNPCLocationSystem(npcLocationSystem) {
+    this.npcLocationSystem = npcLocationSystem;
+  }
+
+  /**
+   * Update the current game time (call this when time changes)
+   * @param {Object} currentTime - Current time object { day, hour, minute }
+   */
+  setCurrentTime(currentTime) {
+    this.currentTime = currentTime;
   }
 
   /**
@@ -135,21 +163,34 @@ export class MerchantSystem {
 
   /**
    * Get all merchants present at a specific location.
-   * Used to find who the player can trade with at their current location.
+   * Uses NPCLocationSystem for dynamic location tracking based on schedules,
+   * or falls back to static locationId if NPCLocationSystem is not set.
    *
    * @param {string} locationId - The location ID to search
+   * @param {Object} [currentTime] - Optional time override (uses this.currentTime if not provided)
    * @returns {Array<Object>} Array of merchant definitions at that location
    *
    * @example
    * const merchants = merchantSystem.getMerchantsAtLocation('town_square');
    * merchants.forEach(m => console.log(`${m.name} is here`));
    */
-  getMerchantsAtLocation(locationId) {
+  getMerchantsAtLocation(locationId, currentTime = null) {
     const merchants = [];
+    const time = currentTime || this.currentTime;
 
-    // Iterate through all cached merchants and filter by location
+    // Iterate through all cached merchants
     for (const merchant of this.merchantCache.values()) {
-      if (merchant.locationId === locationId) {
+      let merchantLocation;
+
+      // Use NPCLocationSystem if available for dynamic location tracking
+      if (this.npcLocationSystem && time) {
+        merchantLocation = this.npcLocationSystem.getNPCLocation(merchant.id, time);
+      } else {
+        // Fall back to static location (supports both old and new field names)
+        merchantLocation = merchant.defaultLocationId || merchant.locationId;
+      }
+
+      if (merchantLocation === locationId) {
         merchants.push(merchant);
       }
     }

@@ -7,9 +7,91 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.8.2] - 2026-01-06
+## [0.8.2] - 2026-01-07
 
 ### Added
+
+#### Content Generator - Dynamic Tag Suggestions
+- **All Creator tabs now display dynamic clickable tag suggestions** below tag input fields
+  - Tags are dynamically collected from datapack content, user-created content, and fallback defaults
+  - Clicking a tag instantly adds it to the current item
+  - Tags are deduplicated and sorted alphabetically
+- **collectTags utility** in DatapackLoader.js for unified tag collection across all creators
+- **NPCCreator**: Added tag suggestions for merchant Accepted/Rejected Item Tags (color-coded: green for accepted, red for rejected)
+- **ItemCreator, EnemyCreator, LocationCreator, SceneCreator, EffectCreator**: Updated with dynamic tags from respective content types
+- **SkillCreator, QuestCreator**: Added tag suggestion buttons (previously had no suggestions)
+
+#### Content Generator - Custom Input Fields
+- **All Creator tabs now support custom input** for label/category fields via input + datalist pattern
+  - Users can select from suggested values OR type custom values
+  - Autocomplete suggestions appear while typing
+- **NPCCreator**: `role` field now accepts custom roles
+- **ItemCreator**: `type` and `rarity` fields now accept custom values
+- **CharacterCreator**: `species`, `gender`, `bodyType`, `faceStyle` fields now accept custom values
+- **EnemyCreator**: `type` and `variant` fields now accept custom values
+- **LocationCreator**: `type` field now accepts custom values
+- **SkillCreator**: `type`, `category`, `targetType`, `damageType` fields now accept custom values
+- **QuestCreator**: `type` field now accepts custom values
+
+#### Content Generator - New Creator Tabs
+- **QuestCreator** - Full quest creation system with:
+  - Quest types: main, side, daily, repeatable, hidden, event
+  - Objectives: kill, collect, deliver, talk, visit, explore, interact, survive, escort, craft, equip, reach level/stat
+  - Prerequisites (quests, levels, items, faction)
+  - Rewards (XP, gold, items, reputation, unlockable content)
+  - Quest dialogue and failure conditions
+- **SkillCreator** - Skill/ability system with:
+  - Skill types: active, passive, toggle, reaction
+  - Effect types: damage, heal, buff, debuff, apply status, remove status, summon, teleport, etc.
+  - Resource costs: stamina, HP, cooldowns
+  - Requirements: level, stats, equipment
+  - Effect targeting and duration
+- **LootTableCreator** - Loot table system with:
+  - Weighted random entries with visual probability bars
+  - Guaranteed drops section
+  - Gold/currency ranges
+  - Roll count configuration
+  - Item selection from datapacks
+- **Loading screen** - Shows animated loading screen while fetching datapack resources
+  - Spinning progress indicator
+  - Animated progress bar
+  - Resource count in status bar
+
+#### NPC Travel System
+- **NPCLocationSystem** - New engine module for dynamic NPC locations based on time schedules
+  - NPCs can have schedules defining where they are at different times of day
+  - Temporary teleport overrides (clears on time period change)
+  - NPC hide/show for story events
+  - Interaction locks prevent NPCs from moving during player interaction
+- **NPC Schedule Editor** in NPCCreator
+  - Add time slots with start hour, end hour, and location
+  - Default location for when no schedule applies
+  - Visual schedule management with add/remove buttons
+- **New Scene Actions**:
+  - `setTimeOfDay`: Jump to day (7:00) or night (21:00), day increments only when going backwards
+  - `modifyTime`: Add or subtract minutes with input field
+  - `teleportNPC`: Temporarily move NPC to a location (clears on time period change)
+  - `hideNPC`: Remove NPC from all locations until shown
+  - `showNPC`: Restore hidden NPC to their scheduled location
+- **MerchantSystem Integration** - `getMerchantsAtLocation()` now uses NPCLocationSystem for dynamic location tracking
+- **TimeSystem.setTimeOfDay()** - New method for time manipulation with smart day increment logic
+
+#### Content Generator - Datapack Integration
+- **DatapackLoader utility** - Loads content from game datapacks for use in selection dropdowns
+  - Loads items, locations, enemies, effects, NPCs, scenes, characters, merchants
+  - Content is cached after first load for performance
+  - Automatically combines datapack content with user-created content
+- **Smart action field editors in Scene Creator** - Action fields now show appropriate selectors based on action type
+  - `giveItem`/`removeItem`: Item dropdown with all datapack and created items
+  - `teleport`/`unlockLocation`: Location dropdown with all datapack and created locations
+  - `applyEffect`/`removeEffect`: Effect dropdown with duration and stacks fields
+  - `modifyStat`: Stat dropdown with all player stats
+  - `modifyRelationship`: NPC dropdown
+  - `showToast`: Toast type dropdown, title, and message fields
+- **Datapack selectors in all Creator tabs**
+  - LocationCreator: NPCs and enemies from datapacks now appear in selection dropdowns
+  - EnemyCreator: Items from datapacks appear in loot drop dropdown
+  - NPCCreator: Locations from datapacks appear in location selector
 
 #### Content Generator - Scene Creator
 - **Multi-tag NSFW Action Categories** - Scenes can now have multiple action types (e.g., "penetrate + infest", "hypnotize + breed")
@@ -144,6 +226,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Loot table system
 - Content Generator tool for creating game content
 - NSFW combat scene system with madlib templates
+
+---
+
+## File Changes Summary (0.8.2)
+
+### New Files
+- `src/components/generator/DatapackLoader.js` - Utility for loading and caching datapack content
+
+### Modified Files
+- `src/components/generator/ContentGenerator.jsx` - Added datapack loading and passing to tab components
+- `src/components/generator/tabs/SceneCreator.jsx` - Smart action field editors with datapack selectors
+- `src/components/generator/tabs/LocationCreator.jsx` - Datapack-aware NPC/enemy selectors, custom type input
+- `src/components/generator/tabs/EnemyCreator.jsx` - Datapack-aware item drop selector, custom type/variant input
+- `src/components/generator/tabs/NPCCreator.jsx` - Datapack-aware location selector, schedule editor, custom role input
+- `src/components/generator/tabs/ItemCreator.jsx` - Added datapackContent prop, custom type/rarity input
+- `src/components/generator/tabs/EffectCreator.jsx` - Added datapackContent prop
+- `src/components/generator/tabs/CharacterCreator.jsx` - Added datapackContent prop, custom species/gender/bodyType/faceStyle input
+- `src/components/generator/tabs/SkillCreator.jsx` - Custom type/category/targetType/damageType input
+- `src/components/generator/tabs/QuestCreator.jsx` - Custom quest type input
 
 ---
 

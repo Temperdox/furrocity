@@ -46,6 +46,7 @@ export { LocationBarringSystem } from './LocationBarringSystem.js';
 
 export { ExpeditionSystem } from './ExpeditionSystem.js';
 export { TimeSystem, DEFAULT_TIME_COSTS, TIME_PERIODS } from './TimeSystem.js';
+export { NPCLocationSystem } from './NPCLocationSystem.js';
 
 // =============================================================================
 // LODGING & ACTION REQUIREMENTS

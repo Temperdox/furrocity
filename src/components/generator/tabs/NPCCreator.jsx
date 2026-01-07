@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { collectTags } from '../DatapackLoader';
 
 const styles = {
   container: {
@@ -178,23 +179,24 @@ const styles = {
   },
 };
 
-const NPC_ROLES = [
-  { value: 'merchant', label: 'Merchant' },
-  { value: 'quest_giver', label: 'Quest Giver' },
-  { value: 'companion', label: 'Companion' },
-  { value: 'innkeeper', label: 'Innkeeper' },
-  { value: 'blacksmith', label: 'Blacksmith' },
-  { value: 'healer', label: 'Healer' },
-  { value: 'guard', label: 'Guard' },
-  { value: 'villager', label: 'Villager' },
-  { value: 'romance', label: 'Romance Option' },
-  { value: 'antagonist', label: 'Antagonist' },
+// Suggested roles - users can also type custom values
+const SUGGESTED_ROLES = [
+  'merchant', 'quest_giver', 'companion', 'innkeeper', 'blacksmith',
+  'healer', 'guard', 'villager', 'romance', 'antagonist', 'bartender',
+  'trainer', 'banker', 'mayor', 'priest', 'thief', 'scholar',
 ];
 
-const COMMON_TAGS = [
+// Fallback NPC tags when no dynamic tags available
+const FALLBACK_NPC_TAGS = [
   'merchant', 'quest', 'companion', 'romance', 'nsfw',
   'friendly', 'hostile', 'neutral', 'mysterious',
   'human', 'elf', 'demon', 'beast', 'undead',
+];
+
+// Fallback item tags for merchant buy/sell config
+const FALLBACK_ITEM_TAGS = [
+  'weapon', 'armor', 'consumable', 'material', 'quest', 'misc',
+  'nsfw', 'toy', 'clothing', 'jewelry', 'food', 'potion',
 ];
 
 const DEFAULT_NPC = {
@@ -202,7 +204,8 @@ const DEFAULT_NPC = {
   name: '',
   description: '',
   role: 'villager',
-  locationId: '',
+  defaultLocationId: '',  // Home location when no schedule matches
+  schedule: [],  // Time-based location schedule
   factionId: '',
   nsfwEnabled: false,
   canBeSeduced: false,
@@ -244,18 +247,45 @@ const NPCCreator = ({
   onEdit,
   editingItem,
   onCancelEdit,
+  datapackContent = {},
+  datapackLoading = false,
 }) => {
+  // Combine datapack locations with user-created locations
+  const allLocations = [...(datapackContent.locations || []), ...locations];
   const [formData, setFormData] = useState({ ...DEFAULT_NPC });
   const [tagInput, setTagInput] = useState('');
   const [acceptedTagInput, setAcceptedTagInput] = useState('');
   const [rejectedTagInput, setRejectedTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
 
+  // Compute dynamic NPC tag suggestions
+  const suggestedNpcTags = useMemo(() => {
+    return collectTags({
+      datapackContent,
+      userContent: items,
+      commonTags: FALLBACK_NPC_TAGS,
+      contentType: 'npcs',
+    });
+  }, [datapackContent, items]);
+
+  // Compute dynamic item tag suggestions (for merchant accepted/rejected tags)
+  const suggestedItemTags = useMemo(() => {
+    return collectTags({
+      datapackContent,
+      userContent: [], // Could pass allContent.items if available
+      commonTags: FALLBACK_ITEM_TAGS,
+      contentType: 'items',
+    });
+  }, [datapackContent]);
+
   useEffect(() => {
     if (editingItem) {
       setFormData({
         ...DEFAULT_NPC,
         ...editingItem,
+        // Handle legacy locationId -> defaultLocationId migration
+        defaultLocationId: editingItem.defaultLocationId || editingItem.locationId || '',
+        schedule: editingItem.schedule || [],
         dialogue: { ...DEFAULT_NPC.dialogue, ...editingItem.dialogue },
         buyConfig: { ...DEFAULT_NPC.buyConfig, ...editingItem.buyConfig },
         sellConfig: { ...DEFAULT_NPC.sellConfig, ...editingItem.sellConfig },
@@ -384,32 +414,127 @@ const NPCCreator = ({
           <div style={styles.halfWidth}>
             <div style={styles.formGroup}>
               <label style={styles.label}>Role</label>
-              <select
-                style={styles.select}
+              <input
+                style={styles.input}
+                list="role-suggestions"
                 value={formData.role}
                 onChange={(e) => handleChange('role', e.target.value)}
-              >
-                {NPC_ROLES.map(r => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
+                placeholder="e.g., merchant, quest_giver, companion"
+              />
+              <datalist id="role-suggestions">
+                {SUGGESTED_ROLES.map(role => (
+                  <option key={role} value={role} />
                 ))}
-              </select>
+              </datalist>
             </div>
           </div>
           <div style={styles.halfWidth}>
             <div style={styles.formGroup}>
-              <label style={styles.label}>Location</label>
+              <label style={styles.label}>Default Location</label>
               <select
                 style={styles.select}
-                value={formData.locationId}
-                onChange={(e) => handleChange('locationId', e.target.value)}
+                value={formData.defaultLocationId || formData.locationId || ''}
+                onChange={(e) => handleChange('defaultLocationId', e.target.value)}
               >
-                <option value="">Select Location</option>
-                {locations.map(l => (
+                <option value="">Select Default Location</option>
+                {allLocations.map(l => (
                   <option key={l.id} value={l.id}>{l.name}</option>
                 ))}
               </select>
+              <div style={{ color: '#808090', fontSize: '11px', marginTop: '4px' }}>
+                Where NPC is when no schedule applies
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Schedule Editor */}
+        <div style={styles.subsection}>
+          <div style={styles.subsectionTitle}>
+            Travel Schedule
+            <button
+              style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white', marginLeft: '10px' }}
+              onClick={() => {
+                const newSchedule = [...(formData.schedule || []), { startHour: 6, endHour: 18, locationId: '' }];
+                handleChange('schedule', newSchedule);
+              }}
+            >
+              + Add Time Slot
+            </button>
+          </div>
+          <div style={{ color: '#808090', fontSize: '12px', marginBottom: '10px' }}>
+            Define where this NPC will be at different times of day
+          </div>
+          {(formData.schedule || []).length === 0 ? (
+            <div style={{ color: '#606080', fontSize: '12px', fontStyle: 'italic', padding: '10px', backgroundColor: '#1a1a2e', borderRadius: '4px' }}>
+              No schedule defined - NPC will always be at default location
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {(formData.schedule || []).map((slot, index) => (
+                <div key={index} style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '10px', backgroundColor: '#1a1a2e', borderRadius: '4px' }}>
+                  <div style={{ flex: '0 0 80px' }}>
+                    <label style={{ ...styles.label, marginBottom: '2px' }}>From</label>
+                    <select
+                      style={{ ...styles.select, padding: '6px' }}
+                      value={slot.startHour}
+                      onChange={(e) => {
+                        const newSchedule = [...formData.schedule];
+                        newSchedule[index] = { ...slot, startHour: parseInt(e.target.value) };
+                        handleChange('schedule', newSchedule);
+                      }}
+                    >
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ flex: '0 0 80px' }}>
+                    <label style={{ ...styles.label, marginBottom: '2px' }}>To</label>
+                    <select
+                      style={{ ...styles.select, padding: '6px' }}
+                      value={slot.endHour}
+                      onChange={(e) => {
+                        const newSchedule = [...formData.schedule];
+                        newSchedule[index] = { ...slot, endHour: parseInt(e.target.value) };
+                        handleChange('schedule', newSchedule);
+                      }}
+                    >
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ ...styles.label, marginBottom: '2px' }}>Location</label>
+                    <select
+                      style={{ ...styles.select, padding: '6px' }}
+                      value={slot.locationId}
+                      onChange={(e) => {
+                        const newSchedule = [...formData.schedule];
+                        newSchedule[index] = { ...slot, locationId: e.target.value };
+                        handleChange('schedule', newSchedule);
+                      }}
+                    >
+                      <option value="">Select Location</option>
+                      {allLocations.map(l => (
+                        <option key={l.id} value={l.id}>{l.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white', alignSelf: 'flex-end', marginBottom: '4px' }}
+                    onClick={() => {
+                      const newSchedule = formData.schedule.filter((_, i) => i !== index);
+                      handleChange('schedule', newSchedule);
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div style={styles.formGroup}>
@@ -540,6 +665,17 @@ const NPCCreator = ({
                   placeholder="Add tag..."
                 />
               </div>
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {suggestedItemTags.filter(t => !formData.buyConfig.acceptedTags.includes(t)).slice(0, 15).map(tag => (
+                  <button
+                    key={tag}
+                    style={{ ...styles.smallButton, backgroundColor: '#3a5a3a', color: '#a0c0a0' }}
+                    onClick={() => handleAddBuyTag('accepted', tag)}
+                  >
+                    + {tag}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div style={styles.formGroup}>
@@ -558,6 +694,17 @@ const NPCCreator = ({
                   onKeyPress={(e) => e.key === 'Enter' && handleAddBuyTag('rejected', rejectedTagInput)}
                   placeholder="Add tag..."
                 />
+              </div>
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {suggestedItemTags.filter(t => !formData.buyConfig.rejectedTags.includes(t)).slice(0, 15).map(tag => (
+                  <button
+                    key={tag}
+                    style={{ ...styles.smallButton, backgroundColor: '#5a3a3a', color: '#c0a0a0' }}
+                    onClick={() => handleAddBuyTag('rejected', tag)}
+                  >
+                    + {tag}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -637,7 +784,7 @@ const NPCCreator = ({
             />
           </div>
           <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {COMMON_TAGS.filter(t => !formData.tags.includes(t)).slice(0, 12).map(tag => (
+            {suggestedNpcTags.filter(t => !formData.tags.includes(t)).slice(0, 15).map(tag => (
               <button
                 key={tag}
                 style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}

@@ -909,6 +909,38 @@ export class SceneRunner {
           await this.callbacks.cancelRental(action.propertyId);
         }
         break;
+
+      // Time manipulation actions
+      case 'setTimeOfDay':
+        if (this.callbacks.setTimeOfDay) {
+          await this.callbacks.setTimeOfDay(action.target);
+        }
+        break;
+
+      case 'modifyTime':
+        if (this.callbacks.modifyTime) {
+          await this.callbacks.modifyTime(action.minutes);
+        }
+        break;
+
+      // NPC location actions
+      case 'teleportNPC':
+        if (this.callbacks.teleportNPC) {
+          await this.callbacks.teleportNPC(action.npcId, action.locationId);
+        }
+        break;
+
+      case 'hideNPC':
+        if (this.callbacks.hideNPC) {
+          await this.callbacks.hideNPC(action.npcId);
+        }
+        break;
+
+      case 'showNPC':
+        if (this.callbacks.showNPC) {
+          await this.callbacks.showNPC(action.npcId);
+        }
+        break;
     }
 
     return { type: action.type, ...action };

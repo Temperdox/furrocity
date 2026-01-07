@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { collectTags } from '../DatapackLoader';
 
 const styles = {
   container: {
@@ -218,7 +219,8 @@ const OPERATIONS = [
   { value: 'set', label: 'Set (=)' },
 ];
 
-const COMMON_TAGS = [
+// Fallback tags when no dynamic tags available
+const FALLBACK_TAGS = [
   'buff', 'debuff', 'dot', 'hot', 'status',
   'poison', 'fire', 'ice', 'lightning', 'holy',
   'curse', 'nsfw', 'arousal', 'corruption',
@@ -261,10 +263,22 @@ const EffectCreator = ({
   onEdit,
   editingItem,
   onCancelEdit,
+  datapackContent = {},
+  datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_EFFECT });
   const [tagInput, setTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
+
+  // Compute dynamic tag suggestions from datapack content and user-created effects
+  const suggestedTags = useMemo(() => {
+    return collectTags({
+      datapackContent,
+      userContent: items,
+      commonTags: FALLBACK_TAGS,
+      contentType: 'effects',
+    });
+  }, [datapackContent, items]);
 
   useEffect(() => {
     if (editingItem) {
@@ -585,7 +599,7 @@ const EffectCreator = ({
             />
           </div>
           <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {COMMON_TAGS.filter(t => !formData.tags.includes(t)).slice(0, 12).map(tag => (
+            {suggestedTags.filter(t => !formData.tags.includes(t)).slice(0, 20).map(tag => (
               <button
                 key={tag}
                 style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}

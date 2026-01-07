@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { collectTags } from '../DatapackLoader';
 
 const styles = {
   container: {
@@ -217,7 +218,8 @@ const NODE_TYPES = [
   { value: 'end', label: 'End', color: '#4a4a7c', icon: '🏁' },
 ];
 
-const COMMON_TAGS = [
+// Fallback tags when no dynamic tags available
+const FALLBACK_TAGS = [
   'story', 'vanilla', 'nsfw', 'intro', 'combat', 'quest',
   'romance', 'dialogue', 'exploration', 'ending',
   'demon', 'wolf', 'tentacle', 'corruption', 'transformation',
@@ -244,6 +246,13 @@ const ACTION_TYPES = [
   { value: 'playSound', label: 'Play Sound' },
   { value: 'playMusic', label: 'Play Music' },
   { value: 'modifyRelationship', label: 'Modify Relationship' },
+  // Time manipulation
+  { value: 'setTimeOfDay', label: 'Set Time of Day' },
+  { value: 'modifyTime', label: 'Modify Time' },
+  // NPC location control
+  { value: 'teleportNPC', label: 'Teleport NPC' },
+  { value: 'hideNPC', label: 'Hide NPC' },
+  { value: 'showNPC', label: 'Show NPC' },
 ];
 
 const STATS_LIST = [
@@ -425,13 +434,32 @@ const SceneCreator = ({
   onEdit,
   editingItem,
   onCancelEdit,
+  datapackContent = {},
+  datapackLoading = false,
 }) => {
+  // Combine datapack content with user-created content for selection dropdowns
+  const allItems = [...(datapackContent.items || []), ...(allContent?.items || [])];
+  const allLocations = [...(datapackContent.locations || []), ...(allContent?.locations || [])];
+  const allEffects = [...(datapackContent.effects || []), ...(allContent?.effects || [])];
+  const allEnemies = [...(datapackContent.enemies || []), ...(allContent?.enemies || [])];
+  const allNPCs = [...(datapackContent.npcs || []), ...(allContent?.npcs || [])];
+  const allCharacters = [...(datapackContent.characters || []), ...(allContent?.characters || [])];
   const [formData, setFormData] = useState({ ...DEFAULT_SCENE });
   const [tagInput, setTagInput] = useState('');
   const [nsfwActionInput, setNsfwActionInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
   const [expandedNodes, setExpandedNodes] = useState({});
   const [activeTagCategory, setActiveTagCategory] = useState(null);
+
+  // Compute dynamic tag suggestions from datapack content and user-created scenes
+  const suggestedTags = useMemo(() => {
+    return collectTags({
+      datapackContent,
+      userContent: items,
+      commonTags: FALLBACK_TAGS,
+      contentType: 'scenes',
+    });
+  }, [datapackContent, items]);
   const [activeNodeIndex, setActiveNodeIndex] = useState(null);
 
   // Load editing item when it changes
@@ -1040,28 +1068,116 @@ const SceneCreator = ({
     }
   };
 
-  // Render action-specific fields
+  // Render action-specific fields with smart selectors
   const renderActionFields = (action, nodeIndex, actionIndex) => {
+    // Helper to render a searchable select with datapack items
+    const renderItemSelect = (value, onChange, placeholder = 'Select item...') => (
+      <select
+        style={styles.select}
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">{placeholder}</option>
+        {allItems.map(item => (
+          <option key={item.id} value={item.id}>
+            {item.name || item.id} ({item.type || 'item'})
+          </option>
+        ))}
+      </select>
+    );
+
+    const renderLocationSelect = (value, onChange, placeholder = 'Select location...') => (
+      <select
+        style={styles.select}
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">{placeholder}</option>
+        {allLocations.map(loc => (
+          <option key={loc.id} value={loc.id}>
+            {loc.name || loc.id} ({loc.parentRegion || 'unknown'})
+          </option>
+        ))}
+      </select>
+    );
+
+    const renderEffectSelect = (value, onChange, placeholder = 'Select effect...') => (
+      <select
+        style={styles.select}
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">{placeholder}</option>
+        {allEffects.map(effect => (
+          <option key={effect.id} value={effect.id}>
+            {effect.name || effect.id} ({effect.type || 'effect'})
+          </option>
+        ))}
+      </select>
+    );
+
+    const renderNPCSelect = (value, onChange, placeholder = 'Select NPC...') => (
+      <select
+        style={styles.select}
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">{placeholder}</option>
+        {allNPCs.map(npc => (
+          <option key={npc.id} value={npc.id}>
+            {npc.name || npc.id}
+          </option>
+        ))}
+      </select>
+    );
+
+    const renderCharacterSelect = (value, onChange, placeholder = 'Select character...') => (
+      <select
+        style={styles.select}
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">{placeholder}</option>
+        {allCharacters.map(char => (
+          <option key={char.id} value={char.id}>
+            {char.name || char.id}
+          </option>
+        ))}
+      </select>
+    );
+
+    const renderSceneSelect = (value, onChange, placeholder = 'Select scene...') => (
+      <select
+        style={styles.select}
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">{placeholder}</option>
+        {items.filter(s => s.id !== formData.id).map(scene => (
+          <option key={scene.id} value={scene.id}>
+            {scene.name || scene.id}
+          </option>
+        ))}
+      </select>
+    );
+
     switch (action.type) {
       case 'giveItem':
       case 'removeItem':
         return (
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              <input
-                style={styles.input}
-                value={action.itemId || ''}
-                onChange={(e) => updateAction(nodeIndex, actionIndex, { itemId: e.target.value })}
-                placeholder="item_id"
-              />
+          <div>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Item</label>
+              {renderItemSelect(action.itemId, (val) => updateAction(nodeIndex, actionIndex, { itemId: val }))}
             </div>
-            <div style={styles.halfWidth}>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Count</label>
               <input
                 style={styles.input}
                 type="number"
                 value={action.count || 1}
                 onChange={(e) => updateAction(nodeIndex, actionIndex, { count: parseInt(e.target.value) || 1 })}
-                placeholder="Count"
+                min="1"
               />
             </div>
           </div>
@@ -1069,24 +1185,79 @@ const SceneCreator = ({
 
       case 'giveGold':
       case 'removeGold':
+        return (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Gold Amount</label>
+            <input
+              style={styles.input}
+              type="number"
+              value={action.amount || 0}
+              onChange={(e) => updateAction(nodeIndex, actionIndex, { amount: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+        );
+
       case 'heal':
       case 'damage':
+        return (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>{action.type === 'heal' ? 'Heal Amount' : 'Damage Amount'}</label>
+            <input
+              style={styles.input}
+              type="number"
+              value={action.amount || 0}
+              onChange={(e) => updateAction(nodeIndex, actionIndex, { amount: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+        );
+
       case 'modifyCorruption':
       case 'modifyArousal':
         return (
-          <input
-            style={styles.input}
-            type="number"
-            value={action.amount || 0}
-            onChange={(e) => updateAction(nodeIndex, actionIndex, { amount: parseInt(e.target.value) || 0 })}
-            placeholder="Amount"
-          />
+          <div style={styles.formGroup}>
+            <label style={styles.label}>{action.type === 'modifyCorruption' ? 'Corruption Change' : 'Arousal Change'} (can be negative)</label>
+            <input
+              style={styles.input}
+              type="number"
+              value={action.amount || 0}
+              onChange={(e) => updateAction(nodeIndex, actionIndex, { amount: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+        );
+
+      case 'modifyStat':
+        return (
+          <div>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Stat to Modify</label>
+              <select
+                style={styles.select}
+                value={action.stat || ''}
+                onChange={(e) => updateAction(nodeIndex, actionIndex, { stat: e.target.value })}
+              >
+                <option value="">Select stat...</option>
+                {STATS_LIST.map(stat => (
+                  <option key={stat} value={stat}>{stat.charAt(0).toUpperCase() + stat.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Amount (can be negative)</label>
+              <input
+                style={styles.input}
+                type="number"
+                value={action.amount || 0}
+                onChange={(e) => updateAction(nodeIndex, actionIndex, { amount: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+          </div>
         );
 
       case 'setFlag':
         return (
           <div style={styles.row}>
             <div style={styles.halfWidth}>
+              <label style={styles.label}>Flag Name</label>
               <input
                 style={styles.input}
                 value={action.flag || ''}
@@ -1095,6 +1266,7 @@ const SceneCreator = ({
               />
             </div>
             <div style={styles.halfWidth}>
+              <label style={styles.label}>Value</label>
               <select
                 style={styles.select}
                 value={action.value === false ? 'false' : 'true'}
@@ -1107,17 +1279,113 @@ const SceneCreator = ({
           </div>
         );
 
+      case 'startQuest':
+      case 'completeQuest':
+        return (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Quest ID</label>
+            <input
+              style={styles.input}
+              value={action.questId || ''}
+              onChange={(e) => updateAction(nodeIndex, actionIndex, { questId: e.target.value })}
+              placeholder="quest_id"
+            />
+          </div>
+        );
+
+      case 'applyEffect':
+      case 'removeEffect':
+        return (
+          <div>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Effect</label>
+              {allEffects.length > 0 ? (
+                renderEffectSelect(action.effectId, (val) => updateAction(nodeIndex, actionIndex, { effectId: val }))
+              ) : (
+                <input
+                  style={styles.input}
+                  value={action.effectId || ''}
+                  onChange={(e) => updateAction(nodeIndex, actionIndex, { effectId: e.target.value })}
+                  placeholder="effect_id"
+                />
+              )}
+            </div>
+            {action.type === 'applyEffect' && (
+              <div style={styles.row}>
+                <div style={styles.halfWidth}>
+                  <label style={styles.label}>Duration (turns, 0 = permanent)</label>
+                  <input
+                    style={styles.input}
+                    type="number"
+                    value={action.duration || 0}
+                    onChange={(e) => updateAction(nodeIndex, actionIndex, { duration: parseInt(e.target.value) || 0 })}
+                    min="0"
+                  />
+                </div>
+                <div style={styles.halfWidth}>
+                  <label style={styles.label}>Stacks</label>
+                  <input
+                    style={styles.input}
+                    type="number"
+                    value={action.stacks || 1}
+                    onChange={(e) => updateAction(nodeIndex, actionIndex, { stacks: parseInt(e.target.value) || 1 })}
+                    min="1"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        );
+
+      case 'unlockLocation':
+        return (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Location to Unlock</label>
+            {allLocations.length > 0 ? (
+              renderLocationSelect(action.locationId, (val) => updateAction(nodeIndex, actionIndex, { locationId: val }))
+            ) : (
+              <input
+                style={styles.input}
+                value={action.locationId || ''}
+                onChange={(e) => updateAction(nodeIndex, actionIndex, { locationId: e.target.value })}
+                placeholder="location_id"
+              />
+            )}
+          </div>
+        );
+
+      case 'teleport':
+        return (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Destination Location</label>
+            {allLocations.length > 0 ? (
+              renderLocationSelect(action.locationId, (val) => updateAction(nodeIndex, actionIndex, { locationId: val }))
+            ) : (
+              <input
+                style={styles.input}
+                value={action.locationId || ''}
+                onChange={(e) => updateAction(nodeIndex, actionIndex, { locationId: e.target.value })}
+                placeholder="location_id"
+              />
+            )}
+          </div>
+        );
+
       case 'showToast':
         return (
           <div>
             <div style={styles.row}>
               <div style={styles.halfWidth}>
+                <label style={styles.label}>Toast Type</label>
                 <select
                   style={styles.select}
                   value={action.toastType || 'info'}
                   onChange={(e) => updateAction(nodeIndex, actionIndex, { toastType: e.target.value })}
                 >
                   <option value="info">Info</option>
+                  <option value="success">Success</option>
+                  <option value="warning">Warning</option>
+                  <option value="error">Error</option>
                   <option value="buff">Buff</option>
                   <option value="debuff">Debuff</option>
                   <option value="item">Item</option>
@@ -1126,60 +1394,210 @@ const SceneCreator = ({
                 </select>
               </div>
               <div style={styles.halfWidth}>
+                <label style={styles.label}>Title</label>
                 <input
                   style={styles.input}
                   value={action.title || ''}
                   onChange={(e) => updateAction(nodeIndex, actionIndex, { title: e.target.value })}
-                  placeholder="Title"
+                  placeholder="Toast Title"
                 />
               </div>
             </div>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Message</label>
+              <input
+                style={styles.input}
+                value={action.message || ''}
+                onChange={(e) => updateAction(nodeIndex, actionIndex, { message: e.target.value })}
+                placeholder="Toast message..."
+              />
+            </div>
+          </div>
+        );
+
+      case 'playSound':
+        return (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Sound ID or Path</label>
             <input
-              style={{ ...styles.input, marginTop: '8px' }}
-              value={action.message || ''}
-              onChange={(e) => updateAction(nodeIndex, actionIndex, { message: e.target.value })}
-              placeholder="Message"
+              style={styles.input}
+              value={action.soundId || ''}
+              onChange={(e) => updateAction(nodeIndex, actionIndex, { soundId: e.target.value })}
+              placeholder="sound_id or /sounds/effect.mp3"
+            />
+          </div>
+        );
+
+      case 'playMusic':
+        return (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Music ID or Path</label>
+            <input
+              style={styles.input}
+              value={action.musicId || ''}
+              onChange={(e) => updateAction(nodeIndex, actionIndex, { musicId: e.target.value })}
+              placeholder="music_id or /music/track.mp3"
             />
           </div>
         );
 
       case 'modifyRelationship':
         return (
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
+          <div>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>NPC</label>
+              {allNPCs.length > 0 ? (
+                renderNPCSelect(action.npcId, (val) => updateAction(nodeIndex, actionIndex, { npcId: val }))
+              ) : (
+                <input
+                  style={styles.input}
+                  value={action.npcId || ''}
+                  onChange={(e) => updateAction(nodeIndex, actionIndex, { npcId: e.target.value })}
+                  placeholder="npc_id"
+                />
+              )}
+            </div>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Relationship Change (can be negative)</label>
+              <input
+                style={styles.input}
+                type="number"
+                value={action.amount || 0}
+                onChange={(e) => updateAction(nodeIndex, actionIndex, { amount: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+          </div>
+        );
+
+      // Time manipulation actions
+      case 'setTimeOfDay':
+        return (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Set Time To</label>
+            <select
+              style={styles.select}
+              value={action.target || 'day'}
+              onChange={(e) => updateAction(nodeIndex, actionIndex, { target: e.target.value })}
+            >
+              <option value="day">Day (7:00 AM)</option>
+              <option value="night">Night (9:00 PM)</option>
+            </select>
+            <div style={{ color: '#808090', fontSize: '11px', marginTop: '4px' }}>
+              Day increments only when going backwards in time
+            </div>
+          </div>
+        );
+
+      case 'modifyTime':
+        return (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Minutes to Add/Subtract</label>
+            <input
+              style={styles.input}
+              type="number"
+              value={action.minutes || 0}
+              onChange={(e) => updateAction(nodeIndex, actionIndex, { minutes: parseInt(e.target.value) || 0 })}
+              placeholder="60 = 1 hour, -30 = back 30 min"
+            />
+            <div style={{ color: '#808090', fontSize: '11px', marginTop: '4px' }}>
+              Positive = forward, Negative = backward in time
+            </div>
+          </div>
+        );
+
+      // NPC location actions
+      case 'teleportNPC':
+        return (
+          <div>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>NPC to Teleport</label>
+              {allNPCs.length > 0 ? (
+                renderNPCSelect(action.npcId, (val) => updateAction(nodeIndex, actionIndex, { npcId: val }))
+              ) : (
+                <input
+                  style={styles.input}
+                  value={action.npcId || ''}
+                  onChange={(e) => updateAction(nodeIndex, actionIndex, { npcId: e.target.value })}
+                  placeholder="npc_id"
+                />
+              )}
+            </div>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Destination Location</label>
+              {allLocations.length > 0 ? (
+                renderLocationSelect(action.locationId, (val) => updateAction(nodeIndex, actionIndex, { locationId: val }))
+              ) : (
+                <input
+                  style={styles.input}
+                  value={action.locationId || ''}
+                  onChange={(e) => updateAction(nodeIndex, actionIndex, { locationId: e.target.value })}
+                  placeholder="location_id"
+                />
+              )}
+            </div>
+            <div style={{ color: '#808090', fontSize: '11px', marginTop: '4px' }}>
+              Temporary - NPC returns to schedule on next time period change
+            </div>
+          </div>
+        );
+
+      case 'hideNPC':
+        return (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>NPC to Hide</label>
+            {allNPCs.length > 0 ? (
+              renderNPCSelect(action.npcId, (val) => updateAction(nodeIndex, actionIndex, { npcId: val }))
+            ) : (
               <input
                 style={styles.input}
                 value={action.npcId || ''}
                 onChange={(e) => updateAction(nodeIndex, actionIndex, { npcId: e.target.value })}
                 placeholder="npc_id"
               />
+            )}
+            <div style={{ color: '#808090', fontSize: '11px', marginTop: '4px' }}>
+              NPC will be removed from all locations until shown again
             </div>
-            <div style={styles.halfWidth}>
+          </div>
+        );
+
+      case 'showNPC':
+        return (
+          <div style={styles.formGroup}>
+            <label style={styles.label}>NPC to Show</label>
+            {allNPCs.length > 0 ? (
+              renderNPCSelect(action.npcId, (val) => updateAction(nodeIndex, actionIndex, { npcId: val }))
+            ) : (
               <input
                 style={styles.input}
-                type="number"
-                value={action.amount || 0}
-                onChange={(e) => updateAction(nodeIndex, actionIndex, { amount: parseInt(e.target.value) || 0 })}
-                placeholder="Amount"
+                value={action.npcId || ''}
+                onChange={(e) => updateAction(nodeIndex, actionIndex, { npcId: e.target.value })}
+                placeholder="npc_id"
               />
+            )}
+            <div style={{ color: '#808090', fontSize: '11px', marginTop: '4px' }}>
+              Restores a hidden NPC to their scheduled location
             </div>
           </div>
         );
 
       default:
         return (
-          <input
-            style={styles.input}
-            value={action.value || action.itemId || action.effectId || action.questId || action.locationId || ''}
-            onChange={(e) => {
-              const key = action.type.includes('Item') ? 'itemId' :
-                action.type.includes('Effect') ? 'effectId' :
-                  action.type.includes('Quest') ? 'questId' :
-                    action.type.includes('Location') ? 'locationId' : 'value';
-              updateAction(nodeIndex, actionIndex, { [key]: e.target.value });
-            }}
-            placeholder="Value"
-          />
+          <div style={styles.formGroup}>
+            <label style={styles.label}>Value</label>
+            <input
+              style={styles.input}
+              value={action.value || action.itemId || action.effectId || action.questId || action.locationId || ''}
+              onChange={(e) => {
+                const key = action.type.includes('Item') ? 'itemId' :
+                  action.type.includes('Effect') ? 'effectId' :
+                    action.type.includes('Quest') ? 'questId' :
+                      action.type.includes('Location') ? 'locationId' : 'value';
+                updateAction(nodeIndex, actionIndex, { [key]: e.target.value });
+              }}
+              placeholder="Value"
+            />
+          </div>
         );
     }
   };
@@ -1318,7 +1736,7 @@ const SceneCreator = ({
             />
           </div>
           <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {COMMON_TAGS.filter(t => !formData.tags.includes(t)).slice(0, 12).map(tag => (
+            {suggestedTags.filter(t => !formData.tags.includes(t)).slice(0, 20).map(tag => (
               <button
                 key={tag}
                 style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}

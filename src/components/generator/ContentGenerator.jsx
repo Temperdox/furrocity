@@ -7,7 +7,10 @@ import { saveAs } from 'file-saver';
 import { ImportSystem } from './ImportSystem';
 import ImportWarningsModal from './ImportWarningsModal';
 
-// Import tab components (we'll create these)
+// Datapack loader for accessing existing game content
+import { datapackLoader } from './DatapackLoader';
+
+// Import tab components
 import ItemCreator from './tabs/ItemCreator';
 import SceneCreator from './tabs/SceneCreator';
 import LocationCreator from './tabs/LocationCreator';
@@ -16,6 +19,9 @@ import EnemyCreator from './tabs/EnemyCreator';
 import EffectCreator from './tabs/EffectCreator';
 import CharacterCreator from './tabs/CharacterCreator';
 import SpriteSheetManager from './tabs/SpriteSheetManager';
+import QuestCreator from './tabs/QuestCreator';
+import LootTableCreator from './tabs/LootTableCreator';
+import SkillCreator from './tabs/SkillCreator';
 
 const styles = {
   overlay: {
@@ -177,18 +183,72 @@ const styles = {
     color: '#c0ffc0',
     fontSize: '14px',
   },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(26, 26, 46, 0.95)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 150,
+  },
+  loadingSpinner: {
+    width: '60px',
+    height: '60px',
+    border: '4px solid #2a2a4a',
+    borderTop: '4px solid #ffd700',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+    marginBottom: '20px',
+  },
+  loadingText: {
+    color: '#ffd700',
+    fontSize: '20px',
+    fontWeight: 'bold',
+    marginBottom: '10px',
+  },
+  loadingSubtext: {
+    color: '#a0a0c0',
+    fontSize: '14px',
+  },
+  loadingProgressBar: {
+    width: '300px',
+    height: '6px',
+    backgroundColor: '#2a2a4a',
+    borderRadius: '3px',
+    marginTop: '20px',
+    overflow: 'hidden',
+  },
+  loadingProgressFill: {
+    height: '100%',
+    backgroundColor: '#ffd700',
+    borderRadius: '3px',
+    animation: 'loadingProgress 2s ease-in-out infinite',
+  },
 };
 
 const TABS = [
   { id: 'items', label: 'Items', icon: '⚔️' },
   { id: 'scenes', label: 'Scenes', icon: '📜' },
+  { id: 'quests', label: 'Quests', icon: '📋' },
   { id: 'locations', label: 'Locations', icon: '🏠' },
   { id: 'npcs', label: 'NPCs', icon: '👤' },
   { id: 'enemies', label: 'Enemies', icon: '👹' },
+  { id: 'skills', label: 'Skills', icon: '⚡' },
   { id: 'effects', label: 'Effects', icon: '✨' },
+  { id: 'lootTables', label: 'Loot Tables', icon: '🎁' },
   { id: 'characters', label: 'Characters', icon: '🧑' },
   { id: 'sprites', label: 'Sprites', icon: '🖼️' },
 ];
+
+// Storage keys
+const STORAGE_KEY = 'contentGenerator_data';
+const STORAGE_TIMESTAMP_KEY = 'contentGenerator_lastSave';
+const AUTOSAVE_INTERVAL = 30000; // 30 seconds
 
 const ContentGenerator = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('items');
@@ -202,14 +262,38 @@ const ContentGenerator = ({ onClose }) => {
   const fileInputRef = useRef(null);
   const importSystem = useRef(new ImportSystem());
 
+  // Recovery modal state
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [recoveryData, setRecoveryData] = useState(null);
+  const [lastSaveTime, setLastSaveTime] = useState(null);
+
+  // Datapack content from game datapacks (for selection dropdowns)
+  const [datapackContent, setDatapackContent] = useState({
+    items: [],
+    locations: [],
+    enemies: [],
+    effects: [],
+    npcs: [],
+    scenes: [],
+    characters: [],
+    merchants: [],
+    substances: [],
+    lootTables: [],
+    encounterTables: [],
+  });
+  const [datapackLoading, setDatapackLoading] = useState(true);
+
   // Content storage for all types
   const [content, setContent] = useState({
     items: [],
     scenes: [],
+    quests: [],
     locations: [],
     npcs: [],
     enemies: [],
+    skills: [],
     effects: [],
+    lootTables: [],
     characters: [],
     sprites: [],
   });
@@ -217,23 +301,100 @@ const ContentGenerator = ({ onClose }) => {
   // Track what's being edited
   const [editingItem, setEditingItem] = useState(null);
 
-  // Load saved content from localStorage on mount
+  // Load datapack content on mount
   useEffect(() => {
-    const saved = localStorage.getItem('contentGenerator_data');
-    if (saved) {
+    const loadDatapacks = async () => {
+      setDatapackLoading(true);
+      try {
+        const loaded = await datapackLoader.loadAll();
+        setDatapackContent(loaded);
+      } catch (error) {
+        console.error('Failed to load datapack content:', error);
+      } finally {
+        setDatapackLoading(false);
+      }
+    };
+    loadDatapacks();
+  }, []);
+
+  // Check for recoverable session on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const savedTimestamp = localStorage.getItem(STORAGE_TIMESTAMP_KEY);
+
+    if (saved && savedTimestamp) {
       try {
         const parsed = JSON.parse(saved);
-        setContent(prev => ({ ...prev, ...parsed }));
+        const timestamp = parseInt(savedTimestamp, 10);
+        const hasContent = Object.values(parsed).some(arr => arr && arr.length > 0);
+
+        if (hasContent) {
+          // Show recovery modal
+          setRecoveryData(parsed);
+          setLastSaveTime(new Date(timestamp));
+          setShowRecoveryModal(true);
+        }
       } catch (e) {
-        console.error('Failed to load saved content:', e);
+        console.error('Failed to parse saved content:', e);
       }
     }
   }, []);
 
-  // Auto-save content to localStorage
-  useEffect(() => {
-    localStorage.setItem('contentGenerator_data', JSON.stringify(content));
+  // Handle recovery decision
+  const handleRecoverSession = useCallback(() => {
+    if (recoveryData) {
+      setContent(prev => ({ ...prev, ...recoveryData }));
+    }
+    setShowRecoveryModal(false);
+    setRecoveryData(null);
+  }, [recoveryData]);
+
+  const handleDiscardSession = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_TIMESTAMP_KEY);
+    setShowRecoveryModal(false);
+    setRecoveryData(null);
+  }, []);
+
+  // Auto-save content to localStorage with timestamp
+  const saveToStorage = useCallback(() => {
+    const hasContent = Object.values(content).some(arr => arr && arr.length > 0);
+    if (hasContent) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
+      localStorage.setItem(STORAGE_TIMESTAMP_KEY, Date.now().toString());
+      setLastSaveTime(new Date());
+    }
   }, [content]);
+
+  // Save on content change (debounced by React's batching)
+  useEffect(() => {
+    saveToStorage();
+  }, [content, saveToStorage]);
+
+  // Periodic auto-save every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      saveToStorage();
+    }, AUTOSAVE_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [saveToStorage]);
+
+  // Save before unload (browser close/refresh)
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      saveToStorage();
+      // Show warning if there's unsaved content
+      const hasContent = Object.values(content).some(arr => arr && arr.length > 0);
+      if (hasContent) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [content, saveToStorage]);
 
   // Import handling
   const handleImportFiles = useCallback(async (files) => {
@@ -378,10 +539,13 @@ const ContentGenerator = ({ onClose }) => {
       setContent({
         items: [],
         scenes: [],
+        quests: [],
         locations: [],
         npcs: [],
         enemies: [],
+        skills: [],
         effects: [],
+        lootTables: [],
         characters: [],
         sprites: [],
       });
@@ -489,6 +653,42 @@ const ContentGenerator = ({ onClose }) => {
       packJson.content.effects = { path: 'effects/', autoLoad: true };
     }
 
+    // Quests
+    if (content.quests.length > 0) {
+      const questsFolder = datapack.folder('quests');
+      const cleanQuests = content.quests.map(quest => {
+        const clean = { ...quest };
+        delete clean._id;
+        return clean;
+      });
+      questsFolder.file('custom_quests.json', JSON.stringify(cleanQuests, null, 2));
+      packJson.content.quests = { path: 'quests/', autoLoad: true };
+    }
+
+    // Skills
+    if (content.skills.length > 0) {
+      const skillsFolder = datapack.folder('skills');
+      const cleanSkills = content.skills.map(skill => {
+        const clean = { ...skill };
+        delete clean._id;
+        return clean;
+      });
+      skillsFolder.file('custom_skills.json', JSON.stringify(cleanSkills, null, 2));
+      packJson.content.skills = { path: 'skills/', autoLoad: true };
+    }
+
+    // Loot Tables
+    if (content.lootTables.length > 0) {
+      const lootTablesFolder = datapack.folder('loot_tables');
+      const cleanLootTables = content.lootTables.map(table => {
+        const clean = { ...table };
+        delete clean._id;
+        return clean;
+      });
+      lootTablesFolder.file('custom_loot_tables.json', JSON.stringify(cleanLootTables, null, 2));
+      packJson.content.lootTables = { path: 'loot_tables/', autoLoad: true };
+    }
+
     // Characters (special handling - exports player template)
     if (content.characters.length > 0) {
       const charactersFolder = datapack.folder('characters');
@@ -539,6 +739,9 @@ const ContentGenerator = ({ onClose }) => {
       onEdit: (item) => handleEditContent(activeTab, item),
       editingItem: editingItem?.type === activeTab ? editingItem.item : null,
       onCancelEdit: () => setEditingItem(null),
+      // Datapack content for selection dropdowns (existing game content)
+      datapackContent,
+      datapackLoading,
     };
 
     switch (activeTab) {
@@ -546,14 +749,20 @@ const ContentGenerator = ({ onClose }) => {
         return <ItemCreator {...commonProps} />;
       case 'scenes':
         return <SceneCreator {...commonProps} />;
+      case 'quests':
+        return <QuestCreator {...commonProps} />;
       case 'locations':
         return <LocationCreator {...commonProps} npcs={content.npcs} enemies={content.enemies} />;
       case 'npcs':
         return <NPCCreator {...commonProps} locations={content.locations} />;
       case 'enemies':
         return <EnemyCreator {...commonProps} scenes={content.scenes} />;
+      case 'skills':
+        return <SkillCreator {...commonProps} />;
       case 'effects':
         return <EffectCreator {...commonProps} />;
+      case 'lootTables':
+        return <LootTableCreator {...commonProps} />;
       case 'characters':
         return <CharacterCreator {...commonProps} />;
       case 'sprites':
@@ -563,8 +772,26 @@ const ContentGenerator = ({ onClose }) => {
     }
   };
 
+  // Format time ago
+  const formatTimeAgo = (date) => {
+    if (!date) return '';
+    const seconds = Math.floor((new Date() - date) / 1000);
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return date.toLocaleDateString();
+  };
+
+  // Count items in recovery data
+  const getRecoveryCount = () => {
+    if (!recoveryData) return 0;
+    return Object.values(recoveryData).reduce((sum, arr) => sum + (arr?.length || 0), 0);
+  };
+
   return createPortal(
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay}>
       <div
         style={{ ...styles.container, position: 'relative' }}
         onClick={e => e.stopPropagation()}
@@ -578,6 +805,33 @@ const ContentGenerator = ({ onClose }) => {
           <div style={styles.dropZone}>
             <div style={styles.dropZoneText}>Drop files to import</div>
             <div style={styles.dropZoneSubtext}>Supports .json and .zip files</div>
+          </div>
+        )}
+
+        {/* Loading Screen for Datapack Resources */}
+        {datapackLoading && (
+          <div style={styles.loadingOverlay}>
+            <style>
+              {`
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+                @keyframes loadingProgress {
+                  0% { width: 0%; margin-left: 0; }
+                  50% { width: 70%; margin-left: 15%; }
+                  100% { width: 0%; margin-left: 100%; }
+                }
+              `}
+            </style>
+            <div style={styles.loadingSpinner} />
+            <div style={styles.loadingText}>Loading Datapack Resources</div>
+            <div style={styles.loadingSubtext}>
+              Fetching items, locations, NPCs, enemies, and more...
+            </div>
+            <div style={styles.loadingProgressBar}>
+              <div style={styles.loadingProgressFill} />
+            </div>
           </div>
         )}
 
@@ -658,18 +912,76 @@ const ContentGenerator = ({ onClose }) => {
         {/* Status Bar */}
         <div style={styles.statusBar}>
           <span>
-            Content auto-saved to browser storage | Drag & drop files to import
+            {lastSaveTime ? `Auto-saved ${formatTimeAgo(lastSaveTime)}` : 'Auto-save enabled'} | Drag & drop files to import
           </span>
           <span>
-            Total: {getTotalCount()} items |
-            Items: {content.items.length} |
-            Scenes: {content.scenes.length} |
-            Locations: {content.locations.length} |
-            NPCs: {content.npcs.length} |
-            Enemies: {content.enemies.length} |
-            Effects: {content.effects.length}
+            Total: {getTotalCount()} items
+            {datapackLoading ? ' | Loading datapacks...' : ` | ${Object.values(datapackContent).reduce((sum, arr) => sum + arr.length, 0)} datapack resources loaded`}
           </span>
         </div>
+
+        {/* Session Recovery Modal */}
+        {showRecoveryModal && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 200,
+          }}>
+            <div style={{
+              backgroundColor: '#252540',
+              borderRadius: '12px',
+              border: '2px solid #4a7c4a',
+              padding: '30px',
+              maxWidth: '500px',
+              textAlign: 'center',
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '15px' }}>💾</div>
+              <h3 style={{ color: '#ffd700', margin: '0 0 15px 0', fontSize: '20px' }}>
+                Recover Previous Session?
+              </h3>
+              <p style={{ color: '#a0a0c0', margin: '0 0 10px 0', fontSize: '14px' }}>
+                Found unsaved content from a previous session:
+              </p>
+              <p style={{ color: '#4a9f4a', margin: '0 0 5px 0', fontSize: '16px', fontWeight: 'bold' }}>
+                {getRecoveryCount()} items
+              </p>
+              <p style={{ color: '#808090', margin: '0 0 25px 0', fontSize: '12px' }}>
+                Last saved: {lastSaveTime ? lastSaveTime.toLocaleString() : 'Unknown'}
+              </p>
+              <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+                <button
+                  style={{
+                    ...styles.button,
+                    backgroundColor: '#4a7c4a',
+                    color: 'white',
+                    padding: '12px 30px',
+                  }}
+                  onClick={handleRecoverSession}
+                >
+                  ✓ Recover Session
+                </button>
+                <button
+                  style={{
+                    ...styles.button,
+                    backgroundColor: '#5a3a3a',
+                    color: '#ff9999',
+                    padding: '12px 30px',
+                  }}
+                  onClick={handleDiscardSession}
+                >
+                  ✕ Start Fresh
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Import Warnings Modal */}
         <ImportWarningsModal

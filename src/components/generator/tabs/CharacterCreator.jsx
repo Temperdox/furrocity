@@ -244,30 +244,20 @@ const generateCupSizes = () => {
 
 const CUP_SIZES = generateCupSizes();
 
-const SPECIES_OPTIONS = [
-  { value: 'human', label: 'Human' },
-  { value: 'wolf', label: 'Wolf' },
-  { value: 'fox', label: 'Fox' },
-  { value: 'cat', label: 'Cat' },
-  { value: 'rabbit', label: 'Rabbit' },
-  { value: 'dragon', label: 'Dragon' },
-  { value: 'demon', label: 'Demon' },
-  { value: 'elf', label: 'Elf' },
+// Suggested species - users can also type custom values
+const SUGGESTED_SPECIES = [
+  'human', 'wolf', 'fox', 'cat', 'rabbit', 'dragon', 'demon', 'elf',
+  'dog', 'bear', 'horse', 'deer', 'shark', 'kobold', 'succubus', 'vampire',
 ];
 
-const BODY_TYPES = [
-  { value: 'slender', label: 'Slender' },
-  { value: 'average', label: 'Average' },
-  { value: 'athletic', label: 'Athletic' },
-  { value: 'curvy', label: 'Curvy' },
-  { value: 'muscular', label: 'Muscular' },
+// Suggested body types - users can also type custom values
+const SUGGESTED_BODY_TYPES = [
+  'slender', 'average', 'athletic', 'curvy', 'muscular', 'petite', 'thick', 'slim',
 ];
 
-const GENDER_OPTIONS = [
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-  { value: 'futa', label: 'Futa' },
-  { value: 'nonbinary', label: 'Non-binary' },
+// Suggested genders - users can also type custom values
+const SUGGESTED_GENDERS = [
+  'male', 'female', 'futa', 'nonbinary', 'androgynous', 'fluid',
 ];
 
 const GENITALIA_TYPES = [
@@ -277,12 +267,9 @@ const GENITALIA_TYPES = [
   { value: 'both', label: 'Both (Futa)' },
 ];
 
-const FACE_STYLES = [
-  { value: 'default', label: 'Default' },
-  { value: 'cute', label: 'Cute' },
-  { value: 'fierce', label: 'Fierce' },
-  { value: 'mysterious', label: 'Mysterious' },
-  { value: 'seductive', label: 'Seductive' },
+// Suggested face styles - users can also type custom values
+const SUGGESTED_FACE_STYLES = [
+  'default', 'cute', 'fierce', 'mysterious', 'seductive', 'gentle', 'stern', 'playful',
 ];
 
 const DEFAULT_CHARACTER = {
@@ -351,6 +338,8 @@ const CharacterCreator = ({
   onEdit,
   editingItem,
   onCancelEdit,
+  datapackContent = {},
+  datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_CHARACTER });
   const [hoveredItem, setHoveredItem] = useState(null);
@@ -525,43 +514,52 @@ const CharacterCreator = ({
               <div style={styles.thirdWidth}>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Species</label>
-                  <select
-                    style={styles.select}
+                  <input
+                    style={styles.input}
+                    list="species-suggestions"
                     value={formData.species}
                     onChange={(e) => handleChange('species', e.target.value)}
-                  >
-                    {SPECIES_OPTIONS.map(s => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
+                    placeholder="e.g., human, wolf, elf"
+                  />
+                  <datalist id="species-suggestions">
+                    {SUGGESTED_SPECIES.map(species => (
+                      <option key={species} value={species} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
               </div>
               <div style={styles.thirdWidth}>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Gender</label>
-                  <select
-                    style={styles.select}
+                  <input
+                    style={styles.input}
+                    list="gender-suggestions"
                     value={formData.gender}
                     onChange={(e) => handleChange('gender', e.target.value)}
-                  >
-                    {GENDER_OPTIONS.map(g => (
-                      <option key={g.value} value={g.value}>{g.label}</option>
+                    placeholder="e.g., male, female, futa"
+                  />
+                  <datalist id="gender-suggestions">
+                    {SUGGESTED_GENDERS.map(gender => (
+                      <option key={gender} value={gender} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
               </div>
               <div style={styles.thirdWidth}>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Body Type</label>
-                  <select
-                    style={styles.select}
+                  <input
+                    style={styles.input}
+                    list="bodytype-suggestions"
                     value={formData.bodyType}
                     onChange={(e) => handleChange('bodyType', e.target.value)}
-                  >
-                    {BODY_TYPES.map(b => (
-                      <option key={b.value} value={b.value}>{b.label}</option>
+                    placeholder="e.g., slender, curvy, muscular"
+                  />
+                  <datalist id="bodytype-suggestions">
+                    {SUGGESTED_BODY_TYPES.map(bodyType => (
+                      <option key={bodyType} value={bodyType} />
                     ))}
-                  </select>
+                  </datalist>
                 </div>
               </div>
             </div>
@@ -704,15 +702,18 @@ const CharacterCreator = ({
                 <div style={styles.halfWidth}>
                   <div style={styles.formGroup}>
                     <label style={styles.label}>Face Style</label>
-                    <select
-                      style={styles.select}
+                    <input
+                      style={styles.input}
+                      list="facestyle-suggestions"
                       value={formData.paperdoll.faceStyle}
                       onChange={(e) => handleNestedChange('paperdoll', 'faceStyle', e.target.value)}
-                    >
-                      {FACE_STYLES.map(f => (
-                        <option key={f.value} value={f.value}>{f.label}</option>
+                      placeholder="e.g., default, cute, fierce"
+                    />
+                    <datalist id="facestyle-suggestions">
+                      {SUGGESTED_FACE_STYLES.map(style => (
+                        <option key={style} value={style} />
                       ))}
-                    </select>
+                    </datalist>
                   </div>
                 </div>
                 <div style={styles.halfWidth}>

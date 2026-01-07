@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { collectTags } from '../DatapackLoader';
 
 const styles = {
   container: {
@@ -201,25 +202,29 @@ const styles = {
   },
 };
 
-const ITEM_TYPES = [
-  { value: 'weapon', label: 'Weapon' },
-  { value: 'armor', label: 'Armor' },
-  { value: 'accessory', label: 'Accessory' },
-  { value: 'consumable', label: 'Consumable' },
-  { value: 'material', label: 'Material' },
-  { value: 'quest', label: 'Quest Item' },
-  { value: 'misc', label: 'Miscellaneous' },
-  { value: 'toy', label: 'Toy (NSFW)' },
-  { value: 'clothing', label: 'Clothing' },
+// Suggested item types - users can also type custom values
+const SUGGESTED_TYPES = [
+  'weapon', 'armor', 'accessory', 'consumable', 'material',
+  'quest', 'misc', 'toy', 'clothing', 'tool', 'key',
 ];
 
-const RARITY_LEVELS = [
-  { value: 'common', label: 'Common', color: '#a0a0a0' },
-  { value: 'uncommon', label: 'Uncommon', color: '#4a9c4a' },
-  { value: 'rare', label: 'Rare', color: '#4a4a9c' },
-  { value: 'epic', label: 'Epic', color: '#9c4a9c' },
-  { value: 'legendary', label: 'Legendary', color: '#ffa500' },
+// Suggested rarities - users can also type custom values
+const SUGGESTED_RARITIES = [
+  'common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'unique',
 ];
+
+// Rarity colors for display (custom rarities will use default color)
+const RARITY_COLORS = {
+  common: '#a0a0a0',
+  uncommon: '#4a9c4a',
+  rare: '#4a4a9c',
+  epic: '#9c4a9c',
+  legendary: '#ffa500',
+  mythic: '#ff4500',
+  unique: '#00ffff',
+};
+
+const getRarityColor = (rarity) => RARITY_COLORS[rarity] || '#4a4a6a';
 
 const EQUIPMENT_SLOTS = [
   // Standard slots
@@ -270,7 +275,8 @@ const EQUIPMENT_SLOTS = [
   { value: 'genital', label: 'Genital (Generic)', category: 'nsfw' },
 ];
 
-const COMMON_TAGS = [
+// Fallback tags shown when no dynamic tags are available
+const FALLBACK_TAGS = [
   'weapon', 'armor', 'consumable', 'material', 'quest', 'misc',
   'sword', 'axe', 'bow', 'staff', 'dagger', 'mace',
   'light', 'medium', 'heavy', 'shield',
@@ -278,7 +284,6 @@ const COMMON_TAGS = [
   'cursed', 'blessed', 'magical', 'rare',
   'nsfw', 'toy', 'clothing', 'jewelry',
   'crafting', 'cooking', 'alchemy',
-  // NSFW specific tags
   'piercing', 'vibrator', 'plug', 'restraint', 'gag',
   'chastity', 'collar', 'leash', 'blindfold', 'clamps',
 ];
@@ -380,10 +385,22 @@ const ItemCreator = ({
   onEdit,
   editingItem,
   onCancelEdit,
+  datapackContent = {},
+  datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_ITEM });
   const [tagInput, setTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
+
+  // Compute dynamic tag suggestions from datapack content and user-created items
+  const suggestedTags = useMemo(() => {
+    return collectTags({
+      datapackContent,
+      userContent: items,
+      commonTags: FALLBACK_TAGS,
+      contentType: 'items',
+    });
+  }, [datapackContent, items]);
 
   // Load editing item when it changes
   useEffect(() => {
@@ -549,29 +566,35 @@ const ItemCreator = ({
           <div style={styles.halfWidth}>
             <div style={styles.formGroup}>
               <label style={styles.label}>Type</label>
-              <select
-                style={styles.select}
+              <input
+                style={styles.input}
+                list="item-type-suggestions"
                 value={formData.type}
                 onChange={(e) => handleChange('type', e.target.value)}
-              >
-                {ITEM_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
+                placeholder="e.g., weapon, armor, consumable"
+              />
+              <datalist id="item-type-suggestions">
+                {SUGGESTED_TYPES.map(type => (
+                  <option key={type} value={type} />
                 ))}
-              </select>
+              </datalist>
             </div>
           </div>
           <div style={styles.halfWidth}>
             <div style={styles.formGroup}>
               <label style={styles.label}>Rarity</label>
-              <select
-                style={styles.select}
+              <input
+                style={styles.input}
+                list="item-rarity-suggestions"
                 value={formData.rarity}
                 onChange={(e) => handleChange('rarity', e.target.value)}
-              >
-                {RARITY_LEVELS.map(r => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
+                placeholder="e.g., common, rare, legendary"
+              />
+              <datalist id="item-rarity-suggestions">
+                {SUGGESTED_RARITIES.map(rarity => (
+                  <option key={rarity} value={rarity} />
                 ))}
-              </select>
+              </datalist>
             </div>
           </div>
         </div>
@@ -1029,7 +1052,7 @@ const ItemCreator = ({
             />
           </div>
           <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {COMMON_TAGS.filter(t => !formData.tags.includes(t)).slice(0, 15).map(tag => (
+            {suggestedTags.filter(t => !formData.tags.includes(t)).slice(0, 20).map(tag => (
               <button
                 key={tag}
                 style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
@@ -1142,7 +1165,7 @@ const ItemCreator = ({
                   padding: '2px 6px',
                   borderRadius: '4px',
                   fontSize: '10px',
-                  backgroundColor: RARITY_LEVELS.find(r => r.value === item.rarity)?.color || '#4a4a6a',
+                  backgroundColor: getRarityColor(item.rarity),
                   color: 'white',
                 }}>
                   {item.rarity}

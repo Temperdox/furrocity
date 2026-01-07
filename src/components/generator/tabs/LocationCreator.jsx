@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { collectTags } from '../DatapackLoader';
 
 const styles = {
   container: {
@@ -358,16 +359,10 @@ const styles = {
   },
 };
 
-const LOCATION_TYPES = [
-  { value: 'outdoor', label: 'Outdoor' },
-  { value: 'indoor', label: 'Indoor' },
-  { value: 'dungeon', label: 'Dungeon' },
-  { value: 'town', label: 'Town' },
-  { value: 'cave', label: 'Cave' },
-  { value: 'building', label: 'Building' },
-  { value: 'forest', label: 'Forest' },
-  { value: 'water', label: 'Water/Beach' },
-  { value: 'region', label: 'Region (World Map)' },
+// Suggested location types - users can also type custom values
+const SUGGESTED_LOCATION_TYPES = [
+  'outdoor', 'indoor', 'dungeon', 'town', 'cave', 'building', 'forest',
+  'water', 'region', 'mountain', 'desert', 'swamp', 'ruins', 'castle',
 ];
 
 const LOCATION_SCOPES = [
@@ -398,7 +393,8 @@ const SERVICES = [
   { id: 'dungeon_entrance', label: 'Dungeon Entrance', icon: '🚪' },
 ];
 
-const COMMON_TAGS = [
+// Fallback tags when no dynamic tags available
+const FALLBACK_TAGS = [
   'safe', 'dangerous', 'town', 'wilderness', 'dungeon',
   'shop', 'rest', 'quest', 'combat', 'exploration',
   'nsfw', 'corruption', 'hidden', 'locked',
@@ -723,6 +719,8 @@ const LocationCreator = ({
   onEdit,
   editingItem,
   onCancelEdit,
+  datapackContent = {},
+  datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_LOCATION });
   const [tagInput, setTagInput] = useState('');
@@ -733,13 +731,28 @@ const LocationCreator = ({
   const [selectedEnemy, setSelectedEnemy] = useState('');
   const mapRef = useRef(null);
 
+  // Compute dynamic tag suggestions from datapack content and user-created locations
+  const suggestedTags = useMemo(() => {
+    return collectTags({
+      datapackContent,
+      userContent: items,
+      commonTags: FALLBACK_TAGS,
+      contentType: 'locations',
+    });
+  }, [datapackContent, items]);
+
   const sprites = allContent.sprites || [];
 
-  // Get regions from items (locations with locationType === 'region')
-  const regions = items.filter(loc => loc.locationType === 'region');
+  // Combine datapack content with user-created content for selection dropdowns
+  const allNPCs = [...(datapackContent.npcs || []), ...npcs];
+  const allEnemies = [...(datapackContent.enemies || []), ...enemies];
+  const allLocations = [...(datapackContent.locations || []), ...items];
+
+  // Get regions from all locations (locations with locationType === 'region')
+  const regions = allLocations.filter(loc => loc.locationType === 'region');
 
   // Get local locations (for parent location selection)
-  const localLocations = items.filter(loc => loc.locationType === 'local' || loc.locationType === 'region');
+  const localLocations = allLocations.filter(loc => loc.locationType === 'local' || loc.locationType === 'region');
 
   // Placeholder map images - in real app these would come from game data
   const LOCAL_MAP = '/maps/local_map.png';
@@ -1036,15 +1049,18 @@ const LocationCreator = ({
           <div style={styles.halfWidth}>
             <div style={styles.formGroup}>
               <label style={styles.label}>Type</label>
-              <select
-                style={styles.select}
+              <input
+                style={styles.input}
+                list="location-type-suggestions"
                 value={formData.type}
                 onChange={(e) => handleChange('type', e.target.value)}
-              >
-                {LOCATION_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
+                placeholder="e.g., outdoor, dungeon, town"
+              />
+              <datalist id="location-type-suggestions">
+                {SUGGESTED_LOCATION_TYPES.map(type => (
+                  <option key={type} value={type} />
                 ))}
-              </select>
+              </datalist>
             </div>
           </div>
         </div>
@@ -1301,7 +1317,7 @@ const LocationCreator = ({
               onChange={(e) => setSelectedNpc(e.target.value)}
             >
               <option value="">Select an NPC to add...</option>
-              {npcs.filter(npc => !formData.npcs.includes(npc.id)).map(npc => (
+              {allNPCs.filter(npc => !formData.npcs.includes(npc.id)).map(npc => (
                 <option key={npc.id} value={npc.id}>{npc.name} ({npc.id})</option>
               ))}
             </select>
@@ -1318,7 +1334,7 @@ const LocationCreator = ({
           {formData.npcs.length > 0 ? (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {formData.npcs.map(npcId => {
-                const npcData = npcs.find(n => n.id === npcId);
+                const npcData = allNPCs.find(n => n.id === npcId);
                 return (
                   <div key={npcId} style={{
                     ...styles.tag,
@@ -1339,7 +1355,7 @@ const LocationCreator = ({
             </div>
           ) : (
             <div style={{ color: '#606080', fontSize: '12px', fontStyle: 'italic' }}>
-              No NPCs added. {npcs.length === 0 && 'Create NPCs in the NPCs tab first.'}
+              No NPCs added. {allNPCs.length === 0 && 'Create NPCs in the NPCs tab or add them in datapacks.'}
             </div>
           )}
         </div>
@@ -1401,7 +1417,7 @@ const LocationCreator = ({
                 onChange={(e) => setSelectedEnemy(e.target.value)}
               >
                 <option value="">Select an enemy to add...</option>
-                {enemies.filter(e => !formData.enemyTables.some(et => et.enemyId === e.id)).map(enemy => (
+                {allEnemies.filter(e => !formData.enemyTables.some(et => et.enemyId === e.id)).map(enemy => (
                   <option key={enemy.id} value={enemy.id}>{enemy.name} ({enemy.id})</option>
                 ))}
               </select>
@@ -1418,7 +1434,7 @@ const LocationCreator = ({
             {formData.enemyTables.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {formData.enemyTables.map(entry => {
-                  const enemyData = enemies.find(e => e.id === entry.enemyId);
+                  const enemyData = allEnemies.find(e => e.id === entry.enemyId);
                   const totalVariantChance = Object.values(entry.variantChances).reduce((a, b) => a + b, 0);
                   return (
                     <div key={entry.enemyId} style={{
@@ -1495,7 +1511,7 @@ const LocationCreator = ({
                     {(() => {
                       const totalWeight = formData.enemyTables.reduce((sum, e) => sum + e.weight, 0);
                       return formData.enemyTables.map(entry => {
-                        const enemyData = enemies.find(e => e.id === entry.enemyId);
+                        const enemyData = allEnemies.find(e => e.id === entry.enemyId);
                         const percentage = totalWeight > 0 ? ((entry.weight / totalWeight) * 100).toFixed(1) : 0;
                         return (
                           <div key={entry.enemyId} style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px' }}>
@@ -1510,7 +1526,7 @@ const LocationCreator = ({
               </div>
             ) : (
               <div style={{ color: '#606080', fontSize: '12px', fontStyle: 'italic', padding: '10px', textAlign: 'center' }}>
-                No enemies in spawn table. {enemies.length === 0 ? 'Create enemies in the Enemies tab first.' : 'Add enemies above.'}
+                No enemies in spawn table. {allEnemies.length === 0 ? 'Create enemies in the Enemies tab or add them in datapacks.' : 'Add enemies above.'}
               </div>
             )}
           </div>
@@ -1535,7 +1551,7 @@ const LocationCreator = ({
             />
           </div>
           <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {COMMON_TAGS.filter(t => !formData.tags.includes(t)).slice(0, 12).map(tag => (
+            {suggestedTags.filter(t => !formData.tags.includes(t)).slice(0, 20).map(tag => (
               <button
                 key={tag}
                 style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
