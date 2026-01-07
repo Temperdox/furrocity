@@ -18,6 +18,11 @@
     "neighbors": ["town_square", "forest_edge"],
     "connectedLocations": ["town_square", "north_road", "forest_path"],
 
+    "navigation": {
+      "down": "inn_cellar",
+      "up": "inn_rooms"
+    },
+
     "mapData": {
       "localMapPosition": { "x": 200, "y": 180 },
       "icon": "inn",
@@ -43,6 +48,113 @@
     "ambiance": {
       "music": "tavern_ambient",
       "sounds": ["fireplace", "chatter"]
+    },
+
+    "firstVisitScene": null,
+    "onEnterScene": null
+  },
+  {
+    "id": "inn_cellar",
+    "name": "Inn Cellar",
+    "description": "A dark, musty cellar beneath the inn. Barrels of ale and wine line the walls, and old crates are stacked in corners.",
+    "type": "building",
+    "locationType": "sub",
+    "parentLocation": "starting_inn",
+    "parentRegion": "crossroads",
+    "tags": ["safe", "cellar", "storage"],
+
+    "inhabited": false,
+    "buildings": 0,
+    "markets": 0,
+
+    "locked": false,
+    "initiallyUnlocked": true,
+
+    "neighbors": [],
+    "connectedLocations": [],
+
+    "navigation": {
+      "up": "starting_inn"
+    },
+
+    "mapData": {
+      "localMapPosition": { "x": 200, "y": 180 },
+      "icon": "cellar",
+      "iconSize": "small",
+      "hidden": true
+    },
+
+    "titleDisplay": {
+      "fontTag": "neutral",
+      "subtitle": "Beneath the Tavern"
+    },
+
+    "features": {
+      "search": true
+    },
+
+    "npcs": [],
+
+    "encounterChance": 0,
+    "encounterTable": null,
+
+    "ambiance": {
+      "music": "cellar_ambient",
+      "sounds": ["dripping", "creaking"]
+    },
+
+    "firstVisitScene": null,
+    "onEnterScene": null
+  },
+  {
+    "id": "inn_rooms",
+    "name": "Inn Guest Rooms",
+    "description": "The upper floor of the inn, with several doors leading to cozy guest rooms. The wooden floorboards creak softly underfoot.",
+    "type": "building",
+    "locationType": "sub",
+    "parentLocation": "starting_inn",
+    "parentRegion": "crossroads",
+    "tags": ["safe", "inn", "rest", "rooms"],
+
+    "inhabited": true,
+    "buildings": 0,
+    "markets": 0,
+
+    "locked": false,
+    "initiallyUnlocked": true,
+
+    "neighbors": [],
+    "connectedLocations": [],
+
+    "navigation": {
+      "down": "starting_inn"
+    },
+
+    "mapData": {
+      "localMapPosition": { "x": 200, "y": 180 },
+      "icon": "rooms",
+      "iconSize": "small",
+      "hidden": true
+    },
+
+    "titleDisplay": {
+      "fontTag": "friendly_town",
+      "subtitle": "A Place to Rest"
+    },
+
+    "features": {
+      "rest": true,
+      "save": true
+    },
+
+    "npcs": ["guest_merchant"],
+
+    "encounterChance": 0,
+    "encounterTable": null,
+
+    "ambiance": {
+      "music": "peaceful_ambient",
+      "sounds": ["creaking", "muffled_chatter"]
     },
 
     "firstVisitScene": null,

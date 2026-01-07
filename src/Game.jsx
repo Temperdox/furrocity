@@ -120,6 +120,7 @@ const GameData = {
       encounterChance: 0,
       actions: ["rest", "interact", "shop", "move"],
       connectedLocations: ["town_square", "forest_edge", "road_north"],
+      navigation: { down: "inn_cellar", up: "inn_rooms" },
       npcs: ["innkeeper_mary", "bard_tom"],
       ambiance: "warm",
       parentRegion: "crossroads",
@@ -127,6 +128,46 @@ const GameData = {
       initiallyUnlocked: true,
       mapData: { localMapPosition: { x: 150, y: 180 } },
       titleDisplay: { fontTag: "friendly_town", subtitle: "A Cozy Rest Stop" }
+    },
+    {
+      id: "inn_cellar",
+      name: "Inn Cellar",
+      description: "A dark, musty cellar beneath the inn. Barrels of ale and wine line the walls.",
+      image: "/locations/cellar.png",
+      tags: ["safe", "cellar", "storage"],
+      encounterChance: 0,
+      actions: ["search", "interact"],
+      connectedLocations: [],
+      navigation: { up: "starting_inn" },
+      npcs: [],
+      ambiance: "dark",
+      parentRegion: "crossroads",
+      parentLocation: "starting_inn",
+      locationType: "sub",
+      locked: false,
+      initiallyUnlocked: true,
+      mapData: { localMapPosition: { x: 150, y: 180 }, hidden: true },
+      titleDisplay: { fontTag: "neutral", subtitle: "Beneath the Tavern" }
+    },
+    {
+      id: "inn_rooms",
+      name: "Inn Guest Rooms",
+      description: "The upper floor of the inn, with several doors leading to cozy guest rooms.",
+      image: "/locations/inn_rooms.png",
+      tags: ["safe", "inn", "rest", "rooms"],
+      encounterChance: 0,
+      actions: ["rest", "interact"],
+      connectedLocations: [],
+      navigation: { down: "starting_inn" },
+      npcs: ["guest_merchant"],
+      ambiance: "peaceful",
+      parentRegion: "crossroads",
+      parentLocation: "starting_inn",
+      locationType: "sub",
+      locked: false,
+      initiallyUnlocked: true,
+      mapData: { localMapPosition: { x: 150, y: 180 }, hidden: true },
+      titleDisplay: { fontTag: "friendly_town", subtitle: "A Place to Rest" }
     },
     {
       id: "town_square",
@@ -4265,11 +4306,11 @@ const DialogueScreen = ({ scene, onComplete }) => {
 };
 
 // Game Location Screen
-const LocationScreen = ({ player, gameState, onAction, onPause }) => {
+const LocationScreen = ({ player, gameState, onAction, onPause, locationSystem, onNavigate, onInteractNpc }) => {
   const location = GameData.locations.find(l => l.id === player.currentLocation);
-  
+
   if (!location) return <div>Error: Location not found</div>;
-  
+
   const actionLabels = {
     rest: '🛏️ Rest',
     interact: '💬 Interact',
@@ -4279,7 +4320,37 @@ const LocationScreen = ({ player, gameState, onAction, onPause }) => {
     search: '🔎 Search',
     stealth: '👁️ Stealth'
   };
-  
+
+  // Get navigation options from location system or directly from location data
+  const navigationOptions = locationSystem
+    ? locationSystem.getNavigationOptions(player.currentLocation, player, gameState)
+    : (location.navigation ? Object.entries(location.navigation).map(([direction, destId]) => {
+        const directionLabels = {
+          up: { icon: '⬆️', label: 'Up' },
+          down: { icon: '⬇️', label: 'Down' },
+          north: { icon: '⬆️', label: 'North' },
+          south: { icon: '⬇️', label: 'South' },
+          east: { icon: '➡️', label: 'East' },
+          west: { icon: '⬅️', label: 'West' },
+          in: { icon: '🚪', label: 'Enter' },
+          out: { icon: '🚶', label: 'Exit' },
+          back: { icon: '↩️', label: 'Back' }
+        };
+        const dirInfo = directionLabels[direction] || { icon: '📍', label: direction };
+        const destLocation = GameData.locations.find(l => l.id === destId);
+        return {
+          direction,
+          directionIcon: dirInfo.icon,
+          directionLabel: dirInfo.label,
+          locationId: destId,
+          location: destLocation,
+          accessible: true
+        };
+      }) : []);
+
+  // Get NPCs at this location
+  const locationNpcs = location.npcs || [];
+
   return (
     <div style={{ ...styles.container, padding: '1.5rem' }}>
       {/* Top HUD */}
@@ -4297,23 +4368,23 @@ const LocationScreen = ({ player, gameState, onAction, onPause }) => {
           </div>
           <ProgressBar value={player.currentHp} max={player.maxHp} color="#22c55e" label="HP" />
           <ProgressBar value={player.currentStamina} max={player.maxStamina} color="#3b82f6" label="Stamina" />
-          <ProgressBar 
-            value={player.nsfwStats.corruption} 
-            max={player.nsfwStats.maxCorruption} 
-            color="#a855f7" 
-            label="Corruption" 
+          <ProgressBar
+            value={player.nsfwStats.corruption}
+            max={player.nsfwStats.maxCorruption}
+            color="#a855f7"
+            label="Corruption"
           />
         </div>
-        
+
         {/* Menu Button */}
         <Button onClick={onPause} style={{ padding: '0.75rem 1.5rem' }}>
           ☰ Menu
         </Button>
       </div>
-      
+
       {/* Location Display */}
-      <div style={{ 
-        ...styles.panel, 
+      <div style={{
+        ...styles.panel,
         marginBottom: '1rem',
         display: 'flex',
         gap: '1.5rem'
@@ -4330,11 +4401,11 @@ const LocationScreen = ({ player, gameState, onAction, onPause }) => {
           fontSize: '4rem',
           flexShrink: 0
         }}>
-          {location.tags.includes('safe') ? '🏠' : 
+          {location.tags.includes('safe') ? '🏠' :
            location.tags.includes('forest') ? '🌲' :
            location.tags.includes('dungeon') ? '🏰' : '📍'}
         </div>
-        
+
         <div>
           <h2 style={{ ...styles.subtitle, fontSize: '1.5rem', marginBottom: '0.5rem' }}>
             {location.name}
@@ -4344,14 +4415,14 @@ const LocationScreen = ({ player, gameState, onAction, onPause }) => {
           </p>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {location.tags.map(tag => (
-              <span 
+              <span
                 key={tag}
                 style={{
                   padding: '0.25rem 0.75rem',
-                  background: tag === 'safe' ? 'rgba(34, 197, 94, 0.2)' : 
-                             tag === 'dangerous' ? 'rgba(239, 68, 68, 0.2)' : 
+                  background: tag === 'safe' ? 'rgba(34, 197, 94, 0.2)' :
+                             tag === 'dangerous' ? 'rgba(239, 68, 68, 0.2)' :
                              'rgba(139, 92, 246, 0.2)',
-                  color: tag === 'safe' ? '#22c55e' : 
+                  color: tag === 'safe' ? '#22c55e' :
                          tag === 'dangerous' ? '#ef4444' : '#a1a1aa',
                   borderRadius: '4px',
                   fontSize: '0.8rem'
@@ -4368,15 +4439,15 @@ const LocationScreen = ({ player, gameState, onAction, onPause }) => {
           )}
         </div>
       </div>
-      
+
       {/* Actions */}
-      <div style={{ ...styles.panel }}>
+      <div style={{ ...styles.panel, marginBottom: '1rem' }}>
         <h3 style={{ ...styles.subtitle, fontSize: '1rem', marginBottom: '1rem' }}>
           Actions
         </h3>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           {location.actions.map(action => (
-            <Button 
+            <Button
               key={action}
               onClick={() => onAction(action)}
               variant={action === 'move' ? 'gold' : 'primary'}
@@ -4385,8 +4456,76 @@ const LocationScreen = ({ player, gameState, onAction, onPause }) => {
             </Button>
           ))}
         </div>
-        
       </div>
+
+      {/* Navigation Row - Sub-location directions */}
+      {navigationOptions.length > 0 && (
+        <div style={{ ...styles.panel, marginBottom: '1rem' }}>
+          <h3 style={{ ...styles.subtitle, fontSize: '1rem', marginBottom: '1rem' }}>
+            Navigation
+          </h3>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {navigationOptions.map(nav => (
+              <Button
+                key={nav.direction}
+                onClick={() => onNavigate ? onNavigate(nav.locationId) : onAction('navigate', nav.locationId)}
+                variant="secondary"
+                disabled={!nav.accessible}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: '0.75rem 1.25rem',
+                  minWidth: '100px',
+                  opacity: nav.accessible ? 1 : 0.5
+                }}
+              >
+                <span style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{nav.directionIcon}</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{nav.directionLabel}</span>
+                <span style={{ fontSize: '0.75rem', color: '#a1a1aa', marginTop: '0.25rem' }}>
+                  {nav.location?.name || nav.locationId}
+                </span>
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* NPCs Row - Characters at this location */}
+      {locationNpcs.length > 0 && (
+        <div style={{ ...styles.panel }}>
+          <h3 style={{ ...styles.subtitle, fontSize: '1rem', marginBottom: '1rem' }}>
+            NPCs
+          </h3>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {locationNpcs.map(npcId => {
+              // Try to get NPC display name from GameData.npcs or format the ID
+              const npcData = GameData.npcs?.find(n => n.id === npcId);
+              const npcName = npcData?.name || npcId.split('_').map(word =>
+                word.charAt(0).toUpperCase() + word.slice(1)
+              ).join(' ');
+              const npcIcon = npcData?.icon || '👤';
+
+              return (
+                <Button
+                  key={npcId}
+                  onClick={() => onInteractNpc ? onInteractNpc(npcId) : onAction('interact_npc', npcId)}
+                  variant="primary"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.25rem'
+                  }}
+                >
+                  <span style={{ fontSize: '1.25rem' }}>{npcIcon}</span>
+                  <span>{npcName}</span>
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -6649,6 +6788,62 @@ const Game = () => {
     }
   };
 
+  // Handle NPC interaction from location screen
+  const handleInteractWithNpc = useCallback((npcId) => {
+    // Try to find NPC data
+    const npcData = GameData.npcs?.find(n => n.id === npcId);
+
+    // Format NPC name for display
+    const npcName = npcData?.name || npcId.split('_').map(word =>
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+
+    // Check if NPC has a dialogue scene
+    if (npcData?.dialogueScene) {
+      const scene = GameData.scenes?.find(s => s.id === npcData.dialogueScene);
+      if (scene) {
+        setSceneContext({ npcId, npcData });
+        setCurrentScene(scene);
+        setScreen('scene');
+        return;
+      }
+    }
+
+    // Check if NPC has a shop
+    if (npcData?.shopId || npcData?.merchantId) {
+      const merchantId = npcData.merchantId || npcData.shopId;
+      const merchants = merchantSystemRef.current?.getMerchantsAtLocation(player.currentLocation);
+      const merchant = merchants?.find(m => m.id === merchantId) || merchants?.[0];
+
+      if (merchant) {
+        const stock = merchantSystemRef.current.getStock(merchant.id, player.currentTime?.day || 1);
+        setActiveMerchant(merchant);
+        setMerchantStock(stock);
+        setShowMerchantView(true);
+        return;
+      }
+    }
+
+    // Check for rumor confrontation
+    if (rumorSystemRef.current) {
+      const rumor = rumorSystemRef.current.shouldMentionRumor(player, npcData || { id: npcId, name: npcName }, player.currentLocation);
+      if (rumor) {
+        setRumorConfrontationData({
+          npc: npcData || { id: npcId, name: npcName },
+          rumor,
+          dialogue: rumorSystemRef.current.generateConfrontationDialogue(rumor, npcData || { id: npcId, name: npcName }),
+          options: rumorSystemRef.current.getResponseOptions(rumor, player),
+          canSkip: true
+        });
+        setShowRumorConfrontation(true);
+        return;
+      }
+    }
+
+    // Default: show a toast indicating NPC interaction
+    toast.info(`Talking to ${npcName}`, 'NPC dialogue system coming soon...');
+  }, [player, toast]);
+
   // ============================================================================
   // EXPEDITION HANDLERS (Region-to-Region Travel)
   // ============================================================================
@@ -7607,6 +7802,9 @@ const Game = () => {
               gameState={gameState}
               onAction={handleLocationAction}
               onPause={() => setScreen('pause')}
+              locationSystem={locationSystemRef.current}
+              onNavigate={handleTravel}
+              onInteractNpc={handleInteractWithNpc}
             />
             <MedievalClock
               time={player.currentTime || { day: 1, hour: 8, minute: 0 }}

@@ -494,6 +494,81 @@ export class LocationSystem {
   }
 
   /**
+   * Get navigation options for a location (sub-location directions)
+   * @param {string} locationId - Location ID
+   * @param {Object} playerState - Player state
+   * @param {Object} gameState - Game state
+   * @returns {Array} Array of {direction, locationId, location, accessible} objects
+   */
+  getNavigationOptions(locationId, playerState = {}, gameState = {}) {
+    const location = this.getLocation(locationId);
+    if (!location || !location.navigation) return [];
+
+    const directions = [];
+    const directionLabels = {
+      up: { icon: '⬆️', label: 'Up' },
+      down: { icon: '⬇️', label: 'Down' },
+      north: { icon: '⬆️', label: 'North' },
+      south: { icon: '⬇️', label: 'South' },
+      east: { icon: '➡️', label: 'East' },
+      west: { icon: '⬅️', label: 'West' },
+      in: { icon: '🚪', label: 'Enter' },
+      out: { icon: '🚶', label: 'Exit' },
+      back: { icon: '↩️', label: 'Back' }
+    };
+
+    for (const [direction, destId] of Object.entries(location.navigation)) {
+      const destLocation = this.getLocation(destId);
+      if (!destLocation) continue;
+
+      const unlockStatus = this.unlockSystem.checkLocationUnlock(destLocation, playerState, gameState);
+      const dirInfo = directionLabels[direction] || { icon: '📍', label: direction };
+
+      directions.push({
+        direction,
+        directionIcon: dirInfo.icon,
+        directionLabel: dirInfo.label,
+        locationId: destId,
+        location: destLocation,
+        unlockStatus,
+        accessible: unlockStatus.unlocked
+      });
+    }
+
+    return directions;
+  }
+
+  /**
+   * Check if a location is a sub-location (has parentLocation)
+   * @param {string} locationId - Location ID
+   * @returns {boolean}
+   */
+  isSubLocation(locationId) {
+    const location = this.getLocation(locationId);
+    return location?.locationType === 'sub' || !!location?.parentLocation;
+  }
+
+  /**
+   * Get the parent location for a sub-location
+   * @param {string} locationId - Location ID
+   * @returns {Object|null} Parent location object or null
+   */
+  getParentLocation(locationId) {
+    const location = this.getLocation(locationId);
+    if (!location?.parentLocation) return null;
+    return this.getLocation(location.parentLocation);
+  }
+
+  /**
+   * Get all sub-locations for a location
+   * @param {string} locationId - Location ID
+   * @returns {Array} Array of sub-location objects
+   */
+  getSubLocations(locationId) {
+    return this.locations.filter(loc => loc.parentLocation === locationId);
+  }
+
+  /**
    * Get icon for a location type
    * @param {Object} location - Location object
    * @returns {string} Icon character/emoji

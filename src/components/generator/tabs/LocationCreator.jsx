@@ -397,6 +397,17 @@ const ICON_SIZES = [
   { value: 'large', label: 'Large', size: 48 },
 ];
 
+const NAVIGATION_DIRECTIONS = [
+  { id: 'up', label: 'Up', icon: '⬆️' },
+  { id: 'down', label: 'Down', icon: '⬇️' },
+  { id: 'left', label: 'Left', icon: '⬅️' },
+  { id: 'right', label: 'Right', icon: '➡️' },
+  { id: 'forward', label: 'Forward', icon: '⏩' },
+  { id: 'back', label: 'Back', icon: '↩️' },
+  { id: 'in', label: 'Enter', icon: '🚪' },
+  { id: 'out', label: 'Exit', icon: '🚶' },
+];
+
 const DEFAULT_LOCATION = {
   id: '',
   name: '',
@@ -414,6 +425,10 @@ const DEFAULT_LOCATION = {
   requirements: null,
   background: '',
   ambientSound: '',
+  // Navigation to sub-locations
+  navigation: {},
+  parentLocation: '',
+  locationType: 'local', // 'local' or 'sub'
   // Map placement properties
   mapPlacement: {
     mapType: null, // 'local' or 'global'
@@ -712,6 +727,9 @@ const LocationCreator = ({
         services: editingItem.services || [],
         npcs: editingItem.npcs || [],
         enemies: editingItem.enemies || [],
+        navigation: editingItem.navigation || {},
+        parentLocation: editingItem.parentLocation || '',
+        locationType: editingItem.locationType || 'local',
         mapPlacement: editingItem.mapPlacement || { mapType: null, x: 0, y: 0 },
         icon: editingItem.icon || { type: 'default', data: null },
       });
@@ -785,6 +803,18 @@ const LocationCreator = ({
       ...prev,
       enemies: prev.enemies.filter(e => e !== enemy),
     }));
+  };
+
+  const handleNavigationChange = (direction, locationId) => {
+    setFormData(prev => {
+      const newNavigation = { ...prev.navigation };
+      if (locationId) {
+        newNavigation[direction] = locationId;
+      } else {
+        delete newNavigation[direction];
+      }
+      return { ...prev, navigation: newNavigation };
+    });
   };
 
   const handleMapClick = (e) => {
@@ -1085,6 +1115,91 @@ const LocationCreator = ({
           </div>
         </div>
 
+        {/* Navigation - Sub-location Links */}
+        <div style={styles.subsection}>
+          <div style={styles.subsectionTitle}>Navigation (Sub-locations)</div>
+          <div style={{ marginBottom: '15px', fontSize: '12px', color: '#808090' }}>
+            Link directions to other locations. Players can navigate using these directions when at this location.
+          </div>
+
+          <div style={styles.row}>
+            <div style={styles.halfWidth}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Location Type</label>
+                <select
+                  style={styles.select}
+                  value={formData.locationType}
+                  onChange={(e) => handleChange('locationType', e.target.value)}
+                >
+                  <option value="local">Local (Main location)</option>
+                  <option value="sub">Sub-location (Inside another location)</option>
+                </select>
+              </div>
+            </div>
+            {formData.locationType === 'sub' && (
+              <div style={styles.halfWidth}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Parent Location</label>
+                  <select
+                    style={styles.select}
+                    value={formData.parentLocation}
+                    onChange={(e) => handleChange('parentLocation', e.target.value)}
+                  >
+                    <option value="">Select parent location...</option>
+                    {items.filter(loc => loc.id !== formData.id).map(loc => (
+                      <option key={loc.id} value={loc.id}>{loc.name} ({loc.id})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '10px',
+            marginTop: '10px'
+          }}>
+            {NAVIGATION_DIRECTIONS.map(dir => (
+              <div key={dir.id} style={styles.formGroup}>
+                <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ fontSize: '16px' }}>{dir.icon}</span> {dir.label}
+                </label>
+                <select
+                  style={styles.select}
+                  value={formData.navigation[dir.id] || ''}
+                  onChange={(e) => handleNavigationChange(dir.id, e.target.value)}
+                >
+                  <option value="">-- No link --</option>
+                  {items.filter(loc => loc.id !== formData.id).map(loc => (
+                    <option key={loc.id} value={loc.id}>{loc.name} ({loc.id})</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+
+          {Object.keys(formData.navigation).length > 0 && (
+            <div style={styles.infoBox}>
+              <strong>Active Navigation Links:</strong>
+              <div style={{ marginTop: '5px' }}>
+                {Object.entries(formData.navigation).map(([dir, locId]) => {
+                  const dirInfo = NAVIGATION_DIRECTIONS.find(d => d.id === dir);
+                  const targetLoc = items.find(l => l.id === locId);
+                  return (
+                    <div key={dir} style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px' }}>
+                      <span>{dirInfo?.icon}</span>
+                      <span>{dirInfo?.label}:</span>
+                      <span style={{ color: '#ffd700' }}>{targetLoc?.name || locId}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Services */}
         <div style={styles.subsection}>
           <div style={styles.subsectionTitle}>Available Services</div>
@@ -1241,10 +1356,16 @@ const LocationCreator = ({
               </div>
               <div style={styles.listItemDetails}>
                 ID: {item.id} | Type: {item.type} | Danger: {item.dangerLevel}
+                {item.locationType === 'sub' && ' | Sub-location'}
               </div>
               {item.mapPlacement?.mapType && (
                 <div style={{ ...styles.listItemDetails, color: '#4a7c4a' }}>
                   📍 {item.mapPlacement.mapType} map ({item.mapPlacement.x.toFixed(1)}%, {item.mapPlacement.y.toFixed(1)}%)
+                </div>
+              )}
+              {item.navigation && Object.keys(item.navigation).length > 0 && (
+                <div style={{ ...styles.listItemDetails, color: '#6a8cca' }}>
+                  🧭 Navigation: {Object.entries(item.navigation).map(([dir, loc]) => `${dir}→${loc}`).join(', ')}
                 </div>
               )}
               <div style={styles.listItemActions}>
