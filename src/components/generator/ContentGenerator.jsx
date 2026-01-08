@@ -248,6 +248,9 @@ const TABS = [
 // Storage keys
 const STORAGE_KEY = 'contentGenerator_data';
 const STORAGE_TIMESTAMP_KEY = 'contentGenerator_lastSave';
+const STORAGE_SETTINGS_KEY = 'contentGenerator_settings';
+const STORAGE_SLOTS_INDEX_KEY = 'contentGenerator_slots';
+const STORAGE_SLOT_PREFIX = 'contentGenerator_slot_';
 const AUTOSAVE_INTERVAL = 30000; // 30 seconds
 
 const ContentGenerator = ({ onClose }) => {
@@ -266,6 +269,18 @@ const ContentGenerator = ({ onClose }) => {
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
   const [recoveryData, setRecoveryData] = useState(null);
   const [lastSaveTime, setLastSaveTime] = useState(null);
+
+  // Save system state
+  const [saveSettings, setSaveSettings] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_SETTINGS_KEY);
+    return saved ? JSON.parse(saved) : { autoSaveEnabled: true };
+  });
+  const [saveSlots, setSaveSlots] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_SLOTS_INDEX_KEY);
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [newSlotName, setNewSlotName] = useState('');
 
   // Datapack content from game datapacks (for selection dropdowns)
   const [datapackContent, setDatapackContent] = useState({
@@ -366,19 +381,93 @@ const ContentGenerator = ({ onClose }) => {
     }
   }, [content]);
 
-  // Save on content change (debounced by React's batching)
+  // Save on content change (debounced by React's batching) - only if auto-save enabled
   useEffect(() => {
-    saveToStorage();
-  }, [content, saveToStorage]);
+    if (saveSettings.autoSaveEnabled) {
+      saveToStorage();
+    }
+  }, [content, saveToStorage, saveSettings.autoSaveEnabled]);
 
-  // Periodic auto-save every 30 seconds
+  // Persist save settings
   useEffect(() => {
+    localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(saveSettings));
+  }, [saveSettings]);
+
+  // Toggle auto-save
+  const toggleAutoSave = useCallback(() => {
+    setSaveSettings(prev => ({ ...prev, autoSaveEnabled: !prev.autoSaveEnabled }));
+  }, []);
+
+  // Manual save (for when auto-save is disabled or just to force a save)
+  const handleManualSave = useCallback(() => {
+    saveToStorage();
+  }, [saveToStorage]);
+
+  // Save to named slot
+  const handleSaveToSlot = useCallback((slotName) => {
+    if (!slotName.trim()) return;
+
+    const slotId = `slot_${Date.now()}`;
+    const slotData = {
+      id: slotId,
+      name: slotName.trim(),
+      savedAt: new Date().toISOString(),
+      data: content
+    };
+
+    // Save slot data
+    localStorage.setItem(`${STORAGE_SLOT_PREFIX}${slotId}`, JSON.stringify(slotData));
+
+    // Update slots index
+    const newSlots = [...saveSlots, { id: slotId, name: slotName.trim(), savedAt: slotData.savedAt }];
+    setSaveSlots(newSlots);
+    localStorage.setItem(STORAGE_SLOTS_INDEX_KEY, JSON.stringify(newSlots));
+
+    setNewSlotName('');
+    setShowSaveModal(false);
+  }, [content, saveSlots]);
+
+  // Load from named slot
+  const handleLoadFromSlot = useCallback((slotId) => {
+    const slotData = localStorage.getItem(`${STORAGE_SLOT_PREFIX}${slotId}`);
+    if (slotData) {
+      try {
+        const parsed = JSON.parse(slotData);
+        if (parsed.data) {
+          if (window.confirm(`Load "${parsed.name}"? This will replace your current work.`)) {
+            setContent(parsed.data);
+            setShowSaveModal(false);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load slot:', e);
+      }
+    }
+  }, []);
+
+  // Delete named slot
+  const handleDeleteSlot = useCallback((slotId) => {
+    if (window.confirm('Delete this save slot? This cannot be undone.')) {
+      // Remove slot data
+      localStorage.removeItem(`${STORAGE_SLOT_PREFIX}${slotId}`);
+
+      // Update slots index
+      const newSlots = saveSlots.filter(s => s.id !== slotId);
+      setSaveSlots(newSlots);
+      localStorage.setItem(STORAGE_SLOTS_INDEX_KEY, JSON.stringify(newSlots));
+    }
+  }, [saveSlots]);
+
+  // Periodic auto-save every 30 seconds (only if enabled)
+  useEffect(() => {
+    if (!saveSettings.autoSaveEnabled) return;
+
     const interval = setInterval(() => {
       saveToStorage();
     }, AUTOSAVE_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [saveToStorage]);
+  }, [saveToStorage, saveSettings.autoSaveEnabled]);
 
   // Save before unload (browser close/refresh)
   useEffect(() => {
@@ -849,6 +938,32 @@ const ContentGenerator = ({ onClose }) => {
         <div style={styles.header}>
           <h2 style={styles.title}>🛠️ Content Generator</h2>
           <div style={styles.headerButtons}>
+            {/* Save Controls */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '10px', padding: '4px 10px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '6px' }}>
+              <button
+                style={{ ...styles.button, backgroundColor: '#3a6a9a', color: 'white', padding: '8px 12px' }}
+                onClick={handleManualSave}
+                title="Save progress now"
+              >
+                💾 Save
+              </button>
+              <button
+                style={{ ...styles.button, backgroundColor: '#4a5a6a', color: 'white', padding: '8px 12px' }}
+                onClick={() => setShowSaveModal(true)}
+                title="Manage save slots"
+              >
+                📁 Slots
+              </button>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: '#a0a0c0' }}>
+                <input
+                  type="checkbox"
+                  checked={saveSettings.autoSaveEnabled}
+                  onChange={toggleAutoSave}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                Auto-save
+              </label>
+            </div>
             <button
               style={{ ...styles.button, ...styles.importButton }}
               onClick={() => fileInputRef.current?.click()}
@@ -912,7 +1027,10 @@ const ContentGenerator = ({ onClose }) => {
         {/* Status Bar */}
         <div style={styles.statusBar}>
           <span>
-            {lastSaveTime ? `Auto-saved ${formatTimeAgo(lastSaveTime)}` : 'Auto-save enabled'} | Drag & drop files to import
+            {saveSettings.autoSaveEnabled
+              ? (lastSaveTime ? `Auto-saved ${formatTimeAgo(lastSaveTime)}` : 'Auto-save enabled')
+              : 'Auto-save disabled'
+            } | Drag & drop files to import | {saveSlots.length} save slot{saveSlots.length !== 1 ? 's' : ''}
           </span>
           <span>
             Total: {getTotalCount()} items
@@ -979,6 +1097,150 @@ const ContentGenerator = ({ onClose }) => {
                   ✕ Start Fresh
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Save Slots Modal */}
+        {showSaveModal && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 200,
+          }}>
+            <div style={{
+              backgroundColor: '#252540',
+              borderRadius: '12px',
+              border: '2px solid #4a4a6a',
+              padding: '25px',
+              width: '500px',
+              maxHeight: '70vh',
+              display: 'flex',
+              flexDirection: 'column',
+            }}>
+              <h3 style={{ color: '#ffd700', margin: '0 0 20px 0', fontSize: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                📁 Save Slots
+              </h3>
+
+              {/* New Save Slot */}
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                <input
+                  type="text"
+                  value={newSlotName}
+                  onChange={(e) => setNewSlotName(e.target.value)}
+                  placeholder="Enter save name..."
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    backgroundColor: '#1a1a2e',
+                    border: '1px solid #4a4a6a',
+                    borderRadius: '6px',
+                    color: '#e0e0e0',
+                    fontSize: '14px',
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newSlotName.trim()) {
+                      handleSaveToSlot(newSlotName);
+                    }
+                  }}
+                />
+                <button
+                  style={{
+                    ...styles.button,
+                    backgroundColor: '#4a7c4a',
+                    color: 'white',
+                    padding: '10px 20px',
+                  }}
+                  onClick={() => handleSaveToSlot(newSlotName)}
+                  disabled={!newSlotName.trim()}
+                >
+                  + New Save
+                </button>
+              </div>
+
+              {/* Existing Slots */}
+              <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                marginBottom: '15px',
+              }}>
+                {saveSlots.length === 0 ? (
+                  <p style={{ color: '#6a6a8a', textAlign: 'center', padding: '30px' }}>
+                    No saved slots yet. Create one above.
+                  </p>
+                ) : (
+                  saveSlots.map(slot => (
+                    <div
+                      key={slot.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px',
+                        backgroundColor: '#1e1e35',
+                        borderRadius: '6px',
+                        marginBottom: '8px',
+                        border: '1px solid #3a3a5a',
+                      }}
+                    >
+                      <div>
+                        <div style={{ color: '#e0e0e0', fontWeight: 'bold', marginBottom: '4px' }}>
+                          {slot.name}
+                        </div>
+                        <div style={{ color: '#6a6a8a', fontSize: '12px' }}>
+                          Saved: {new Date(slot.savedAt).toLocaleString()}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#3a6a9a',
+                            color: 'white',
+                            padding: '6px 12px',
+                            fontSize: '12px',
+                          }}
+                          onClick={() => handleLoadFromSlot(slot.id)}
+                        >
+                          Load
+                        </button>
+                        <button
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#7c4a4a',
+                            color: 'white',
+                            padding: '6px 12px',
+                            fontSize: '12px',
+                          }}
+                          onClick={() => handleDeleteSlot(slot.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Close Button */}
+              <button
+                style={{
+                  ...styles.button,
+                  backgroundColor: '#4a4a6a',
+                  color: 'white',
+                  padding: '10px',
+                }}
+                onClick={() => setShowSaveModal(false)}
+              >
+                Close
+              </button>
             </div>
           </div>
         )}

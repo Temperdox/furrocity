@@ -366,7 +366,8 @@ const SUGGESTED_LOCATION_TYPES = [
 ];
 
 const LOCATION_SCOPES = [
-  { value: 'region', label: 'Region', description: 'A large area on the world map containing multiple locations' },
+  { value: 'kingdom', label: 'Kingdom', description: 'A top-level realm containing multiple regions' },
+  { value: 'region', label: 'Region', description: 'A large area within a kingdom containing multiple locations' },
   { value: 'local', label: 'Local', description: 'A location within a region, shown on the local map' },
   { value: 'sub', label: 'Sub-location', description: 'A location inside another location (e.g., cellar, upper floor)' },
 ];
@@ -423,6 +424,7 @@ const DEFAULT_LOCATION = {
   name: '',
   description: '',
   parentRegion: '', // For local locations - which region they belong to
+  parentKingdom: '', // For regions - which kingdom they belong to
   type: 'outdoor',
   dangerLevel: 1,
   tags: [],
@@ -441,13 +443,22 @@ const DEFAULT_LOCATION = {
   // Navigation to sub-locations
   navigation: {},
   parentLocation: '', // For sub-locations - which location they're inside
-  locationType: 'local', // 'region', 'local', or 'sub'
+  locationType: 'local', // 'kingdom', 'region', 'local', or 'sub'
+  // For kingdoms - child regions and neighbor kingdoms
+  childRegions: [],
+  neighborKingdoms: [],
+  governance: {
+    ruler: '',
+    rulerTitle: '',
+    rulingHouse: '',
+  },
+  capital: '', // Capital region/location ID
   // For regions - child locations
   childLocations: [],
   neighborRegions: [],
   // Map placement properties
   mapPlacement: {
-    mapType: null, // 'local' or 'world'
+    mapType: null, // 'local', 'world', or 'kingdom'
     x: 0,
     y: 0,
   },

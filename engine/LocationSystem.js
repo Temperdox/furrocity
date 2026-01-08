@@ -20,8 +20,10 @@ export class LocationSystem {
     this.unlockSystem = unlockSystem;
     this.locations = [];
     this.regions = [];
+    this.kingdoms = [];
     this.locationCache = new Map();
     this.regionCache = new Map();
+    this.kingdomCache = new Map();
     this.fontTags = {};
     this.tagMappings = {};
     this.tagPriority = {};
@@ -30,14 +32,16 @@ export class LocationSystem {
   }
 
   /**
-   * Initialize with location and region data
+   * Initialize with location, region, and kingdom data
    * @param {Array} locations - Array of location objects
    * @param {Array} regions - Array of region objects
    * @param {Object} fontTagData - Font tag definitions
+   * @param {Array} kingdoms - Array of kingdom objects (optional)
    */
-  initialize(locations, regions, fontTagData = {}) {
+  initialize(locations, regions, fontTagData = {}, kingdoms = []) {
     this.locations = locations || [];
     this.regions = regions || [];
+    this.kingdoms = kingdoms || [];
     this.fontTags = fontTagData.fontTags || {};
     this.tagMappings = fontTagData.tagMappings || {};
     this.tagPriority = fontTagData.tagPriority || {};
@@ -47,6 +51,7 @@ export class LocationSystem {
     // Build caches
     this.locationCache.clear();
     this.regionCache.clear();
+    this.kingdomCache.clear();
 
     this.locations.forEach(loc => {
       this.locationCache.set(loc.id, loc);
@@ -54,6 +59,10 @@ export class LocationSystem {
 
     this.regions.forEach(reg => {
       this.regionCache.set(reg.id, reg);
+    });
+
+    this.kingdoms.forEach(kingdom => {
+      this.kingdomCache.set(kingdom.id, kingdom);
     });
   }
 
@@ -89,6 +98,133 @@ export class LocationSystem {
    */
   getAllRegions() {
     return this.regions;
+  }
+
+  /**
+   * Get a kingdom by ID
+   * @param {string} kingdomId - Kingdom ID
+   * @returns {Object|null}
+   */
+  getKingdom(kingdomId) {
+    return this.kingdomCache.get(kingdomId) || null;
+  }
+
+  /**
+   * Get all kingdoms
+   * @returns {Array}
+   */
+  getAllKingdoms() {
+    return this.kingdoms;
+  }
+
+  /**
+   * Get all regions within a kingdom
+   * @param {string} kingdomId - Kingdom ID
+   * @returns {Array}
+   */
+  getKingdomRegions(kingdomId) {
+    return this.regions.filter(reg => reg.parentKingdom === kingdomId);
+  }
+
+  /**
+   * Get the kingdom for a region
+   * @param {string} regionId - Region ID
+   * @returns {Object|null}
+   */
+  getRegionKingdom(regionId) {
+    const region = this.getRegion(regionId);
+    if (!region || !region.parentKingdom) return null;
+    return this.getKingdom(region.parentKingdom);
+  }
+
+  /**
+   * Get all kingdoms with their unlock status
+   * @param {Object} playerState - Player state
+   * @param {Object} gameState - Game state
+   * @returns {Array} Kingdoms with added unlockStatus field
+   */
+  getKingdomsWithStatus(playerState, gameState = {}) {
+    return this.kingdoms.map(kingdom => ({
+      ...kingdom,
+      unlockStatus: this.unlockSystem.checkLocationUnlock(kingdom, playerState, gameState)
+    }));
+  }
+
+  /**
+   * Get neighbor kingdoms from current kingdom
+   * @param {string} kingdomId - Current kingdom ID
+   * @param {Object} playerState - Player state
+   * @param {Object} gameState - Game state
+   * @returns {Array}
+   */
+  getNeighborKingdoms(kingdomId, playerState, gameState = {}) {
+    const kingdom = this.getKingdom(kingdomId);
+    if (!kingdom) return [];
+
+    const neighborIds = kingdom.neighborKingdoms || [];
+    const neighbors = [];
+
+    for (const neighborId of neighborIds) {
+      const neighbor = this.getKingdom(neighborId);
+      if (!neighbor) continue;
+
+      const unlockStatus = this.unlockSystem.checkLocationUnlock(neighbor, playerState, gameState);
+
+      neighbors.push({
+        ...neighbor,
+        unlockStatus,
+        accessible: unlockStatus.unlocked
+      });
+    }
+
+    return neighbors;
+  }
+
+  /**
+   * Get the full location hierarchy for a location
+   * Returns kingdom -> region -> location -> subLocation chain
+   * @param {string} locationId - Location ID
+   * @returns {Object} Hierarchy object with kingdom, region, location, subLocation
+   */
+  getLocationHierarchy(locationId) {
+    const location = this.getLocation(locationId);
+    if (!location) return { kingdom: null, region: null, location: null, subLocation: null };
+
+    let targetLocation = location;
+    let subLocation = null;
+
+    // If this is a sub-location, get the parent location
+    if (location.parentLocation) {
+      subLocation = location;
+      targetLocation = this.getLocation(location.parentLocation);
+    }
+
+    // Get the region
+    const region = targetLocation?.parentRegion
+      ? this.getRegion(targetLocation.parentRegion)
+      : null;
+
+    // Get the kingdom
+    const kingdom = region?.parentKingdom
+      ? this.getKingdom(region.parentKingdom)
+      : null;
+
+    return {
+      kingdom,
+      region,
+      location: targetLocation,
+      subLocation
+    };
+  }
+
+  /**
+   * Get the player's initial unlocked kingdoms
+   * @returns {Array} Array of initially unlocked kingdom IDs
+   */
+  getInitiallyUnlockedKingdoms() {
+    return this.kingdoms
+      .filter(kingdom => kingdom.initiallyUnlocked)
+      .map(kingdom => kingdom.id);
   }
 
   /**
@@ -594,6 +730,7 @@ export class LocationSystem {
       case 'outdoor': return '🌳';
       case 'dungeon': return '🏰';
       case 'region': return '🗺️';
+      case 'kingdom': return '👑';
       default: return '📍';
     }
   }

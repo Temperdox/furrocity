@@ -86,6 +86,12 @@ const GameData = {
   // Locations are loaded from datapacks - see world_locations.json
   locations: [],
 
+  // Regions are loaded from datapacks - see regions.json
+  regions: [],
+
+  // Kingdoms are loaded from datapacks - see kingdoms.json
+  kingdoms: [],
+
   // Enemy tables are loaded from datapacks - see encounter_tables/
   enemyTables: {},
 
@@ -1177,10 +1183,13 @@ const defaultPlayerState = {
   // Location
   currentLocation: "starting_inn",
   currentRegion: "crossroads",
+  currentKingdom: "kingdom_eldoria",
   visitedLocations: ["starting_inn"],
   visitedRegions: ["crossroads"],
+  visitedKingdoms: ["kingdom_eldoria"],
   unlockedLocations: ["starting_inn", "town_square", "forest_edge"],
   unlockedRegions: ["crossroads"],
+  unlockedKingdoms: ["kingdom_eldoria"],
   discoveredLocations: [],
   
   // Combat state
@@ -5453,6 +5462,16 @@ const Game = () => {
           GameData.locations = loadedContent.locations;
         }
 
+        // Merge regions
+        if (loadedContent.regions && loadedContent.regions.length > 0) {
+          GameData.regions = loadedContent.regions;
+        }
+
+        // Merge kingdoms
+        if (loadedContent.kingdoms && loadedContent.kingdoms.length > 0) {
+          GameData.kingdoms = loadedContent.kingdoms;
+        }
+
         // Merge enemies - directly replace with datapack content
         if (loadedContent.enemies && Object.keys(loadedContent.enemies).length > 0) {
           Object.assign(GameData.enemies, loadedContent.enemies);
@@ -5480,6 +5499,8 @@ const Game = () => {
 
         console.log('[Game] Datapack content merged into GameData:', {
           characters: GameData.characters.length,
+          kingdoms: GameData.kingdoms.length,
+          regions: GameData.regions.length,
           locations: GameData.locations.length,
           enemies: Object.keys(GameData.enemies).length,
           lootTables: Object.keys(GameData.lootTables).length,
@@ -5537,13 +5558,8 @@ const Game = () => {
         }
       };
 
-      // Initialize with GameData locations and regions
-      const regionsData = [
-        { id: "crossroads", name: "Crossroads Region", type: "region", locked: false, initiallyUnlocked: true, mapData: { worldMapPosition: { x: 250, y: 300 } }, neighborRegions: ["darkwood"] },
-        { id: "darkwood", name: "Darkwood Forest", type: "region", locked: true, unlockRequirements: { type: "or", conditions: [{ type: "visited_location", location: "forest_edge" }] }, mapData: { worldMapPosition: { x: 400, y: 250 } }, neighborRegions: ["crossroads"] }
-      ];
-
-      locationSystemRef.current.initialize(GameData.locations, regionsData, locationFontData);
+      // Initialize with GameData locations, regions, and kingdoms
+      locationSystemRef.current.initialize(GameData.locations, GameData.regions, locationFontData, GameData.kingdoms);
 
       // Initialize reputation and rumor systems
       reputationSystemRef.current = new ReputationSystem(fameSystemRef.current);
@@ -6282,17 +6298,25 @@ const Game = () => {
     // Get region for the new location
     const newRegion = location.parentRegion || player.currentRegion;
 
+    // Get kingdom for the new region
+    const regionData = locationSystemRef.current.getRegion(newRegion);
+    const newKingdom = regionData?.parentKingdom || player.currentKingdom;
+
     // Move to location
     setPlayer(prev => ({
       ...prev,
       currentLocation: destinationId,
       currentRegion: newRegion,
+      currentKingdom: newKingdom,
       visitedLocations: prev.visitedLocations.includes(destinationId)
         ? prev.visitedLocations
         : [...prev.visitedLocations, destinationId],
       visitedRegions: prev.visitedRegions.includes(newRegion)
         ? prev.visitedRegions
         : [...prev.visitedRegions, newRegion],
+      visitedKingdoms: prev.visitedKingdoms.includes(newKingdom)
+        ? prev.visitedKingdoms
+        : [...prev.visitedKingdoms, newKingdom],
       unlockedLocations: prev.unlockedLocations.includes(destinationId)
         ? prev.unlockedLocations
         : [...prev.unlockedLocations, destinationId]
@@ -6522,16 +6546,23 @@ const Game = () => {
     const destinationRegion = currentExpedition.toRegion;
     const regionData = locationSystemRef.current?.getRegion(destinationRegion);
 
+    // Get kingdom for the new region
+    const newKingdom = regionData?.parentKingdom || player.currentKingdom;
+
     // Get first location in the region
     const firstLocation = regionData?.childLocations?.[0] || destinationRegion;
 
     setPlayer(prev => ({
       ...prev,
       currentRegion: destinationRegion,
+      currentKingdom: newKingdom,
       currentLocation: firstLocation,
       visitedRegions: prev.visitedRegions?.includes(destinationRegion)
         ? prev.visitedRegions
         : [...(prev.visitedRegions || []), destinationRegion],
+      visitedKingdoms: prev.visitedKingdoms?.includes(newKingdom)
+        ? prev.visitedKingdoms
+        : [...(prev.visitedKingdoms || []), newKingdom],
       expedition: {
         ...prev.expedition,
         current: null,
@@ -7366,6 +7397,7 @@ const Game = () => {
               onClose={() => setShowTravelModal(false)}
               currentLocation={player.currentLocation}
               currentRegion={player.currentRegion}
+              currentKingdom={player.currentKingdom}
               playerState={player}
               gameState={gameState}
               locationSystem={locationSystemRef.current}

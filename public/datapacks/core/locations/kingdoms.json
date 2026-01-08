@@ -1,0 +1,62 @@
+[
+  {
+    "id": "kingdom_eldoria",
+    "name": "Kingdom of Eldoria",
+    "description": "A prosperous realm known for its fertile lands, ancient forests, and thriving trade routes. The kingdom has stood for centuries, though recent corruption in the Darkwood threatens its peace.",
+    "type": "kingdom",
+    "childRegions": ["crossroads", "darkwood", "mountain_pass", "plains"],
+    "neighborKingdoms": ["demon_realm_kingdom"],
+    "capital": "crossroads",
+    "governance": {
+      "ruler": "King Aldric III",
+      "rulerTitle": "King",
+      "rulingHouse": "House Valdric"
+    },
+    "mapData": {
+      "worldMapImage": "/maps/kingdoms/eldoria.png",
+      "position": { "x": 0, "y": 0 },
+      "size": "large"
+    },
+    "tags": ["human", "fertile", "forested", "civilized"],
+    "unlockConditions": null,
+    "initiallyUnlocked": true,
+    "locked": false,
+    "ambiance": {
+      "music": "kingdom_theme",
+      "sounds": ["distant_bells", "birds", "wind"]
+    }
+  },
+  {
+    "id": "demon_realm_kingdom",
+    "name": "The Demon Realm",
+    "description": "A twisted dimension where demons hold absolute dominion. This nightmare realm bleeds into the mortal world through corrupted portals, threatening to consume all in its path.",
+    "type": "kingdom",
+    "childRegions": ["demon_realm"],
+    "neighborKingdoms": ["kingdom_eldoria"],
+    "capital": "throne_of_lust",
+    "governance": {
+      "ruler": "The Demon Queen",
+      "rulerTitle": "Queen of Temptation",
+      "rulingHouse": "Court of Desires"
+    },
+    "mapData": {
+      "worldMapImage": "/maps/kingdoms/demon_realm.png",
+      "position": { "x": 500, "y": 200 },
+      "size": "medium"
+    },
+    "tags": ["demon", "corrupted", "dangerous", "nsfw", "otherworldly"],
+    "unlockConditions": {
+      "type": "and",
+      "conditions": [
+        { "type": "level", "operator": ">=", "value": 10 },
+        { "type": "quest_complete", "quest": "demon_portal" }
+      ]
+    },
+    "initiallyUnlocked": false,
+    "locked": true,
+    "ambiance": {
+      "music": "demonic_realm",
+      "sounds": ["screams", "dark_whispers", "chains", "moans"]
+    }
+  }
+]

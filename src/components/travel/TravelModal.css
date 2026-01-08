@@ -63,6 +63,42 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
+/* Breadcrumb Navigation */
+.travel-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  margin-right: auto;
+  padding-right: 16px;
+}
+
+.breadcrumb-item {
+  color: #8b9dc3;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.breadcrumb-item.clickable {
+  cursor: pointer;
+}
+
+.breadcrumb-item.clickable:hover {
+  color: #e0e0e0;
+  background: rgba(61, 90, 128, 0.3);
+}
+
+.breadcrumb-item.active {
+  color: #ffd700;
+  font-weight: 600;
+}
+
+.breadcrumb-separator {
+  color: #4a4a6a;
+  font-size: 0.75rem;
+}
+
 /* View Toggle */
 .view-toggle {
   display: flex;
@@ -259,6 +295,55 @@
 .location-marker.current .location-marker-label {
   color: #ffd700;
   font-weight: 600;
+}
+
+/* Kingdom Marker Styling */
+.location-marker.kingdom-marker .location-marker-icon {
+  width: 56px;
+  height: 56px;
+  font-size: 2rem;
+  background: radial-gradient(circle, rgba(50, 40, 20, 0.9) 0%, rgba(30, 25, 15, 0.95) 100%);
+  border-color: #b8860b;
+  box-shadow: 0 4px 16px rgba(184, 134, 11, 0.3), 0 0 20px rgba(255, 215, 0, 0.1);
+}
+
+.location-marker.kingdom-marker:hover .location-marker-icon {
+  border-color: #ffd700;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4), 0 0 30px rgba(255, 215, 0, 0.2);
+}
+
+.location-marker.kingdom-marker.current .location-marker-icon {
+  border-color: #ffd700;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.6), 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Marker Subtitle (region/location count) */
+.marker-subtitle {
+  font-size: 0.65rem;
+  color: #6b7280;
+  margin-top: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* Selected Location Info */
+.selected-location-info {
+  margin: 12px 0;
+  padding: 10px;
+  background: rgba(61, 90, 128, 0.15);
+  border-radius: 6px;
+  border: 1px solid rgba(61, 90, 128, 0.3);
+}
+
+.selected-location-info p {
+  margin: 4px 0;
+  color: #b0b0c0;
+  font-size: 0.9rem;
+}
+
+.selected-location-info strong {
+  color: #8b9dc3;
 }
 
 /* Selected Location Panel */

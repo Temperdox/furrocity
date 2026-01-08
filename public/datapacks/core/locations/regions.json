@@ -4,6 +4,7 @@
     "name": "Crossroads Region",
     "description": "A peaceful frontier region centered around a small trading town at the crossroads of major trade routes.",
     "type": "region",
+    "parentKingdom": "kingdom_eldoria",
     "locked": false,
     "initiallyUnlocked": true,
     "mapData": {
@@ -42,6 +43,7 @@
     "name": "Darkwood Forest",
     "description": "An ancient, corrupted forest full of dangers. Strange creatures lurk in the shadows, and the trees seem to whisper secrets.",
     "type": "region",
+    "parentKingdom": "kingdom_eldoria",
     "locked": true,
     "initiallyUnlocked": false,
     "unlockRequirements": {
@@ -88,6 +90,7 @@
     "name": "Mountain Pass",
     "description": "A treacherous mountain path connecting the lowlands to the highland territories. Bandits and worse prey on travelers.",
     "type": "region",
+    "parentKingdom": "kingdom_eldoria",
     "locked": true,
     "initiallyUnlocked": false,
     "unlockRequirements": {
@@ -133,6 +136,7 @@
     "name": "Golden Plains",
     "description": "Vast grasslands stretching to the horizon. Nomadic tribes roam these lands, and ancient burial mounds dot the landscape.",
     "type": "region",
+    "parentKingdom": "kingdom_eldoria",
     "locked": true,
     "initiallyUnlocked": false,
     "unlockRequirements": {
@@ -176,6 +180,7 @@
     "name": "The Demon Realm",
     "description": "A twisted dimension where demons hold sway. The very air is thick with corruption and dark magic.",
     "type": "region",
+    "parentKingdom": "demon_realm_kingdom",
     "locked": true,
     "initiallyUnlocked": false,
     "unlockRequirements": {

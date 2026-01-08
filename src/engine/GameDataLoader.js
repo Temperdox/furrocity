@@ -47,7 +47,7 @@ async function loadDirectory(packId, contentPath) {
   const knownFiles = {
     items: ['weapons_armor.json', 'clothing_paperdoll.json', 'consumables.json', 'materials.json'],
     enemies: ['forest_enemies.json', 'dungeon_enemies.json', 'demon_enemies.json', 'town_enemies.json'],
-    locations: ['world_locations.json', 'regions.json', 'dungeons.json'],
+    locations: ['world_locations.json', 'regions.json', 'dungeons.json', 'kingdoms.json'],
     effects: ['core_effects.json', 'buffs.json', 'debuffs.json', 'curses.json'],
     scenes: ['intro_scenes.json', 'combat_scenes.json', 'quest_scenes.json', 'inn_rental_scenes.json', 'enemy_scene_mapping.json'],
     merchants: ['merchants.json', 'shop_inventories.json'],
@@ -238,6 +238,8 @@ class GameDataLoader {
         lootTables: {},
         baseItems: {},
         locations: [],
+        regions: [],
+        kingdoms: [],
         encounterTables: {},
         characters: [],
         scenes: {},
@@ -276,9 +278,17 @@ class GameDataLoader {
           this.cache.baseItems[converted.id] = converted;
         }
 
-        // Load locations
-        const locations = await loadDirectory(packId, 'locations');
-        this.cache.locations.push(...locations);
+        // Load locations (separating kingdoms, regions, and locations)
+        const allLocations = await loadDirectory(packId, 'locations');
+        for (const loc of allLocations) {
+          if (loc.type === 'kingdom') {
+            this.cache.kingdoms.push(loc);
+          } else if (loc.type === 'region') {
+            this.cache.regions.push(loc);
+          } else {
+            this.cache.locations.push(loc);
+          }
+        }
 
         // Load encounter tables - convert to the simpler format Game.jsx expects
         const encounters = await loadDirectory(packId, 'encounter_tables');
@@ -317,6 +327,8 @@ class GameDataLoader {
         enemies: Object.keys(this.cache.enemies).length,
         lootTables: Object.keys(this.cache.lootTables).length,
         baseItems: Object.keys(this.cache.baseItems).length,
+        kingdoms: this.cache.kingdoms.length,
+        regions: this.cache.regions.length,
         locations: this.cache.locations.length,
         encounterTables: Object.keys(this.cache.encounterTables).length,
         characters: this.cache.characters.length,
@@ -331,6 +343,8 @@ class GameDataLoader {
         lootTables: {},
         baseItems: {},
         locations: [],
+        regions: [],
+        kingdoms: [],
         encounterTables: {},
         characters: [],
         scenes: {},
@@ -368,6 +382,20 @@ class GameDataLoader {
    */
   getLocations() {
     return this.cache?.locations || [];
+  }
+
+  /**
+   * Get all regions
+   */
+  getRegions() {
+    return this.cache?.regions || [];
+  }
+
+  /**
+   * Get all kingdoms
+   */
+  getKingdoms() {
+    return this.cache?.kingdoms || [];
   }
 
   /**
@@ -424,6 +452,18 @@ class GameDataLoader {
     this.cache.locations.forEach(loc => locationMap.set(loc.id, loc));
     merged.locations = Array.from(locationMap.values());
 
+    // Merge regions - combine arrays, datapack items with same ID take precedence
+    const regionMap = new Map();
+    (existingGameData.regions || []).forEach(reg => regionMap.set(reg.id, reg));
+    this.cache.regions.forEach(reg => regionMap.set(reg.id, reg));
+    merged.regions = Array.from(regionMap.values());
+
+    // Merge kingdoms - combine arrays, datapack items with same ID take precedence
+    const kingdomMap = new Map();
+    (existingGameData.kingdoms || []).forEach(kingdom => kingdomMap.set(kingdom.id, kingdom));
+    this.cache.kingdoms.forEach(kingdom => kingdomMap.set(kingdom.id, kingdom));
+    merged.kingdoms = Array.from(kingdomMap.values());
+
     // Merge encounter tables - datapack takes precedence
     merged.enemyTables = {
       ...(existingGameData.enemyTables || {}),
@@ -446,6 +486,8 @@ class GameDataLoader {
       enemies: Object.keys(merged.enemies).length,
       lootTables: Object.keys(merged.lootTables).length,
       baseItems: Object.keys(merged.baseItems).length,
+      kingdoms: merged.kingdoms.length,
+      regions: merged.regions.length,
       locations: merged.locations.length,
       enemyTables: Object.keys(merged.enemyTables).length,
       characters: merged.characters.length,
