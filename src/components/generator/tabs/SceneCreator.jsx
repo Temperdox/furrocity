@@ -439,7 +439,13 @@ const SceneCreator = ({
 }) => {
   // Combine datapack content with user-created content for selection dropdowns
   const allItems = [...(datapackContent.items || []), ...(allContent?.items || [])];
-  const allLocations = [...(datapackContent.locations || []), ...(allContent?.locations || [])];
+  // Filter locations to exclude any enemy objects that may have been incorrectly included
+  const allLocations = [...(datapackContent.locations || []), ...(allContent?.locations || [])]
+    .filter(loc => {
+      const hasLocationFields = loc.locationType || loc.parentRegion || loc.connectedLocations || loc.navigation;
+      const hasEnemyFields = loc.tier !== undefined || loc.maxHp !== undefined || loc.nsfwActions !== undefined || loc.loot !== undefined;
+      return hasLocationFields || !hasEnemyFields;
+    });
   const allEffects = [...(datapackContent.effects || []), ...(allContent?.effects || [])];
   const allEnemies = [...(datapackContent.enemies || []), ...(allContent?.enemies || [])];
   const allNPCs = [...(datapackContent.npcs || []), ...(allContent?.npcs || [])];

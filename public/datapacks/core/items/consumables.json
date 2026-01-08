@@ -1,0 +1,62 @@
+[
+  {
+    "id": "healing_potion",
+    "name": "Healing Potion",
+    "baseName": "Healing Potion",
+    "type": "consumable",
+    "stackable": true,
+    "value": 25,
+    "effect": { "heal": 30 },
+    "tags": ["potion", "healing"]
+  },
+  {
+    "id": "health_potion",
+    "name": "Health Potion",
+    "baseName": "Health Potion",
+    "type": "consumable",
+    "stackable": true,
+    "value": 25,
+    "effect": { "heal": 30 },
+    "tags": ["potion", "healing"]
+  },
+  {
+    "id": "health_potion_small",
+    "name": "Small Health Potion",
+    "baseName": "Small Health Potion",
+    "type": "consumable",
+    "stackable": true,
+    "value": 10,
+    "effect": { "heal": 15 },
+    "tags": ["potion", "healing"]
+  },
+  {
+    "id": "health_potion_large",
+    "name": "Large Health Potion",
+    "baseName": "Large Health Potion",
+    "type": "consumable",
+    "stackable": true,
+    "value": 50,
+    "effect": { "heal": 60 },
+    "tags": ["potion", "healing"]
+  },
+  {
+    "id": "stamina_potion",
+    "name": "Stamina Potion",
+    "baseName": "Stamina Potion",
+    "type": "consumable",
+    "stackable": true,
+    "value": 25,
+    "effect": { "restoreStamina": 30 },
+    "tags": ["potion", "stamina"]
+  },
+  {
+    "id": "antidote",
+    "name": "Antidote",
+    "baseName": "Antidote",
+    "type": "consumable",
+    "stackable": true,
+    "value": 20,
+    "effect": { "curePoison": true },
+    "tags": ["potion", "cure"]
+  }
+]

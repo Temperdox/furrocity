@@ -251,7 +251,13 @@ const NPCCreator = ({
   datapackLoading = false,
 }) => {
   // Combine datapack locations with user-created locations
-  const allLocations = [...(datapackContent.locations || []), ...locations];
+  // Filter locations to exclude any enemy objects that may have been incorrectly included
+  const allLocations = [...(datapackContent.locations || []), ...locations]
+    .filter(loc => {
+      const hasLocationFields = loc.locationType || loc.parentRegion || loc.connectedLocations || loc.navigation;
+      const hasEnemyFields = loc.tier !== undefined || loc.maxHp !== undefined || loc.nsfwActions !== undefined || loc.loot !== undefined;
+      return hasLocationFields || !hasEnemyFields;
+    });
   const [formData, setFormData] = useState({ ...DEFAULT_NPC });
   const [tagInput, setTagInput] = useState('');
   const [acceptedTagInput, setAcceptedTagInput] = useState('');

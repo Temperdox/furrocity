@@ -1,0 +1,135 @@
+[
+  {
+    "id": "forest_weak",
+    "name": "Weak Forest Encounters",
+    "entries": [
+      { "type": "enemy", "id": "forest_wolf", "weight": 40 },
+      { "type": "enemy", "id": "forest_goblin", "weight": 35 },
+      { "type": "enemy", "id": "boar", "weight": 25 }
+    ]
+  },
+  {
+    "id": "forest_standard",
+    "name": "Standard Forest Encounters",
+    "entries": [
+      { "type": "enemy", "id": "forest_wolf", "weight": 30 },
+      { "type": "enemy", "id": "bear", "weight": 20 },
+      { "type": "enemy", "id": "boar", "weight": 20 },
+      { "type": "enemy", "id": "giant_spider", "weight": 15 },
+      { "type": "enemy", "id": "bandit", "weight": 15 }
+    ]
+  },
+  {
+    "id": "forest_dangerous",
+    "name": "Dangerous Forest Encounters",
+    "entries": [
+      { "type": "enemy", "id": "bear", "weight": 25 },
+      { "type": "enemy", "id": "giant_spider", "weight": 20 },
+      { "type": "enemy", "id": "treant", "weight": 15 },
+      { "type": "enemy", "id": "alpha_wolf", "weight": 15 },
+      { "type": "enemy", "id": "corrupted_beast", "weight": 15 },
+      { "type": "enemy", "id": "bandit_leader", "weight": 10 }
+    ]
+  },
+  {
+    "id": "forest_nsfw",
+    "name": "Forest NSFW Encounters",
+    "entries": [
+      { "type": "enemy", "id": "slime", "weight": 30 },
+      { "type": "enemy", "id": "tentacle_plant", "weight": 30 },
+      { "type": "enemy", "id": "dryad", "weight": 25 },
+      { "type": "enemy", "id": "bandit", "weight": 15 }
+    ]
+  },
+  {
+    "id": "forest_nsfw_heavy",
+    "name": "Heavy Forest NSFW Encounters",
+    "entries": [
+      { "type": "enemy", "id": "tentacle_plant", "weight": 35 },
+      { "type": "enemy", "id": "slime", "weight": 25 },
+      { "type": "enemy", "id": "dryad", "weight": 20 },
+      { "type": "enemy", "id": "succubus", "weight": 20 }
+    ]
+  },
+  {
+    "id": "wolf_pack",
+    "name": "Wolf Pack Encounters",
+    "entries": [
+      { "type": "enemy", "id": "forest_wolf", "weight": 60 },
+      { "type": "enemy", "id": "alpha_wolf", "weight": 40 }
+    ]
+  },
+  {
+    "id": "road_bandits",
+    "name": "Road Bandit Encounters",
+    "entries": [
+      { "type": "enemy", "id": "bandit", "weight": 50 },
+      { "type": "enemy", "id": "bandit_archer", "weight": 30 },
+      { "type": "enemy", "id": "bandit_leader", "weight": 10 },
+      { "type": "enemy", "id": "guard_dog", "weight": 10 }
+    ]
+  },
+  {
+    "id": "bandits",
+    "name": "Bandit Gang",
+    "entries": [
+      { "type": "enemy", "id": "bandit", "weight": 50 },
+      { "type": "enemy", "id": "bandit_archer", "weight": 30 },
+      { "type": "enemy", "id": "bandit_leader", "weight": 10 },
+      { "type": "enemy", "id": "war_hound", "weight": 10 }
+    ]
+  },
+  {
+    "id": "bandit_dogs",
+    "name": "Bandit Guard Dogs",
+    "entries": [
+      { "type": "enemy", "id": "guard_dog", "weight": 70 },
+      { "type": "enemy", "id": "war_hound", "weight": 30 }
+    ]
+  },
+  {
+    "id": "forest_beasts",
+    "name": "Forest Beasts",
+    "entries": [
+      { "type": "enemy", "id": "forest_wolf", "weight": 40 },
+      { "type": "enemy", "id": "bear", "weight": 20 },
+      { "type": "enemy", "id": "boar", "weight": 30 },
+      { "type": "enemy", "id": "giant_spider", "weight": 10 }
+    ]
+  },
+  {
+    "id": "forest_creatures",
+    "name": "Forest Creatures",
+    "entries": [
+      { "type": "enemy", "id": "treant", "weight": 20 },
+      { "type": "enemy", "id": "dryad", "weight": 30 },
+      { "type": "enemy", "id": "forest_spirit", "weight": 25 },
+      { "type": "enemy", "id": "corrupted_beast", "weight": 25 }
+    ]
+  },
+  {
+    "id": "corrupted_creatures",
+    "name": "Corrupted Creatures",
+    "entries": [
+      { "type": "enemy", "id": "corrupted_beast", "weight": 40 },
+      { "type": "enemy", "id": "slime", "weight": 30 },
+      { "type": "enemy", "id": "tentacle_plant", "weight": 30 }
+    ]
+  },
+  {
+    "id": "demon_standard",
+    "name": "Demon Standard Encounters",
+    "entries": [
+      { "type": "enemy", "id": "corrupted_beast", "weight": 40 },
+      { "type": "enemy", "id": "succubus", "weight": 60 }
+    ]
+  },
+  {
+    "id": "demon_nsfw",
+    "name": "Demon NSFW Encounters",
+    "entries": [
+      { "type": "enemy", "id": "succubus", "weight": 70 },
+      { "type": "enemy", "id": "tentacle_plant", "weight": 30 }
+    ]
+  }
+]

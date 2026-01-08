@@ -447,5 +447,502 @@
         { "healthThreshold": 0.5, "action": "howl_summon_pack" }
       ]
     }
+  },
+  {
+    "id": "bear",
+    "name": "Bear",
+    "description": "A massive brown bear protecting its territory.",
+    "type": "beast",
+    "tier": 2,
+    "level": 4,
+    "tags": ["bear", "beast", "forest", "strong", "natural"],
+    "locations": ["darkwood_forest", "deep_forest", "cave_entrance"],
+    "icon": { "type": "sprite", "sheetId": "enemies", "iconId": "bear" },
+    "hp": 90,
+    "maxHp": 90,
+    "maxStamina": 100,
+    "stats": {
+      "strength": 14,
+      "vitality": 12,
+      "evasion": 5,
+      "speed": 8
+    },
+    "damageType": "physical",
+    "resistances": { "physical": 15, "ice": 20 },
+    "weaknesses": { "fire": 15 },
+    "loot": [
+      { "itemId": "gold", "chance": 0.5, "min": 10, "max": 30 },
+      { "itemId": "bear_pelt", "chance": 0.6 },
+      { "itemId": "bear_claw", "chance": 0.4 },
+      { "itemId": "raw_meat", "chance": 0.7, "min": 2, "max": 4 }
+    ],
+    "experience": 55,
+    "skills": ["maul", "roar", "swipe"],
+    "canRestrain": true,
+    "restraintType": "bear_hug",
+    "restraintHp": 50,
+    "ai": {
+      "aggression": 0.6,
+      "fleeThreshold": 0.15
+    }
+  },
+  {
+    "id": "boar",
+    "name": "Wild Boar",
+    "description": "A tusked beast with a nasty temperament.",
+    "type": "beast",
+    "tier": 1,
+    "level": 3,
+    "tags": ["boar", "beast", "forest", "aggressive", "natural"],
+    "locations": ["darkwood_forest", "forest_path", "plains_edge"],
+    "icon": { "type": "sprite", "sheetId": "enemies", "iconId": "boar" },
+    "hp": 55,
+    "maxHp": 55,
+    "maxStamina": 70,
+    "stats": {
+      "strength": 10,
+      "vitality": 9,
+      "evasion": 6,
+      "speed": 11
+    },
+    "damageType": "physical",
+    "resistances": {},
+    "weaknesses": { "fire": 20 },
+    "loot": [
+      { "itemId": "gold", "chance": 0.3, "min": 3, "max": 10 },
+      { "itemId": "boar_tusk", "chance": 0.5 },
+      { "itemId": "raw_meat", "chance": 0.8, "min": 1, "max": 3 },
+      { "itemId": "boar_hide", "chance": 0.4 }
+    ],
+    "experience": 30,
+    "skills": ["charge", "gore", "trample"],
+    "canRestrain": false,
+    "ai": {
+      "aggression": 0.8,
+      "fleeThreshold": 0.2
+    }
+  },
+  {
+    "id": "giant_spider",
+    "name": "Giant Spider",
+    "description": "A massive arachnid with venomous fangs and web-spinning abilities.",
+    "type": "beast",
+    "tier": 2,
+    "level": 4,
+    "tags": ["spider", "beast", "forest", "venomous", "web"],
+    "locations": ["darkwood_depths", "cave_entrance", "abandoned_mine"],
+    "icon": { "type": "sprite", "sheetId": "enemies", "iconId": "spider" },
+    "hp": 50,
+    "maxHp": 50,
+    "maxStamina": 90,
+    "stats": {
+      "strength": 8,
+      "vitality": 6,
+      "evasion": 12,
+      "speed": 14
+    },
+    "damageType": "poison",
+    "resistances": { "poison": 75 },
+    "weaknesses": { "fire": 40, "ice": 20 },
+    "loot": [
+      { "itemId": "spider_silk", "chance": 0.6, "min": 1, "max": 3 },
+      { "itemId": "spider_venom", "chance": 0.4 },
+      { "itemId": "spider_fang", "chance": 0.3 }
+    ],
+    "experience": 40,
+    "skills": ["poison_bite", "web_shot", "ambush"],
+    "canRestrain": true,
+    "restraintType": "web",
+    "restraintHp": 30,
+    "ai": {
+      "aggression": 0.7,
+      "fleeThreshold": 0.25
+    }
+  },
+  {
+    "id": "treant",
+    "name": "Treant",
+    "description": "An ancient tree spirit awakened to defend the forest.",
+    "type": "plant",
+    "tier": 3,
+    "level": 7,
+    "tags": ["treant", "plant", "forest", "ancient", "magical", "boss_eligible"],
+    "locations": ["corrupted_grove", "ancient_forest", "druid_sanctum"],
+    "icon": { "type": "sprite", "sheetId": "enemies", "iconId": "treant" },
+    "hp": 150,
+    "maxHp": 150,
+    "maxStamina": 80,
+    "stats": {
+      "strength": 18,
+      "vitality": 20,
+      "evasion": 2,
+      "speed": 4
+    },
+    "damageType": "physical",
+    "resistances": { "physical": 25, "poison": 50, "ice": 20 },
+    "weaknesses": { "fire": 75, "dark": 25 },
+    "loot": [
+      { "itemId": "ancient_bark", "chance": 0.7 },
+      { "itemId": "heartwood", "chance": 0.3 },
+      { "itemId": "nature_essence", "chance": 0.4 },
+      { "itemId": "gold", "chance": 0.5, "min": 30, "max": 80 }
+    ],
+    "experience": 100,
+    "skills": ["root_strike", "entangle", "regenerate", "nature_wrath"],
+    "canRestrain": true,
+    "restraintType": "vine_bind",
+    "restraintHp": 60,
+    "ai": {
+      "aggression": 0.4,
+      "fleeThreshold": 0.1
+    }
+  },
+  {
+    "id": "dryad",
+    "name": "Dryad",
+    "description": "A beautiful forest spirit with power over nature.",
+    "type": "fey",
+    "tier": 2,
+    "level": 5,
+    "tags": ["dryad", "fey", "forest", "magical", "nature", "nsfw"],
+    "locations": ["ancient_forest", "corrupted_grove", "druid_sanctum"],
+    "icon": { "type": "sprite", "sheetId": "enemies", "iconId": "dryad" },
+    "hp": 70,
+    "maxHp": 70,
+    "maxStamina": 100,
+    "stats": {
+      "strength": 6,
+      "vitality": 8,
+      "evasion": 14,
+      "speed": 12,
+      "charm": 18,
+      "willpower": 15
+    },
+    "damageType": "nature",
+    "resistances": { "nature": 75, "poison": 50 },
+    "weaknesses": { "fire": 50, "dark": 30 },
+    "loot": [
+      { "itemId": "dryad_essence", "chance": 0.4 },
+      { "itemId": "enchanted_flower", "chance": 0.5 },
+      { "itemId": "nature_charm", "chance": 0.2 },
+      { "itemId": "gold", "chance": 0.6, "min": 20, "max": 50 }
+    ],
+    "experience": 65,
+    "skills": ["charm", "thorn_whip", "nature_blessing", "entangle"],
+    "canRestrain": true,
+    "restraintType": "vine_bind",
+    "restraintHp": 35,
+    "nsfwActions": ["seduce", "nature_kiss", "pollen_intoxication"],
+    "nsfwActionData": {
+      "seduce": {
+        "name": "Seduce",
+        "description": "The dryad's beauty clouds your mind...",
+        "corruptionGain": 5,
+        "arousalEffect": 4,
+        "applyEffect": "charmed"
+      },
+      "nature_kiss": {
+        "name": "Nature's Kiss",
+        "description": "She pulls you close and kisses you deeply...",
+        "corruptionGain": 8,
+        "arousalEffect": 6,
+        "healSelf": 10
+      },
+      "pollen_intoxication": {
+        "name": "Pollen Cloud",
+        "description": "Intoxicating pollen fills your lungs...",
+        "corruptionGain": 4,
+        "applyEffect": "aroused",
+        "stacks": 2
+      }
+    },
+    "ai": {
+      "aggression": 0.3,
+      "fleeThreshold": 0.3,
+      "prefersSeduce": true
+    }
+  },
+  {
+    "id": "forest_spirit",
+    "name": "Forest Spirit",
+    "description": "An ethereal being of pure forest magic.",
+    "type": "spirit",
+    "tier": 2,
+    "level": 5,
+    "tags": ["spirit", "magical", "forest", "ethereal"],
+    "locations": ["ancient_forest", "spirit_grove", "druid_sanctum"],
+    "icon": { "type": "sprite", "sheetId": "enemies", "iconId": "forest_spirit" },
+    "hp": 45,
+    "maxHp": 45,
+    "maxStamina": 120,
+    "stats": {
+      "strength": 5,
+      "vitality": 5,
+      "evasion": 18,
+      "speed": 16,
+      "willpower": 14
+    },
+    "damageType": "nature",
+    "resistances": { "physical": 50, "nature": 100 },
+    "weaknesses": { "dark": 50, "fire": 30 },
+    "loot": [
+      { "itemId": "spirit_essence", "chance": 0.5 },
+      { "itemId": "ethereal_dust", "chance": 0.4 },
+      { "itemId": "gold", "chance": 0.3, "min": 15, "max": 40 }
+    ],
+    "experience": 55,
+    "skills": ["spirit_bolt", "phase_shift", "nature_surge", "possession"],
+    "canRestrain": true,
+    "restraintType": "ethereal_hold",
+    "restraintHp": 25,
+    "ai": {
+      "aggression": 0.5,
+      "fleeThreshold": 0.4,
+      "prefersRanged": true
+    }
+  },
+  {
+    "id": "corrupted_beast",
+    "name": "Corrupted Beast",
+    "description": "A forest animal twisted by dark magic into a monstrous form.",
+    "type": "beast",
+    "tier": 2,
+    "level": 5,
+    "tags": ["corrupted", "beast", "forest", "dark", "dangerous"],
+    "locations": ["corrupted_grove", "darkwood_depths", "demon_portal_area"],
+    "icon": { "type": "sprite", "sheetId": "enemies", "iconId": "corrupted_beast" },
+    "hp": 75,
+    "maxHp": 75,
+    "maxStamina": 90,
+    "stats": {
+      "strength": 12,
+      "vitality": 10,
+      "evasion": 8,
+      "speed": 10
+    },
+    "damageType": "dark",
+    "resistances": { "dark": 50, "poison": 30 },
+    "weaknesses": { "holy": 50, "fire": 25 },
+    "loot": [
+      { "itemId": "corrupted_essence", "chance": 0.5 },
+      { "itemId": "dark_crystal", "chance": 0.3 },
+      { "itemId": "tainted_meat", "chance": 0.6 },
+      { "itemId": "gold", "chance": 0.4, "min": 15, "max": 35 }
+    ],
+    "experience": 50,
+    "skills": ["corrupted_bite", "dark_howl", "frenzy"],
+    "canRestrain": true,
+    "restraintType": "corrupted_grasp",
+    "restraintHp": 40,
+    "nsfwActions": ["corrupt_touch"],
+    "nsfwActionData": {
+      "corrupt_touch": {
+        "name": "Corrupting Touch",
+        "description": "Dark energy seeps into you from its touch...",
+        "corruptionGain": 10,
+        "arousalEffect": 2,
+        "applyEffect": "corruption"
+      }
+    },
+    "ai": {
+      "aggression": 0.9,
+      "fleeThreshold": 0.1
+    }
+  },
+  {
+    "id": "bandit_archer",
+    "name": "Bandit Archer",
+    "description": "A skilled marksman who preys on travelers from a distance.",
+    "type": "humanoid",
+    "tier": 2,
+    "level": 4,
+    "tags": ["human", "bandit", "humanoid", "ranged", "intelligent"],
+    "locations": ["north_road", "bandit_camp", "forest_path"],
+    "icon": { "type": "sprite", "sheetId": "enemies", "iconId": "bandit_archer" },
+    "hp": 45,
+    "maxHp": 45,
+    "maxStamina": 80,
+    "stats": {
+      "strength": 7,
+      "vitality": 6,
+      "evasion": 12,
+      "speed": 11
+    },
+    "damageType": "physical",
+    "resistances": {},
+    "weaknesses": {},
+    "loot": [
+      { "itemId": "gold", "chance": 0.85, "min": 10, "max": 35 },
+      { "itemId": "shortbow", "chance": 0.25 },
+      { "itemId": "arrows", "chance": 0.7, "min": 5, "max": 15 },
+      { "itemId": "health_potion", "chance": 0.2 }
+    ],
+    "experience": 35,
+    "skills": ["aimed_shot", "multishot", "retreat"],
+    "canRestrain": true,
+    "restraintType": "rope_bind",
+    "restraintHp": 30,
+    "nsfwActions": ["grope"],
+    "nsfwActionData": {
+      "grope": {
+        "name": "Grope",
+        "description": "The archer takes advantage of your vulnerability...",
+        "corruptionGain": 3,
+        "arousalEffect": 2
+      }
+    },
+    "ai": {
+      "aggression": 0.6,
+      "fleeThreshold": 0.3,
+      "prefersRanged": true,
+      "keepDistance": true
+    }
+  },
+  {
+    "id": "bandit_leader",
+    "name": "Bandit Leader",
+    "description": "A cunning and dangerous criminal who commands respect through fear.",
+    "type": "humanoid",
+    "tier": 3,
+    "level": 6,
+    "tags": ["human", "bandit", "humanoid", "intelligent", "boss"],
+    "locations": ["bandit_camp", "bandit_hideout"],
+    "icon": { "type": "sprite", "sheetId": "enemies", "iconId": "bandit_leader" },
+    "hp": 100,
+    "maxHp": 100,
+    "maxStamina": 100,
+    "stats": {
+      "strength": 14,
+      "vitality": 12,
+      "evasion": 9,
+      "speed": 10,
+      "willpower": 10
+    },
+    "damageType": "physical",
+    "resistances": { "physical": 10 },
+    "weaknesses": {},
+    "loot": [
+      { "itemId": "gold", "chance": 1.0, "min": 50, "max": 150 },
+      { "itemId": "steel_sword", "chance": 0.4 },
+      { "itemId": "leader_medallion", "chance": 0.3 },
+      { "itemId": "health_potion", "chance": 0.5, "min": 1, "max": 2 },
+      { "itemId": "stolen_valuables", "chance": 0.6 }
+    ],
+    "experience": 85,
+    "skills": ["power_strike", "rally_troops", "intimidate", "execute"],
+    "canRestrain": true,
+    "restraintType": "rope_bind",
+    "restraintHp": 50,
+    "nsfwActions": ["grope", "strip", "dominate"],
+    "nsfwActionData": {
+      "grope": {
+        "name": "Grope",
+        "description": "The leader roughly gropes you, asserting dominance...",
+        "corruptionGain": 4,
+        "arousalEffect": 2
+      },
+      "strip": {
+        "name": "Strip",
+        "description": "He orders his men to strip you of your armor...",
+        "corruptionGain": 6,
+        "damageClothing": { "slot": "all", "amount": 40 }
+      },
+      "dominate": {
+        "name": "Dominate",
+        "description": "He forces you into submission...",
+        "corruptionGain": 10,
+        "arousalEffect": 4,
+        "requiresTags": ["domination"],
+        "triggerScene": "bandit_domination"
+      }
+    },
+    "ai": {
+      "aggression": 0.7,
+      "fleeThreshold": 0.15,
+      "summonMinions": true
+    },
+    "bossConfig": {
+      "isBoss": true,
+      "musicTrack": "boss_humanoid",
+      "phases": [
+        { "healthThreshold": 0.5, "action": "rally_troops" }
+      ]
+    }
+  },
+  {
+    "id": "war_hound",
+    "name": "War Hound",
+    "description": "A large, armored dog trained for combat.",
+    "type": "beast",
+    "tier": 2,
+    "level": 4,
+    "tags": ["dog", "beast", "trained", "armored"],
+    "locations": ["bandit_camp", "guard_post", "military_camp"],
+    "icon": { "type": "sprite", "sheetId": "enemies", "iconId": "war_hound" },
+    "hp": 60,
+    "maxHp": 60,
+    "maxStamina": 90,
+    "stats": {
+      "strength": 11,
+      "vitality": 9,
+      "evasion": 10,
+      "speed": 14
+    },
+    "damageType": "physical",
+    "resistances": { "physical": 15 },
+    "weaknesses": { "fire": 15 },
+    "loot": [
+      { "itemId": "gold", "chance": 0.2, "min": 2, "max": 8 },
+      { "itemId": "dog_collar", "chance": 0.4 },
+      { "itemId": "raw_meat", "chance": 0.5 },
+      { "itemId": "dog_armor_scraps", "chance": 0.3 }
+    ],
+    "experience": 40,
+    "skills": ["savage_bite", "tackle", "intimidating_bark"],
+    "canRestrain": true,
+    "restraintType": "pin",
+    "restraintHp": 35,
+    "ai": {
+      "aggression": 0.85,
+      "fleeThreshold": 0.2,
+      "packTactics": true
+    }
+  },
+  {
+    "id": "guard_dog",
+    "name": "Guard Dog",
+    "description": "A trained dog that patrols and protects its master's territory.",
+    "type": "beast",
+    "tier": 1,
+    "level": 2,
+    "tags": ["dog", "beast", "trained"],
+    "locations": ["town_outskirts", "bandit_camp", "farm"],
+    "icon": { "type": "sprite", "sheetId": "enemies", "iconId": "guard_dog" },
+    "hp": 35,
+    "maxHp": 35,
+    "maxStamina": 70,
+    "stats": {
+      "strength": 7,
+      "vitality": 6,
+      "evasion": 10,
+      "speed": 13
+    },
+    "damageType": "physical",
+    "resistances": {},
+    "weaknesses": {},
+    "loot": [
+      { "itemId": "raw_meat", "chance": 0.4 },
+      { "itemId": "dog_collar", "chance": 0.3 }
+    ],
+    "experience": 20,
+    "skills": ["bite", "tackle", "alert_bark"],
+    "canRestrain": true,
+    "restraintType": "pin",
+    "restraintHp": 25,
+    "ai": {
+      "aggression": 0.7,
+      "fleeThreshold": 0.3,
+      "alertsAllies": true
+    }
   }
 ]

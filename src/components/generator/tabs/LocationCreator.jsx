@@ -1609,12 +1609,19 @@ const LocationCreator = ({
   const allScenes = [...(datapackContent.scenes || []), ...(allContent.scenes || [])];
 
   // Deduplicate locations by ID (user-created items take precedence)
+  // Also filter out any enemy objects that may have been incorrectly included
   const allLocations = useMemo(() => {
     const locMap = new Map();
+    // Helper to check if an object is a valid location
+    const isValidLocation = (loc) => {
+      const hasLocationFields = loc.locationType || loc.parentRegion || loc.connectedLocations || loc.navigation;
+      const hasEnemyFields = loc.tier !== undefined || loc.maxHp !== undefined || loc.nsfwActions !== undefined || loc.loot !== undefined;
+      return hasLocationFields || !hasEnemyFields;
+    };
     // Add datapack locations first
-    (datapackContent.locations || []).forEach(loc => locMap.set(loc.id, loc));
+    (datapackContent.locations || []).filter(isValidLocation).forEach(loc => locMap.set(loc.id, loc));
     // User-created items override datapack ones with same ID
-    items.forEach(loc => locMap.set(loc.id, loc));
+    items.filter(isValidLocation).forEach(loc => locMap.set(loc.id, loc));
     return Array.from(locMap.values());
   }, [datapackContent.locations, items]);
 

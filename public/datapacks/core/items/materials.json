@@ -1,0 +1,575 @@
+[
+  {
+    "id": "gold",
+    "name": "Gold",
+    "baseName": "Gold",
+    "type": "currency",
+    "stackable": true,
+    "value": 1,
+    "tags": ["currency", "gold"]
+  },
+  {
+    "id": "wolf_pelt",
+    "name": "Wolf Pelt",
+    "baseName": "Wolf Pelt",
+    "type": "material",
+    "stackable": true,
+    "value": 15,
+    "tags": ["material", "leather", "animal", "wolf"]
+  },
+  {
+    "id": "wolf_fang",
+    "name": "Wolf Fang",
+    "baseName": "Wolf Fang",
+    "type": "material",
+    "stackable": true,
+    "value": 8,
+    "tags": ["material", "bone", "animal", "wolf"]
+  },
+  {
+    "id": "raw_meat",
+    "name": "Raw Meat",
+    "baseName": "Raw Meat",
+    "type": "material",
+    "stackable": true,
+    "value": 5,
+    "tags": ["food", "meat", "raw"]
+  },
+  {
+    "id": "leather_scraps",
+    "name": "Leather Scraps",
+    "baseName": "Leather Scraps",
+    "type": "material",
+    "stackable": true,
+    "value": 3,
+    "tags": ["material", "leather", "crafting"]
+  },
+  {
+    "id": "herb_common",
+    "name": "Common Herb",
+    "baseName": "Common Herb",
+    "type": "material",
+    "stackable": true,
+    "value": 5,
+    "tags": ["herb", "alchemy", "nature"]
+  },
+  {
+    "id": "herb_healing",
+    "name": "Healing Herb",
+    "baseName": "Healing Herb",
+    "type": "material",
+    "stackable": true,
+    "value": 8,
+    "tags": ["herb", "alchemy", "healing"]
+  },
+  {
+    "id": "herb_rare",
+    "name": "Rare Herb",
+    "baseName": "Rare Herb",
+    "type": "material",
+    "stackable": true,
+    "value": 25,
+    "tags": ["herb", "alchemy", "nature", "rare"]
+  },
+  {
+    "id": "rare_herb",
+    "name": "Rare Herb",
+    "baseName": "Rare Herb",
+    "type": "material",
+    "stackable": true,
+    "value": 25,
+    "tags": ["herb", "alchemy", "nature", "rare"]
+  },
+  {
+    "id": "mushroom",
+    "name": "Mushroom",
+    "baseName": "Mushroom",
+    "type": "material",
+    "stackable": true,
+    "value": 3,
+    "tags": ["food", "alchemy", "nature"]
+  },
+  {
+    "id": "wood",
+    "name": "Wood",
+    "baseName": "Wood",
+    "type": "material",
+    "stackable": true,
+    "value": 2,
+    "tags": ["material", "crafting", "nature"]
+  },
+  {
+    "id": "wood_stick",
+    "name": "Wood Stick",
+    "baseName": "Wood Stick",
+    "type": "material",
+    "stackable": true,
+    "value": 1,
+    "tags": ["material", "crafting", "nature"]
+  },
+  {
+    "id": "wild_berries",
+    "name": "Wild Berries",
+    "baseName": "Wild Berries",
+    "type": "consumable",
+    "stackable": true,
+    "value": 2,
+    "effect": { "heal": 5 },
+    "tags": ["food", "nature", "healing"]
+  },
+  {
+    "id": "bear_pelt",
+    "name": "Bear Pelt",
+    "baseName": "Bear Pelt",
+    "type": "material",
+    "stackable": true,
+    "value": 35,
+    "tags": ["material", "leather", "animal", "bear", "rare"]
+  },
+  {
+    "id": "bear_claw",
+    "name": "Bear Claw",
+    "baseName": "Bear Claw",
+    "type": "material",
+    "stackable": true,
+    "value": 15,
+    "tags": ["material", "bone", "animal", "bear"]
+  },
+  {
+    "id": "boar_tusk",
+    "name": "Boar Tusk",
+    "baseName": "Boar Tusk",
+    "type": "material",
+    "stackable": true,
+    "value": 10,
+    "tags": ["material", "bone", "animal", "boar"]
+  },
+  {
+    "id": "boar_hide",
+    "name": "Boar Hide",
+    "baseName": "Boar Hide",
+    "type": "material",
+    "stackable": true,
+    "value": 12,
+    "tags": ["material", "leather", "animal", "boar"]
+  },
+  {
+    "id": "spider_silk",
+    "name": "Spider Silk",
+    "baseName": "Spider Silk",
+    "type": "material",
+    "stackable": true,
+    "value": 20,
+    "tags": ["material", "crafting", "spider", "rare"]
+  },
+  {
+    "id": "spider_venom",
+    "name": "Spider Venom",
+    "baseName": "Spider Venom",
+    "type": "material",
+    "stackable": true,
+    "value": 30,
+    "tags": ["material", "alchemy", "spider", "poison"]
+  },
+  {
+    "id": "spider_fang",
+    "name": "Spider Fang",
+    "baseName": "Spider Fang",
+    "type": "material",
+    "stackable": true,
+    "value": 12,
+    "tags": ["material", "bone", "spider"]
+  },
+  {
+    "id": "ancient_bark",
+    "name": "Ancient Bark",
+    "baseName": "Ancient Bark",
+    "type": "material",
+    "stackable": true,
+    "value": 50,
+    "tags": ["material", "nature", "magical", "rare"]
+  },
+  {
+    "id": "heartwood",
+    "name": "Heartwood",
+    "baseName": "Heartwood",
+    "type": "material",
+    "stackable": true,
+    "value": 100,
+    "tags": ["material", "nature", "magical", "epic"]
+  },
+  {
+    "id": "nature_essence",
+    "name": "Nature Essence",
+    "baseName": "Nature Essence",
+    "type": "material",
+    "stackable": true,
+    "value": 40,
+    "tags": ["material", "magical", "nature", "essence"]
+  },
+  {
+    "id": "dryad_essence",
+    "name": "Dryad Essence",
+    "baseName": "Dryad Essence",
+    "type": "material",
+    "stackable": true,
+    "value": 60,
+    "tags": ["material", "magical", "fey", "essence", "rare"]
+  },
+  {
+    "id": "enchanted_flower",
+    "name": "Enchanted Flower",
+    "baseName": "Enchanted Flower",
+    "type": "material",
+    "stackable": true,
+    "value": 35,
+    "tags": ["material", "nature", "magical"]
+  },
+  {
+    "id": "nature_charm",
+    "name": "Nature Charm",
+    "baseName": "Nature Charm",
+    "type": "accessory",
+    "stackable": false,
+    "value": 80,
+    "tags": ["accessory", "magical", "nature"]
+  },
+  {
+    "id": "spirit_essence",
+    "name": "Spirit Essence",
+    "baseName": "Spirit Essence",
+    "type": "material",
+    "stackable": true,
+    "value": 55,
+    "tags": ["material", "magical", "spirit", "essence"]
+  },
+  {
+    "id": "ethereal_dust",
+    "name": "Ethereal Dust",
+    "baseName": "Ethereal Dust",
+    "type": "material",
+    "stackable": true,
+    "value": 45,
+    "tags": ["material", "magical", "spirit"]
+  },
+  {
+    "id": "corrupted_essence",
+    "name": "Corrupted Essence",
+    "baseName": "Corrupted Essence",
+    "type": "material",
+    "stackable": true,
+    "value": 40,
+    "tags": ["material", "magical", "dark", "corrupted"]
+  },
+  {
+    "id": "dark_crystal",
+    "name": "Dark Crystal",
+    "baseName": "Dark Crystal",
+    "type": "material",
+    "stackable": true,
+    "value": 65,
+    "tags": ["material", "magical", "dark", "rare"]
+  },
+  {
+    "id": "tainted_meat",
+    "name": "Tainted Meat",
+    "baseName": "Tainted Meat",
+    "type": "material",
+    "stackable": true,
+    "value": 5,
+    "tags": ["food", "corrupted", "dangerous"]
+  },
+  {
+    "id": "goblin_ear",
+    "name": "Goblin Ear",
+    "baseName": "Goblin Ear",
+    "type": "material",
+    "stackable": true,
+    "value": 5,
+    "tags": ["material", "trophy", "goblin"]
+  },
+  {
+    "id": "slime_core",
+    "name": "Slime Core",
+    "baseName": "Slime Core",
+    "type": "material",
+    "stackable": true,
+    "value": 15,
+    "tags": ["material", "alchemy", "slime"]
+  },
+  {
+    "id": "slime_residue",
+    "name": "Slime Residue",
+    "baseName": "Slime Residue",
+    "type": "material",
+    "stackable": true,
+    "value": 8,
+    "tags": ["material", "alchemy", "slime"]
+  },
+  {
+    "id": "vine_sample",
+    "name": "Vine Sample",
+    "baseName": "Vine Sample",
+    "type": "material",
+    "stackable": true,
+    "value": 12,
+    "tags": ["material", "nature", "plant"]
+  },
+  {
+    "id": "aphrodisiac_pollen",
+    "name": "Aphrodisiac Pollen",
+    "baseName": "Aphrodisiac Pollen",
+    "type": "material",
+    "stackable": true,
+    "value": 40,
+    "tags": ["material", "alchemy", "nsfw", "plant"]
+  },
+  {
+    "id": "plant_core",
+    "name": "Plant Core",
+    "baseName": "Plant Core",
+    "type": "material",
+    "stackable": true,
+    "value": 25,
+    "tags": ["material", "nature", "plant"]
+  },
+  {
+    "id": "alpha_fang",
+    "name": "Alpha Fang",
+    "baseName": "Alpha Fang",
+    "type": "material",
+    "stackable": true,
+    "value": 35,
+    "tags": ["material", "bone", "wolf", "rare"]
+  },
+  {
+    "id": "mimic_tongue",
+    "name": "Mimic Tongue",
+    "baseName": "Mimic Tongue",
+    "type": "material",
+    "stackable": true,
+    "value": 50,
+    "tags": ["material", "monster", "mimic", "rare"]
+  },
+  {
+    "id": "succubus_essence",
+    "name": "Succubus Essence",
+    "baseName": "Succubus Essence",
+    "type": "material",
+    "stackable": true,
+    "value": 150,
+    "tags": ["material", "magical", "demon", "essence", "epic"]
+  },
+  {
+    "id": "charm_pendant",
+    "name": "Charm Pendant",
+    "baseName": "Charm Pendant",
+    "type": "accessory",
+    "slot": "neck",
+    "stackable": false,
+    "value": 200,
+    "stats": { "charm": 5, "willpower": 3 },
+    "tags": ["accessory", "magical", "demon"]
+  },
+  {
+    "id": "succubus_wings",
+    "name": "Succubus Wings",
+    "baseName": "Succubus Wings",
+    "type": "material",
+    "stackable": true,
+    "value": 500,
+    "tags": ["material", "demon", "legendary"]
+  },
+  {
+    "id": "dog_collar",
+    "name": "Dog Collar",
+    "baseName": "Dog Collar",
+    "type": "material",
+    "stackable": true,
+    "value": 5,
+    "tags": ["material", "leather", "dog"]
+  },
+  {
+    "id": "dog_armor_scraps",
+    "name": "Dog Armor Scraps",
+    "baseName": "Dog Armor Scraps",
+    "type": "material",
+    "stackable": true,
+    "value": 10,
+    "tags": ["material", "armor", "scraps"]
+  },
+  {
+    "id": "arrows",
+    "name": "Arrows",
+    "baseName": "Arrows",
+    "type": "ammo",
+    "stackable": true,
+    "value": 1,
+    "tags": ["ammo", "ranged"]
+  },
+  {
+    "id": "leader_medallion",
+    "name": "Leader's Medallion",
+    "baseName": "Leader's Medallion",
+    "type": "accessory",
+    "slot": "neck",
+    "stackable": false,
+    "value": 100,
+    "stats": { "willpower": 2 },
+    "tags": ["accessory", "bandit", "rare"]
+  },
+  {
+    "id": "stolen_valuables",
+    "name": "Stolen Valuables",
+    "baseName": "Stolen Valuables",
+    "type": "material",
+    "stackable": true,
+    "value": 50,
+    "tags": ["treasure", "bandit"]
+  },
+  {
+    "id": "beast_pelt",
+    "name": "Beast Pelt",
+    "baseName": "Beast Pelt",
+    "type": "material",
+    "stackable": true,
+    "value": 20,
+    "tags": ["material", "leather", "animal"]
+  },
+  {
+    "id": "beast_fang",
+    "name": "Beast Fang",
+    "baseName": "Beast Fang",
+    "type": "material",
+    "stackable": true,
+    "value": 10,
+    "tags": ["material", "bone", "animal"]
+  },
+  {
+    "id": "beast_claw",
+    "name": "Beast Claw",
+    "baseName": "Beast Claw",
+    "type": "material",
+    "stackable": true,
+    "value": 12,
+    "tags": ["material", "bone", "animal"]
+  },
+  {
+    "id": "beast_essence",
+    "name": "Beast Essence",
+    "baseName": "Beast Essence",
+    "type": "material",
+    "stackable": true,
+    "value": 45,
+    "tags": ["material", "magical", "essence", "rare"]
+  },
+  {
+    "id": "crude_lockpick",
+    "name": "Crude Lockpick",
+    "baseName": "Crude Lockpick",
+    "type": "tool",
+    "stackable": true,
+    "value": 5,
+    "tags": ["tool", "lockpick"]
+  },
+  {
+    "id": "stolen_trinket",
+    "name": "Stolen Trinket",
+    "baseName": "Stolen Trinket",
+    "type": "material",
+    "stackable": true,
+    "value": 15,
+    "tags": ["treasure", "goblin"]
+  },
+  {
+    "id": "beast_musk",
+    "name": "Beast Musk",
+    "baseName": "Beast Musk",
+    "type": "material",
+    "stackable": true,
+    "value": 20,
+    "tags": ["material", "alchemy", "nsfw"]
+  },
+  {
+    "id": "pheromone_gland",
+    "name": "Pheromone Gland",
+    "baseName": "Pheromone Gland",
+    "type": "material",
+    "stackable": true,
+    "value": 35,
+    "tags": ["material", "alchemy", "nsfw"]
+  },
+  {
+    "id": "aphrodisiac_herb",
+    "name": "Aphrodisiac Herb",
+    "baseName": "Aphrodisiac Herb",
+    "type": "material",
+    "stackable": true,
+    "value": 25,
+    "tags": ["herb", "alchemy", "nsfw"]
+  },
+  {
+    "id": "feral_essence",
+    "name": "Feral Essence",
+    "baseName": "Feral Essence",
+    "type": "material",
+    "stackable": true,
+    "value": 50,
+    "tags": ["material", "magical", "nsfw", "essence"]
+  },
+  {
+    "id": "heat_suppressant",
+    "name": "Heat Suppressant",
+    "baseName": "Heat Suppressant",
+    "type": "consumable",
+    "stackable": true,
+    "value": 40,
+    "effect": { "suppressHeat": 24 },
+    "tags": ["consumable", "alchemy", "nsfw"]
+  },
+  {
+    "id": "leather_armor_piece",
+    "name": "Leather Armor Piece",
+    "baseName": "Leather Armor Piece",
+    "type": "material",
+    "stackable": true,
+    "value": 15,
+    "tags": ["material", "armor", "leather"]
+  },
+  {
+    "id": "rope",
+    "name": "Rope",
+    "baseName": "Rope",
+    "type": "material",
+    "stackable": true,
+    "value": 8,
+    "tags": ["material", "crafting"]
+  },
+  {
+    "id": "lockpick",
+    "name": "Lockpick",
+    "baseName": "Lockpick",
+    "type": "tool",
+    "stackable": true,
+    "value": 15,
+    "tags": ["tool", "lockpick"]
+  },
+  {
+    "id": "stolen_goods",
+    "name": "Stolen Goods",
+    "baseName": "Stolen Goods",
+    "type": "material",
+    "stackable": true,
+    "value": 30,
+    "tags": ["treasure", "bandit"]
+  },
+  {
+    "id": "random_rare",
+    "name": "Rare Treasure",
+    "baseName": "Rare Treasure",
+    "type": "material",
+    "stackable": true,
+    "value": 75,
+    "tags": ["treasure", "rare"]
+  }
+]

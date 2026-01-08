@@ -28,42 +28,15 @@ import ChangelogModal from './components/ui/ChangelogModal.jsx';
 import SceneDisplay from './components/ui/SceneDisplay.jsx';
 import DebugMenu from './components/debug/DebugMenu.jsx';
 import ContentGenerator from './components/generator/ContentGenerator.jsx';
+import { gameDataLoader } from './engine/GameDataLoader.js';
 
 // ============================================================================
 // GAME DATA STRUCTURES (JSON-DRIVEN CONTENT)
 // ============================================================================
 
 const GameData = {
-  characters: [
-    {
-      id: "warrior_male",
-      name: "Marcus the Bold",
-      image: "/characters/marcus.png",
-      description: "A battle-hardened warrior seeking redemption.",
-      baseStats: { strength: 3, vitality: 2, evasion: 1, stamina: 2, willpower: 1, intelligence: 0, charm: 1, corruptionResistance: 0 }
-    },
-    {
-      id: "rogue_male", 
-      name: "Shade",
-      image: "/characters/shade.png",
-      description: "A nimble thief with a mysterious past.",
-      baseStats: { strength: 1, vitality: 1, evasion: 3, stamina: 2, willpower: 1, intelligence: 1, charm: 1, corruptionResistance: 0 }
-    },
-    {
-      id: "mage_male",
-      name: "Aldric",
-      image: "/characters/aldric.png", 
-      description: "A scholar of forbidden arts.",
-      baseStats: { strength: 0, vitality: 1, evasion: 1, stamina: 1, willpower: 2, intelligence: 3, charm: 1, corruptionResistance: 1 }
-    },
-    {
-      id: "paladin_male",
-      name: "Sir Cedric",
-      image: "/characters/cedric.png",
-      description: "A fallen knight seeking to restore his honor.",
-      baseStats: { strength: 2, vitality: 2, evasion: 0, stamina: 2, willpower: 2, intelligence: 1, charm: 1, corruptionResistance: 0 }
-    }
-  ],
+  // Characters are loaded from datapacks - see playable_characters.json
+  characters: [],
 
   difficulties: [
     { id: "easy", name: "Story Mode", description: "Relaxed gameplay, focus on narrative.", statMultiplier: 1.2, encounterRateMultiplier: 0.5, canSaveAnywhere: true },
@@ -110,233 +83,17 @@ const GameData = {
     { id: "restraint_escape", name: "Restraint Escape", category: "restraints", defaultEnabled: true }
   ],
 
-  locations: [
-    {
-      id: "starting_inn",
-      name: "The Weary Traveler Inn",
-      description: "A cozy inn at the crossroads. The smell of ale and roasted meat fills the air.",
-      image: "/locations/inn.png",
-      tags: ["safe", "inn", "town", "rest"],
-      encounterChance: 0,
-      actions: ["rest", "interact", "shop", "move"],
-      connectedLocations: ["town_square", "forest_edge", "road_north"],
-      navigation: { down: "inn_cellar", up: "inn_rooms" },
-      npcs: ["innkeeper_mary", "bard_tom"],
-      ambiance: "warm",
-      parentRegion: "crossroads",
-      locked: false,
-      initiallyUnlocked: true,
-      mapData: { localMapPosition: { x: 150, y: 180 } },
-      titleDisplay: { fontTag: "friendly_town", subtitle: "A Cozy Rest Stop" }
-    },
-    {
-      id: "inn_cellar",
-      name: "Inn Cellar",
-      description: "A dark, musty cellar beneath the inn. Barrels of ale and wine line the walls.",
-      image: "/locations/cellar.png",
-      tags: ["safe", "cellar", "storage"],
-      encounterChance: 0,
-      actions: ["search", "interact"],
-      connectedLocations: [],
-      navigation: { up: "starting_inn" },
-      npcs: [],
-      ambiance: "dark",
-      parentRegion: "crossroads",
-      parentLocation: "starting_inn",
-      locationType: "sub",
-      locked: false,
-      initiallyUnlocked: true,
-      mapData: { localMapPosition: { x: 150, y: 180 }, hidden: true },
-      titleDisplay: { fontTag: "neutral", subtitle: "Beneath the Tavern" }
-    },
-    {
-      id: "inn_rooms",
-      name: "Inn Guest Rooms",
-      description: "The upper floor of the inn, with several doors leading to cozy guest rooms.",
-      image: "/locations/inn_rooms.png",
-      tags: ["safe", "inn", "rest", "rooms"],
-      encounterChance: 0,
-      actions: ["rest", "interact"],
-      connectedLocations: [],
-      navigation: { down: "starting_inn" },
-      npcs: ["guest_merchant"],
-      ambiance: "peaceful",
-      parentRegion: "crossroads",
-      parentLocation: "starting_inn",
-      locationType: "sub",
-      locked: false,
-      initiallyUnlocked: true,
-      mapData: { localMapPosition: { x: 150, y: 180 }, hidden: true },
-      titleDisplay: { fontTag: "friendly_town", subtitle: "A Place to Rest" }
-    },
-    {
-      id: "town_square",
-      name: "Crossroads Town Square",
-      description: "The bustling center of a small frontier town.",
-      image: "/locations/town_square.png",
-      tags: ["safe", "town", "shop"],
-      encounterChance: 0,
-      actions: ["interact", "shop", "move", "search"],
-      connectedLocations: ["starting_inn", "blacksmith", "temple", "market"],
-      npcs: ["guard_captain", "merchant_ben"],
-      ambiance: "busy",
-      parentRegion: "crossroads",
-      locked: false,
-      initiallyUnlocked: true,
-      mapData: { localMapPosition: { x: 250, y: 200 } },
-      titleDisplay: { fontTag: "friendly_town" }
-    },
-    {
-      id: "forest_edge",
-      name: "Darkwood Forest Edge",
-      description: "The trees grow thick here. Strange sounds echo from within.",
-      image: "/locations/forest_edge.png",
-      tags: ["wilderness", "forest", "dangerous"],
-      encounterChance: 30,
-      maxEnemyCount: 2,
-      enemyTables: ["forest_beasts", "bandits"],
-      lootTables: ["forest_loot", "bandit_loot"],
-      actions: ["explore", "search", "move", "rest"],
-      connectedLocations: ["starting_inn", "deep_forest", "forest_clearing"],
-      ambiance: "eerie",
-      parentRegion: "crossroads",
-      locked: false,
-      initiallyUnlocked: true,
-      neighbors: ["deep_forest", "bandit_hideout"],
-      mapData: { localMapPosition: { x: 380, y: 150 } },
-      titleDisplay: { fontTag: "hostile_forest", subtitle: "Where the Wild Things Are" }
-    },
-    {
-      id: "deep_forest",
-      name: "Darkwood Depths",
-      description: "Ancient trees block out the sun. The air is thick with mystery.",
-      image: "/locations/deep_forest.png",
-      tags: ["wilderness", "forest", "dangerous", "dark"],
-      encounterChance: 50,
-      maxEnemyCount: 3,
-      enemyTables: ["forest_beasts", "forest_creatures"],
-      lootTables: ["forest_loot", "rare_herbs"],
-      actions: ["explore", "search", "move"],
-      connectedLocations: ["forest_edge", "ancient_ruins", "witch_hut"],
-      ambiance: "dark",
-      parentRegion: "darkwood",
-      locked: true,
-      unlockRequirements: { type: "visited_location", location: "forest_edge" },
-      discoverableWhileExploring: true,
-      discoveryChance: 0.2,
-      mapData: { localMapPosition: { x: 200, y: 200 } },
-      titleDisplay: { fontTag: "hostile_forest", subtitle: "Into the Darkness" }
-    },
-    {
-      id: "bandit_hideout",
-      name: "Bandit Hideout",
-      description: "A cave system converted into a criminal stronghold.",
-      image: "/locations/bandit_cave.png",
-      tags: ["dungeon", "dangerous", "hostile", "cave"],
-      encounterChance: 75,
-      maxEnemyCount: 4,
-      enemyTables: ["bandits", "bandit_dogs"],
-      lootTables: ["bandit_loot", "stolen_goods"],
-      actions: ["explore", "search", "move", "stealth"],
-      connectedLocations: ["forest_edge", "hidden_tunnel"],
-      ambiance: "hostile",
-      parentRegion: "crossroads",
-      locked: true,
-      unlockRequirements: { type: "level", value: 3, operator: ">=" },
-      discoverableWhileExploring: true,
-      discoveryChance: 0.15,
-      dangerLevel: 3,
-      mapData: { localMapPosition: { x: 420, y: 280 } },
-      titleDisplay: { fontTag: "cave", subtitle: "Den of Thieves" }
-    }
-  ],
+  // Locations are loaded from datapacks - see world_locations.json
+  locations: [],
 
-  enemyTables: {
-    forest_beasts: [
-      { id: "wolf", weight: 40 },
-      { id: "bear", weight: 20 },
-      { id: "boar", weight: 30 },
-      { id: "giant_spider", weight: 10 }
-    ],
-    bandits: [
-      { id: "bandit_grunt", weight: 50 },
-      { id: "bandit_archer", weight: 30 },
-      { id: "bandit_brute", weight: 15 },
-      { id: "bandit_leader", weight: 5 }
-    ],
-    bandit_dogs: [
-      { id: "guard_dog", weight: 70 },
-      { id: "war_hound", weight: 30 }
-    ],
-    forest_creatures: [
-      { id: "treant", weight: 20 },
-      { id: "dryad", weight: 30 },
-      { id: "forest_spirit", weight: 25 },
-      { id: "corrupted_beast", weight: 25 }
-    ]
-  },
+  // Enemy tables are loaded from datapacks - see encounter_tables/
+  enemyTables: {},
 
-  enemies: {
-    wolf: {
-      id: "wolf",
-      name: "Wolf",
-      baseStats: { hp: 30, attack: 8, defense: 3, speed: 12, level: 1 },
-      tags: ["beast", "pack", "natural"],
-      lootTable: "wolf_loot",
-      abilities: ["bite", "howl", "pounce"],
-      grappleChance: 20,
-      restraintType: "pin"
-    },
-    bandit_grunt: {
-      id: "bandit_grunt",
-      name: "Bandit",
-      baseStats: { hp: 50, attack: 10, defense: 5, speed: 8, level: 2 },
-      tags: ["humanoid", "bandit", "armed"],
-      lootTable: "bandit_loot",
-      abilities: ["slash", "kick", "grapple"],
-      grappleChance: 35,
-      restraintType: "hold"
-    },
-    bandit_brute: {
-      id: "bandit_brute",
-      name: "Bandit Brute",
-      baseStats: { hp: 80, attack: 15, defense: 8, speed: 5, level: 4 },
-      tags: ["humanoid", "bandit", "strong"],
-      lootTable: "bandit_loot",
-      abilities: ["heavy_strike", "grab", "crush"],
-      grappleChance: 50,
-      restraintType: "bear_hug"
-    },
-    guard_dog: {
-      id: "guard_dog",
-      name: "Guard Dog",
-      baseStats: { hp: 25, attack: 7, defense: 2, speed: 14, level: 1 },
-      tags: ["beast", "dog", "trained"],
-      lootTable: "dog_loot",
-      abilities: ["bite", "tackle"],
-      grappleChance: 30,
-      restraintType: "pin"
-    }
-  },
+  // Enemies are loaded from datapacks - see enemies/
+  enemies: {},
 
-  lootTables: {
-    wolf_loot: [
-      { itemId: "wolf_pelt", dropChance: 80, minCount: 1, maxCount: 1 },
-      { itemId: "wolf_fang", dropChance: 50, minCount: 1, maxCount: 2 },
-      { itemId: "raw_meat", dropChance: 60, minCount: 1, maxCount: 2 }
-    ],
-    bandit_loot: [
-      { itemId: "gold", dropChance: 90, minCount: 5, maxCount: 25 },
-      { itemId: "rusty_sword", dropChance: 30, minCount: 1, maxCount: 1 },
-      { itemId: "leather_scraps", dropChance: 40, minCount: 1, maxCount: 3 },
-      { itemId: "healing_potion", dropChance: 20, minCount: 1, maxCount: 1 }
-    ],
-    forest_loot: [
-      { itemId: "herb_common", dropChance: 60, minCount: 1, maxCount: 3 },
-      { itemId: "mushroom", dropChance: 40, minCount: 1, maxCount: 2 },
-      { itemId: "wood", dropChance: 70, minCount: 1, maxCount: 5 }
-    ]
-  },
+  // Loot tables are loaded from datapacks - see loot_tables/
+  lootTables: {},
 
   itemRarities: [
     { id: "common", name: "Common", color: "#9CA3AF", dropWeight: 50, statMultiplier: 1.0 },
@@ -378,263 +135,8 @@ const GameData = {
     }
   },
 
-  baseItems: {
-    rusty_sword: {
-      id: "rusty_sword",
-      baseName: "Sword",
-      type: "weapon",
-      slot: "main_hand",
-      baseStats: { attack: 5 },
-      tags: ["sword", "melee", "blade"]
-    },
-    leather_armor: {
-      id: "leather_armor",
-      baseName: "Leather Armor",
-      type: "armor",
-      slot: "chest",
-      baseStats: { defense: 3 },
-      tags: ["light", "armor", "leather"],
-      clothingLevel: 2,
-      paperdollType: "chest_armor",
-      paperdollImages: {
-        fullBody: "/images/paperdoll/armor/leather_chest_fullbody.png",
-        torso: "/images/paperdoll/armor/leather_chest_torso.png"
-      }
-    },
-    cloth_pants: {
-      id: "cloth_pants",
-      baseName: "Cloth Pants",
-      type: "armor",
-      slot: "legs",
-      baseStats: { defense: 1 },
-      tags: ["cloth", "pants", "light"],
-      clothingLevel: 1,
-      paperdollType: "pants",
-      paperdollImages: {
-        fullBody: "/images/paperdoll/clothing/cloth_pants_fullbody.png",
-        groin: "/images/paperdoll/clothing/cloth_pants_groin.png",
-        legs: "/images/paperdoll/clothing/cloth_pants_legs.png"
-      }
-    },
-    healing_potion: {
-      id: "healing_potion",
-      baseName: "Healing Potion",
-      type: "consumable",
-      effect: { heal: 30 },
-      tags: ["potion", "healing"]
-    },
-    gold: {
-      id: "gold",
-      baseName: "Gold",
-      type: "currency",
-      stackable: true,
-      tags: ["currency", "gold"]
-    },
-    // Underwear items with paperdoll
-    cotton_briefs: {
-      id: "cotton_briefs",
-      baseName: "Cotton Briefs",
-      name: "White Cotton Briefs",
-      type: "clothing",
-      category: "underwear",
-      slot: "underwear_lower",
-      rarity: "common",
-      tags: ["underwear", "briefs", "cotton"],
-      paperdollType: "briefs",
-      paperdollImages: {
-        fullBody: "/images/paperdoll/clothing/briefs/cotton_white_fullbody.png",
-        groin: "/images/paperdoll/clothing/briefs/cotton_white_groin.png"
-      },
-      clothingState: { maxIntegrity: 50, exposureThreshold: 20 }
-    },
-    lace_thong: {
-      id: "lace_thong",
-      baseName: "Lace Thong",
-      name: "Black Lace Thong",
-      type: "clothing",
-      category: "underwear",
-      slot: "underwear_lower",
-      rarity: "uncommon",
-      tags: ["underwear", "thong", "lace", "sexy"],
-      paperdollType: "thong",
-      paperdollImages: {
-        fullBody: "/images/paperdoll/clothing/thong/lace_black_fullbody.png",
-        groin: "/images/paperdoll/clothing/thong/lace_black_groin.png",
-        ass: "/images/paperdoll/clothing/thong/lace_black_ass.png"
-      },
-      stats: { charm: 2 },
-      clothingState: { maxIntegrity: 30, exposureThreshold: 10 }
-    },
-    silk_stockings: {
-      id: "silk_stockings",
-      baseName: "Silk Stockings",
-      name: "Black Silk Stockings",
-      type: "clothing",
-      category: "legwear",
-      slot: "legwear",
-      rarity: "uncommon",
-      tags: ["legwear", "stockings", "silk", "sexy"],
-      paperdollType: "stockings",
-      paperdollImages: {
-        fullBody: "/images/paperdoll/clothing/stockings/silk_black_fullbody.png",
-        legs: "/images/paperdoll/clothing/stockings/silk_black_legs.png",
-        feet: "/images/paperdoll/clothing/stockings/silk_black_feet.png"
-      },
-      stats: { charm: 3, evasion: 1 },
-      clothingState: { maxIntegrity: 40, exposureThreshold: 15 }
-    },
-    // Lewd items with paperdoll
-    steel_chastity_cage: {
-      id: "steel_chastity_cage",
-      baseName: "Chastity Cage",
-      name: "Steel Chastity Cage",
-      type: "clothing",
-      category: "lewd",
-      slot: "genitals",
-      rarity: "rare",
-      tags: ["lewd", "chastity", "steel", "restraint"],
-      paperdollType: "chastity_cage",
-      paperdollImages: {
-        groin: "/images/paperdoll/lewd/chastity/steel_cage_groin.png"
-      },
-      lockable: true,
-      requiresKey: "chastity_key_steel"
-    },
-    silver_cock_ring: {
-      id: "silver_cock_ring",
-      baseName: "Cock Ring",
-      name: "Silver Cock Ring",
-      type: "clothing",
-      category: "lewd",
-      slot: "genitals",
-      rarity: "uncommon",
-      tags: ["lewd", "cock_ring", "silver"],
-      paperdollType: "cock_ring",
-      paperdollImages: {
-        groin: "/images/paperdoll/lewd/cockring/silver_groin.png"
-      },
-      stats: { stamina: 5 }
-    },
-    fox_tail_plug: {
-      id: "fox_tail_plug",
-      baseName: "Tail Plug",
-      name: "Fox Tail Butt Plug",
-      type: "clothing",
-      category: "lewd",
-      slot: "plug",
-      rarity: "uncommon",
-      tags: ["lewd", "plug", "tail", "fox"],
-      paperdollType: "tail_plug",
-      paperdollImages: {
-        ass: "/images/paperdoll/lewd/plugs/fox_tail_ass.png",
-        fullBody: "/images/paperdoll/lewd/plugs/fox_tail_fullbody.png"
-      },
-      stats: { charm: 3 }
-    },
-    // Piercings with paperdoll
-    jacobs_ladder_steel: {
-      id: "jacobs_ladder_steel",
-      baseName: "Jacob's Ladder",
-      name: "Steel Jacob's Ladder",
-      type: "piercing",
-      category: "piercing",
-      slot: "genital_piercing",
-      rarity: "rare",
-      tags: ["piercing", "genital", "jacobs_ladder", "permanent"],
-      paperdollType: "jacobs_ladder",
-      paperdollImages: {
-        groin: "/images/paperdoll/piercings/jacobs_ladder_steel.png",
-        fullBody: "/images/paperdoll/piercings/jacobs_ladder_steel_fullbody.png"
-      },
-      permanent: true,
-      stats: { charm: 2 }
-    },
-    prince_albert_gold: {
-      id: "prince_albert_gold",
-      baseName: "Prince Albert",
-      name: "Gold Prince Albert",
-      type: "piercing",
-      category: "piercing",
-      slot: "genital_piercing",
-      rarity: "epic",
-      tags: ["piercing", "genital", "prince_albert", "permanent"],
-      paperdollType: "prince_albert",
-      paperdollImages: {
-        groin: "/images/paperdoll/piercings/prince_albert_gold.png"
-      },
-      permanent: true,
-      stats: { charm: 4 }
-    },
-    // Restraints with paperdoll
-    hemp_rope: {
-      id: "hemp_rope",
-      baseName: "Rope Bindings",
-      name: "Hemp Rope Bindings",
-      type: "restraint",
-      category: "bondage",
-      slot: "restraint",
-      rarity: "common",
-      tags: ["restraint", "rope", "hemp"],
-      paperdollType: "rope_arms",
-      paperdollImages: {
-        arms: "/images/paperdoll/restraints/rope_hemp_arms.png",
-        fullBody: "/images/paperdoll/restraints/rope_hemp_fullbody.png"
-      },
-      restraintStats: { hp: 40, breakDifficulty: 6 }
-    },
-    leather_armbinder: {
-      id: "leather_armbinder",
-      baseName: "Armbinder",
-      name: "Leather Armbinder",
-      type: "restraint",
-      category: "bondage",
-      slot: "restraint",
-      rarity: "rare",
-      tags: ["restraint", "armbinder", "leather", "strict"],
-      paperdollType: "armbinder",
-      paperdollImages: {
-        arms: "/images/paperdoll/restraints/armbinder_leather_arms.png",
-        fullBody: "/images/paperdoll/restraints/armbinder_leather_fullbody.png",
-        torso: "/images/paperdoll/restraints/armbinder_leather_torso.png"
-      },
-      restraintStats: { hp: 80, breakDifficulty: 10 },
-      lockable: true
-    },
-    leather_collar: {
-      id: "leather_collar",
-      baseName: "Collar",
-      name: "Black Leather Collar",
-      type: "clothing",
-      category: "accessory",
-      slot: "neck",
-      rarity: "common",
-      tags: ["accessory", "collar", "leather"],
-      paperdollType: "collar",
-      paperdollImages: {
-        head: "/images/paperdoll/accessories/collar_leather_black.png",
-        fullBody: "/images/paperdoll/accessories/collar_leather_black_fullbody.png"
-      },
-      lockable: true
-    },
-    // Tattoos with paperdoll
-    dragon_back_tattoo: {
-      id: "dragon_back_tattoo",
-      baseName: "Tattoo",
-      name: "Dragon Back Tattoo",
-      type: "tattoo",
-      category: "bodymod",
-      slot: "tattoo_back",
-      rarity: "rare",
-      tags: ["tattoo", "dragon", "back", "permanent"],
-      paperdollType: "back_tattoo",
-      paperdollImages: {
-        fullBody: "/images/paperdoll/tattoos/dragon_back_fullbody.png",
-        torso: "/images/paperdoll/tattoos/dragon_back_torso.png"
-      },
-      permanent: true,
-      stats: { charm: 2, willpower: 1 }
-    }
-  },
+  // Base items are loaded from datapacks - see items/
+  baseItems: {},
 
   restraints: {
     pin: { id: "pin", name: "Pinned", hp: 20, breakDifficulty: 1, description: "Held down by weight" },
@@ -645,27 +147,8 @@ const GameData = {
     magic_bind: { id: "magic_bind", name: "Magical Bonds", hp: 45, breakDifficulty: 2.0, description: "Arcane restraints" }
   },
 
-  scenes: {
-    intro_full: {
-      id: "intro_full",
-      type: "cutscene",
-      tags: ["intro", "story"],
-      dialogue: [
-        { speaker: "narrator", text: "The world has fallen into darkness..." },
-        { speaker: "narrator", text: "You awaken in a small room at the Weary Traveler Inn, memories fragmented." },
-        { speaker: "narrator", text: "Outside, you hear the sounds of a world in chaos." },
-        { speaker: "narrator", text: "Your journey begins now..." }
-      ]
-    },
-    intro_short: {
-      id: "intro_short",
-      type: "cutscene",
-      tags: ["intro", "story"],
-      dialogue: [
-        { speaker: "narrator", text: "You awaken at the Weary Traveler Inn. Your journey begins." }
-      ]
-    }
-  },
+  // Scenes are loaded from datapacks - see scenes/
+  scenes: {},
 
   // Achievement Definitions
   achievements: {
@@ -5948,9 +5431,75 @@ const Game = () => {
   const actionRequirementSystemRef = useRef(null);
   const systemsInitializedRef = useRef(false);
 
-  // Initialize engine systems
+  // Datapack loading state
+  const [datapackLoaded, setDatapackLoaded] = useState(false);
+  const datapackLoadingRef = useRef(false);
+
+  // Load datapacks and merge into GameData
   useEffect(() => {
-    if (!systemsInitializedRef.current) {
+    if (datapackLoadingRef.current) return;
+    datapackLoadingRef.current = true;
+
+    gameDataLoader.loadAll().then(loadedContent => {
+      // Merge loaded content into GameData
+      if (loadedContent) {
+        // Merge characters - datapack content takes precedence
+        if (loadedContent.characters && loadedContent.characters.length > 0) {
+          GameData.characters = loadedContent.characters;
+        }
+
+        // Merge locations
+        if (loadedContent.locations && loadedContent.locations.length > 0) {
+          GameData.locations = loadedContent.locations;
+        }
+
+        // Merge enemies - directly replace with datapack content
+        if (loadedContent.enemies && Object.keys(loadedContent.enemies).length > 0) {
+          Object.assign(GameData.enemies, loadedContent.enemies);
+        }
+
+        // Merge loot tables
+        if (loadedContent.lootTables && Object.keys(loadedContent.lootTables).length > 0) {
+          Object.assign(GameData.lootTables, loadedContent.lootTables);
+        }
+
+        // Merge base items
+        if (loadedContent.baseItems && Object.keys(loadedContent.baseItems).length > 0) {
+          Object.assign(GameData.baseItems, loadedContent.baseItems);
+        }
+
+        // Merge encounter/enemy tables
+        if (loadedContent.encounterTables && Object.keys(loadedContent.encounterTables).length > 0) {
+          Object.assign(GameData.enemyTables, loadedContent.encounterTables);
+        }
+
+        // Merge scenes
+        if (loadedContent.scenes && Object.keys(loadedContent.scenes).length > 0) {
+          Object.assign(GameData.scenes, loadedContent.scenes);
+        }
+
+        console.log('[Game] Datapack content merged into GameData:', {
+          characters: GameData.characters.length,
+          locations: GameData.locations.length,
+          enemies: Object.keys(GameData.enemies).length,
+          lootTables: Object.keys(GameData.lootTables).length,
+          baseItems: Object.keys(GameData.baseItems).length,
+          enemyTables: Object.keys(GameData.enemyTables).length,
+          scenes: Object.keys(GameData.scenes).length
+        });
+      }
+
+      setDatapackLoaded(true);
+    }).catch(error => {
+      console.error('[Game] Failed to load datapacks:', error);
+      setDatapackLoaded(true); // Continue even on error, with empty content
+    });
+  }, []);
+
+  // Initialize engine systems (after datapacks are loaded)
+  useEffect(() => {
+    if (!datapackLoaded) return; // Wait for datapacks to load
+    if (systemsInitializedRef.current) return;
       // Create system instances
       inventorySystemRef.current = new InventorySystem();
       fameSystemRef.current = new FameSystem();
@@ -6145,10 +5694,9 @@ const Game = () => {
         merchantSystemRef.current.merchantCache.set(m.id, m);
       });
 
-      systemsInitializedRef.current = true;
-      console.log('[Game] Engine systems initialized');
-    }
-  }, []);
+    systemsInitializedRef.current = true;
+    console.log('[Game] Engine systems initialized');
+  }, [datapackLoaded]);
 
   // Auto-save timer
   const playTimeRef = useRef(0);
@@ -7925,6 +7473,27 @@ const Game = () => {
   
   // Get time-based theme styles
   const timeThemeStyles = getTimeThemeStyles();
+
+  // Show loading screen while datapacks are loading
+  if (!datapackLoaded) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(180deg, #1a1a2e 0%, #1f1f3a 50%, #2a2a4a 100%)',
+        color: '#e0e0e0',
+        fontFamily: "'Cinzel', serif",
+        fontSize: '1.5rem'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ marginBottom: '1rem' }}>Loading Game Data...</div>
+          <div style={{ fontSize: '0.875rem', opacity: 0.7 }}>Please wait while content packs are loaded</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <GameContext.Provider value={{ player, setPlayer, gameState, setGameState, GameData }}>

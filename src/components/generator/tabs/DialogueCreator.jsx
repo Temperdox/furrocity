@@ -282,7 +282,13 @@ const DialogueCreator = ({
   // Combine datapack content with user-created content
   const allNPCs = [...(datapackContent.npcs || []), ...(allContent?.npcs || [])];
   const allItems = [...(datapackContent.items || []), ...(allContent?.items || [])];
-  const allLocations = [...(datapackContent.locations || []), ...(allContent?.locations || [])];
+  // Filter locations to exclude any enemy objects that may have been incorrectly included
+  const allLocations = [...(datapackContent.locations || []), ...(allContent?.locations || [])]
+    .filter(loc => {
+      const hasLocationFields = loc.locationType || loc.parentRegion || loc.connectedLocations || loc.navigation;
+      const hasEnemyFields = loc.tier !== undefined || loc.maxHp !== undefined || loc.nsfwActions !== undefined || loc.loot !== undefined;
+      return hasLocationFields || !hasEnemyFields;
+    });
   const allQuests = allContent?.quests || [];
 
   useEffect(() => {
