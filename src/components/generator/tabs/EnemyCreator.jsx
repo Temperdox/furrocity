@@ -520,16 +520,22 @@ const EnemyCreator = ({
               <label style={styles.label}>Type</label>
               <input
                 style={styles.input}
-                list="enemy-type-suggestions"
                 value={formData.type}
                 onChange={(e) => handleChange('type', e.target.value)}
                 placeholder="e.g., humanoid, beast, demon"
               />
-              <datalist id="enemy-type-suggestions">
-                {SUGGESTED_ENEMY_TYPES.map(type => (
-                  <option key={type} value={type} />
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {SUGGESTED_ENEMY_TYPES.filter(t => t !== formData.type).map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                    onClick={() => handleChange('type', type)}
+                  >
+                    + {type}
+                  </button>
                 ))}
-              </datalist>
+              </div>
             </div>
           </div>
           <div style={styles.thirdWidth}>
@@ -537,16 +543,22 @@ const EnemyCreator = ({
               <label style={styles.label}>Variant</label>
               <input
                 style={styles.input}
-                list="enemy-variant-suggestions"
                 value={formData.variant}
                 onChange={(e) => handleChange('variant', e.target.value)}
                 placeholder="e.g., normal, elite, boss"
               />
-              <datalist id="enemy-variant-suggestions">
-                {SUGGESTED_VARIANTS.map(variant => (
-                  <option key={variant} value={variant} />
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {SUGGESTED_VARIANTS.filter(v => v !== formData.variant).map(variant => (
+                  <button
+                    key={variant}
+                    type="button"
+                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                    onClick={() => handleChange('variant', variant)}
+                  >
+                    + {variant}
+                  </button>
                 ))}
-              </datalist>
+              </div>
             </div>
           </div>
           <div style={styles.thirdWidth}>

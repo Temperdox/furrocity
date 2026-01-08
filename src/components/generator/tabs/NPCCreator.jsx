@@ -416,16 +416,22 @@ const NPCCreator = ({
               <label style={styles.label}>Role</label>
               <input
                 style={styles.input}
-                list="role-suggestions"
                 value={formData.role}
                 onChange={(e) => handleChange('role', e.target.value)}
                 placeholder="e.g., merchant, quest_giver, companion"
               />
-              <datalist id="role-suggestions">
-                {SUGGESTED_ROLES.map(role => (
-                  <option key={role} value={role} />
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {SUGGESTED_ROLES.filter(r => r !== formData.role).map(role => (
+                  <button
+                    key={role}
+                    type="button"
+                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                    onClick={() => handleChange('role', role)}
+                  >
+                    + {role}
+                  </button>
                 ))}
-              </datalist>
+              </div>
             </div>
           </div>
           <div style={styles.halfWidth}>

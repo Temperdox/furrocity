@@ -427,6 +427,7 @@ const DEFAULT_LOCATION = {
   dangerLevel: 1,
   tags: [],
   hidden: false,
+  discoveryConditions: null, // Logic tree for discovery requirements
   services: [],
   npcs: [], // Array of NPC IDs
   // Enemy encounter configuration
@@ -707,6 +708,861 @@ const IconSelectorModal = ({
   );
 };
 
+// Fuzzy match scoring function - higher score = better match
+const getFuzzyScore = (text, search) => {
+  if (!text || !search) return 0;
+  const textLower = text.toLowerCase();
+  const searchLower = search.toLowerCase();
+
+  // Exact match = highest score
+  if (textLower === searchLower) return 1000;
+
+  // Starts with search = very high score
+  if (textLower.startsWith(searchLower)) return 900 + (searchLower.length / textLower.length) * 50;
+
+  // Contains search as substring = high score
+  if (textLower.includes(searchLower)) return 700 + (searchLower.length / textLower.length) * 50;
+
+  // Word boundary match (search appears after space, underscore, etc)
+  const wordBoundaryMatch = textLower.match(new RegExp(`[\\s_-]${searchLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+  if (wordBoundaryMatch) return 600 + (searchLower.length / textLower.length) * 50;
+
+  // Fuzzy character match - count matching characters in order
+  let score = 0;
+  let searchIdx = 0;
+  let consecutiveBonus = 0;
+
+  for (let i = 0; i < textLower.length && searchIdx < searchLower.length; i++) {
+    if (textLower[i] === searchLower[searchIdx]) {
+      score += 10 + consecutiveBonus;
+      consecutiveBonus += 5; // Bonus for consecutive matches
+      searchIdx++;
+    } else {
+      consecutiveBonus = 0;
+    }
+  }
+
+  // Only return score if all search characters were found
+  if (searchIdx === searchLower.length) {
+    return score;
+  }
+
+  return 0;
+};
+
+// Location Selection Modal with fuzzy search
+const LocationSelectModal = ({
+  isOpen,
+  onClose,
+  onSelect,
+  locations,
+  currentLocationId,
+  directionInfo,
+}) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = useRef(null);
+
+  // Focus search input when modal opens
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  }, [isOpen]);
+
+  // Reset search when modal closes
+  useEffect(() => {
+    if (!isOpen) setSearchQuery('');
+  }, [isOpen]);
+
+  // Filter and sort locations by match quality
+  const filteredLocations = useMemo(() => {
+    const filtered = locations.filter(loc => loc.id !== currentLocationId);
+
+    if (!searchQuery.trim()) {
+      // No search - sort alphabetically
+      return filtered.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    // Score each location and sort by score descending
+    return filtered
+      .map(loc => ({
+        ...loc,
+        score: Math.max(
+          getFuzzyScore(loc.id, searchQuery),
+          getFuzzyScore(loc.name, searchQuery)
+        ),
+      }))
+      .filter(loc => loc.score > 0)
+      .sort((a, b) => b.score - a.score);
+  }, [locations, currentLocationId, searchQuery]);
+
+  if (!isOpen) return null;
+
+  return createPortal(
+    <div style={styles.modalOverlay} onClick={onClose}>
+      <div style={{ ...styles.modal, width: '500px' }} onClick={e => e.stopPropagation()}>
+        <div style={styles.modalHeader}>
+          <h3 style={styles.modalTitle}>
+            {directionInfo?.icon} Select Location for "{directionInfo?.label}"
+          </h3>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', color: '#a0a0c0', fontSize: '20px', cursor: 'pointer' }}
+          >
+            ×
+          </button>
+        </div>
+
+        <div style={{ padding: '15px 20px', borderBottom: '1px solid #4a4a6a' }}>
+          <input
+            ref={searchInputRef}
+            style={{
+              ...styles.input,
+              width: '100%',
+              padding: '12px',
+              fontSize: '14px',
+            }}
+            type="text"
+            placeholder="Search locations by name or ID..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        <div style={{ ...styles.modalBody, maxHeight: '400px', padding: 0 }}>
+          {/* Clear option */}
+          <div
+            style={{
+              padding: '12px 20px',
+              cursor: 'pointer',
+              borderBottom: '1px solid #3a3a5a',
+              color: '#808090',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}
+            onClick={() => {
+              onSelect('');
+              onClose();
+            }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#2a2a4a'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <span style={{ fontSize: '16px' }}>🚫</span>
+            <span>No link (clear)</span>
+          </div>
+
+          {filteredLocations.length === 0 ? (
+            <div style={{ padding: '20px', textAlign: 'center', color: '#808090' }}>
+              No locations found matching "{searchQuery}"
+            </div>
+          ) : (
+            filteredLocations.map(loc => (
+              <div
+                key={loc.id}
+                style={{
+                  padding: '12px 20px',
+                  cursor: 'pointer',
+                  borderBottom: '1px solid #2a2a4a',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+                onClick={() => {
+                  onSelect(loc.id);
+                  onClose();
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#2a2a4a'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div>
+                  <div style={{ color: 'white', fontWeight: 'bold' }}>{loc.name}</div>
+                  <div style={{ color: '#808090', fontSize: '12px' }}>{loc.id}</div>
+                </div>
+                <div style={{ color: '#606080', fontSize: '11px' }}>
+                  {loc.locationType || 'local'}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div style={styles.modalFooter}>
+          <button
+            style={{ ...styles.button, ...styles.secondaryButton }}
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+// Condition types for discovery requirements
+const CONDITION_CATEGORIES = [
+  { id: 'item', label: 'Item', icon: '📦' },
+  { id: 'equipment', label: 'Equipment', icon: '⚔️' },
+  { id: 'stat', label: 'Player Stat', icon: '📊' },
+  { id: 'quest', label: 'Quest', icon: '📜' },
+  { id: 'scene', label: 'Scene', icon: '🎬' },
+  { id: 'flag', label: 'Game Flag', icon: '🚩' },
+  { id: 'location', label: 'Location', icon: '📍' },
+];
+
+const CONDITION_CHECKS = {
+  item: [
+    { id: 'hasItem', label: 'Has Item', params: ['itemId'] },
+    { id: 'hasItemCount', label: 'Has Item Count', params: ['itemId', 'operator', 'value'] },
+  ],
+  equipment: [
+    { id: 'hasEquipped', label: 'Has Equipped', params: ['itemId'] },
+    { id: 'hasSlotEquipped', label: 'Slot Has Equipment', params: ['slot'] },
+  ],
+  stat: [
+    { id: 'statCheck', label: 'Stat Value', params: ['statName', 'operator', 'value'] },
+    { id: 'levelCheck', label: 'Player Level', params: ['operator', 'value'] },
+  ],
+  quest: [
+    { id: 'questCompleted', label: 'Quest Completed', params: ['questId'] },
+    { id: 'questActive', label: 'Quest Active', params: ['questId'] },
+    { id: 'questObjective', label: 'Quest Objective Done', params: ['questId', 'objectiveIndex'] },
+  ],
+  scene: [
+    { id: 'sceneCompleted', label: 'Scene Completed', params: ['sceneId'] },
+    { id: 'sceneChoice', label: 'Scene Choice Made', params: ['sceneId', 'choiceId'] },
+  ],
+  flag: [
+    { id: 'flagSet', label: 'Flag Is Set', params: ['flagName'] },
+    { id: 'flagValue', label: 'Flag Value', params: ['flagName', 'operator', 'value'] },
+  ],
+  location: [
+    { id: 'visitedLocation', label: 'Visited Location', params: ['locationId'] },
+    { id: 'currentLocation', label: 'Is At Location', params: ['locationId'] },
+  ],
+};
+
+const OPERATORS = [
+  { id: 'eq', label: '=', description: 'Equal to' },
+  { id: 'ne', label: '≠', description: 'Not equal to' },
+  { id: 'gt', label: '>', description: 'Greater than' },
+  { id: 'gte', label: '≥', description: 'Greater or equal' },
+  { id: 'lt', label: '<', description: 'Less than' },
+  { id: 'lte', label: '≤', description: 'Less or equal' },
+];
+
+const PLAYER_STATS = [
+  'hp', 'maxHp', 'stamina', 'maxStamina', 'level', 'experience',
+  'strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma',
+  'gold', 'corruption', 'lust', 'arousal',
+];
+
+const EQUIPMENT_SLOTS = [
+  'head', 'body', 'hands', 'feet', 'accessory', 'weapon', 'offhand',
+  'neck', 'ring', 'piercings', 'intimate',
+];
+
+// Block color scheme
+const BLOCK_COLORS = {
+  group: { bg: '#4a6fa5', border: '#3a5a8a', text: 'white' },
+  and: { bg: '#5a8a5a', border: '#4a7a4a', text: 'white' },
+  or: { bg: '#8a6a5a', border: '#7a5a4a', text: 'white' },
+  not: { bg: '#8a5a5a', border: '#7a4a4a', text: 'white' },
+  condition: { bg: '#5a5a8a', border: '#4a4a7a', text: 'white' },
+  item: { bg: '#6a8a6a', border: '#5a7a5a', text: 'white' },
+  equipment: { bg: '#8a7a5a', border: '#7a6a4a', text: 'white' },
+  stat: { bg: '#5a7a8a', border: '#4a6a7a', text: 'white' },
+  quest: { bg: '#7a6a8a', border: '#6a5a7a', text: 'white' },
+  scene: { bg: '#8a6a7a', border: '#7a5a6a', text: 'white' },
+  flag: { bg: '#6a6a6a', border: '#5a5a5a', text: 'white' },
+  location: { bg: '#5a8a7a', border: '#4a7a6a', text: 'white' },
+};
+
+// Create a default condition node
+const createConditionNode = (type = 'condition', category = 'item') => {
+  if (type === 'group') {
+    return {
+      type: 'group',
+      operator: 'and',
+      children: [],
+    };
+  }
+  if (type === 'not') {
+    return {
+      type: 'not',
+      child: null,
+    };
+  }
+  // Default condition
+  const checks = CONDITION_CHECKS[category] || [];
+  const defaultCheck = checks[0]?.id || 'hasItem';
+  return {
+    type: 'condition',
+    category,
+    check: defaultCheck,
+    params: {},
+  };
+};
+
+// Condition Builder Component
+const ConditionBuilder = ({
+  conditions,
+  onChange,
+  items = [],
+  quests = [],
+  scenes = [],
+  locations = [],
+}) => {
+  // Render a single condition block
+  const renderConditionBlock = (node, path = [], depth = 0) => {
+    if (!node) return null;
+
+    const colors = BLOCK_COLORS[node.type === 'condition' ? node.category : node.type] || BLOCK_COLORS.condition;
+
+    const updateNode = (updates) => {
+      const newConditions = JSON.parse(JSON.stringify(conditions));
+      let target = newConditions;
+      for (let i = 0; i < path.length - 1; i++) {
+        if (path[i] === 'child') {
+          target = target.child;
+        } else {
+          target = target.children[path[i]];
+        }
+      }
+      if (path.length > 0) {
+        const lastKey = path[path.length - 1];
+        if (lastKey === 'child') {
+          Object.assign(target.child, updates);
+        } else {
+          Object.assign(target.children[lastKey], updates);
+        }
+      } else {
+        Object.assign(newConditions, updates);
+      }
+      onChange(newConditions);
+    };
+
+    const removeNode = () => {
+      if (path.length === 0) {
+        onChange(null);
+        return;
+      }
+      const newConditions = JSON.parse(JSON.stringify(conditions));
+      let target = newConditions;
+      for (let i = 0; i < path.length - 1; i++) {
+        if (path[i] === 'child') {
+          target = target.child;
+        } else {
+          target = target.children[path[i]];
+        }
+      }
+      const lastKey = path[path.length - 1];
+      if (lastKey === 'child') {
+        target.child = null;
+      } else {
+        target.children.splice(lastKey, 1);
+      }
+      onChange(newConditions);
+    };
+
+    const addChild = (childType = 'condition', category = 'item') => {
+      const newChild = createConditionNode(childType, category);
+      const newConditions = JSON.parse(JSON.stringify(conditions));
+      let target = newConditions;
+      for (const key of path) {
+        if (key === 'child') {
+          target = target.child;
+        } else {
+          target = target.children[key];
+        }
+      }
+      if (node.type === 'group') {
+        target.children.push(newChild);
+      } else if (node.type === 'not') {
+        target.child = newChild;
+      }
+      onChange(newConditions);
+    };
+
+    // Render GROUP (AND/OR) block
+    if (node.type === 'group') {
+      return (
+        <div
+          key={path.join('-')}
+          style={{
+            backgroundColor: node.operator === 'and' ? BLOCK_COLORS.and.bg : BLOCK_COLORS.or.bg,
+            border: `2px solid ${node.operator === 'and' ? BLOCK_COLORS.and.border : BLOCK_COLORS.or.border}`,
+            borderRadius: '8px',
+            padding: '10px',
+            marginLeft: depth * 20,
+            marginBottom: '8px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+            <select
+              style={{
+                padding: '5px 10px',
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                color: 'white',
+                fontWeight: 'bold',
+              }}
+              value={node.operator}
+              onChange={(e) => updateNode({ operator: e.target.value })}
+            >
+              <option value="and">AND (all must be true)</option>
+              <option value="or">OR (any can be true)</option>
+            </select>
+            <button
+              type="button"
+              style={{ ...styles.smallButton, backgroundColor: '#5a3a3a' }}
+              onClick={removeNode}
+              title="Remove this group"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Children */}
+          <div style={{ marginLeft: '10px', borderLeft: '2px solid rgba(255,255,255,0.2)', paddingLeft: '10px' }}>
+            {node.children.map((child, idx) => renderConditionBlock(child, [...path, idx], depth + 1))}
+
+            {/* Add child buttons */}
+            <div style={{ display: 'flex', gap: '5px', marginTop: '8px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                style={{ ...styles.smallButton, backgroundColor: '#4a6a4a' }}
+                onClick={() => addChild('group')}
+              >
+                + Group
+              </button>
+              <button
+                type="button"
+                style={{ ...styles.smallButton, backgroundColor: '#6a4a4a' }}
+                onClick={() => addChild('not')}
+              >
+                + NOT
+              </button>
+              {CONDITION_CATEGORIES.map(cat => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  style={{ ...styles.smallButton, backgroundColor: BLOCK_COLORS[cat.id]?.bg || '#5a5a5a' }}
+                  onClick={() => addChild('condition', cat.id)}
+                  title={cat.label}
+                >
+                  + {cat.icon}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Render NOT block
+    if (node.type === 'not') {
+      return (
+        <div
+          key={path.join('-')}
+          style={{
+            backgroundColor: BLOCK_COLORS.not.bg,
+            border: `2px solid ${BLOCK_COLORS.not.border}`,
+            borderRadius: '8px',
+            padding: '10px',
+            marginLeft: depth * 20,
+            marginBottom: '8px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+            <span style={{ fontWeight: 'bold', color: 'white' }}>NOT (invert result)</span>
+            <button
+              type="button"
+              style={{ ...styles.smallButton, backgroundColor: '#5a3a3a' }}
+              onClick={removeNode}
+            >
+              ×
+            </button>
+          </div>
+
+          <div style={{ marginLeft: '10px', borderLeft: '2px solid rgba(255,255,255,0.2)', paddingLeft: '10px' }}>
+            {node.child ? (
+              renderConditionBlock(node.child, [...path, 'child'], depth + 1)
+            ) : (
+              <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  style={{ ...styles.smallButton, backgroundColor: '#4a6a4a' }}
+                  onClick={() => addChild('group')}
+                >
+                  + Group
+                </button>
+                {CONDITION_CATEGORIES.map(cat => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    style={{ ...styles.smallButton, backgroundColor: BLOCK_COLORS[cat.id]?.bg || '#5a5a5a' }}
+                    onClick={() => addChild('condition', cat.id)}
+                    title={cat.label}
+                  >
+                    + {cat.icon}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Render CONDITION block (leaf node)
+    const category = node.category || 'item';
+    const checks = CONDITION_CHECKS[category] || [];
+    const currentCheck = checks.find(c => c.id === node.check) || checks[0];
+
+    return (
+      <div
+        key={path.join('-')}
+        style={{
+          backgroundColor: colors.bg,
+          border: `2px solid ${colors.border}`,
+          borderRadius: '8px',
+          padding: '10px',
+          marginLeft: depth * 20,
+          marginBottom: '8px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Category icon */}
+          <span style={{ fontSize: '16px' }}>
+            {CONDITION_CATEGORIES.find(c => c.id === category)?.icon}
+          </span>
+
+          {/* Category selector */}
+          <select
+            style={{
+              padding: '5px',
+              borderRadius: '4px',
+              border: 'none',
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              color: 'white',
+              fontSize: '12px',
+            }}
+            value={category}
+            onChange={(e) => {
+              const newCategory = e.target.value;
+              const newChecks = CONDITION_CHECKS[newCategory] || [];
+              updateNode({
+                category: newCategory,
+                check: newChecks[0]?.id || '',
+                params: {},
+              });
+            }}
+          >
+            {CONDITION_CATEGORIES.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.label}</option>
+            ))}
+          </select>
+
+          {/* Check type selector */}
+          <select
+            style={{
+              padding: '5px',
+              borderRadius: '4px',
+              border: 'none',
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              color: 'white',
+              fontSize: '12px',
+            }}
+            value={node.check}
+            onChange={(e) => updateNode({ check: e.target.value, params: {} })}
+          >
+            {checks.map(check => (
+              <option key={check.id} value={check.id}>{check.label}</option>
+            ))}
+          </select>
+
+          {/* Parameters based on check type */}
+          {currentCheck?.params?.includes('itemId') && (
+            <select
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                color: 'white',
+                fontSize: '12px',
+                maxWidth: '150px',
+              }}
+              value={node.params.itemId || ''}
+              onChange={(e) => updateNode({ params: { ...node.params, itemId: e.target.value } })}
+            >
+              <option value="">Select item...</option>
+              {items.map(item => (
+                <option key={item.id} value={item.id}>{item.name}</option>
+              ))}
+            </select>
+          )}
+
+          {currentCheck?.params?.includes('questId') && (
+            <select
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                color: 'white',
+                fontSize: '12px',
+                maxWidth: '150px',
+              }}
+              value={node.params.questId || ''}
+              onChange={(e) => updateNode({ params: { ...node.params, questId: e.target.value } })}
+            >
+              <option value="">Select quest...</option>
+              {quests.map(quest => (
+                <option key={quest.id} value={quest.id}>{quest.name}</option>
+              ))}
+            </select>
+          )}
+
+          {currentCheck?.params?.includes('sceneId') && (
+            <select
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                color: 'white',
+                fontSize: '12px',
+                maxWidth: '150px',
+              }}
+              value={node.params.sceneId || ''}
+              onChange={(e) => updateNode({ params: { ...node.params, sceneId: e.target.value } })}
+            >
+              <option value="">Select scene...</option>
+              {scenes.map(scene => (
+                <option key={scene.id} value={scene.id}>{scene.name || scene.id}</option>
+              ))}
+            </select>
+          )}
+
+          {currentCheck?.params?.includes('locationId') && (
+            <select
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                color: 'white',
+                fontSize: '12px',
+                maxWidth: '150px',
+              }}
+              value={node.params.locationId || ''}
+              onChange={(e) => updateNode({ params: { ...node.params, locationId: e.target.value } })}
+            >
+              <option value="">Select location...</option>
+              {locations.map(loc => (
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
+              ))}
+            </select>
+          )}
+
+          {currentCheck?.params?.includes('slot') && (
+            <select
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                color: 'white',
+                fontSize: '12px',
+              }}
+              value={node.params.slot || ''}
+              onChange={(e) => updateNode({ params: { ...node.params, slot: e.target.value } })}
+            >
+              <option value="">Select slot...</option>
+              {EQUIPMENT_SLOTS.map(slot => (
+                <option key={slot} value={slot}>{slot}</option>
+              ))}
+            </select>
+          )}
+
+          {currentCheck?.params?.includes('statName') && (
+            <select
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                color: 'white',
+                fontSize: '12px',
+              }}
+              value={node.params.statName || ''}
+              onChange={(e) => updateNode({ params: { ...node.params, statName: e.target.value } })}
+            >
+              <option value="">Select stat...</option>
+              {PLAYER_STATS.map(stat => (
+                <option key={stat} value={stat}>{stat}</option>
+              ))}
+            </select>
+          )}
+
+          {currentCheck?.params?.includes('flagName') && (
+            <input
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                color: 'white',
+                fontSize: '12px',
+                width: '120px',
+              }}
+              type="text"
+              placeholder="Flag name..."
+              value={node.params.flagName || ''}
+              onChange={(e) => updateNode({ params: { ...node.params, flagName: e.target.value } })}
+            />
+          )}
+
+          {currentCheck?.params?.includes('operator') && (
+            <select
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                color: 'white',
+                fontSize: '12px',
+              }}
+              value={node.params.operator || 'eq'}
+              onChange={(e) => updateNode({ params: { ...node.params, operator: e.target.value } })}
+            >
+              {OPERATORS.map(op => (
+                <option key={op.id} value={op.id}>{op.label} {op.description}</option>
+              ))}
+            </select>
+          )}
+
+          {currentCheck?.params?.includes('value') && (
+            <input
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                color: 'white',
+                fontSize: '12px',
+                width: '60px',
+              }}
+              type="number"
+              placeholder="Value"
+              value={node.params.value ?? ''}
+              onChange={(e) => updateNode({ params: { ...node.params, value: parseInt(e.target.value) || 0 } })}
+            />
+          )}
+
+          {currentCheck?.params?.includes('objectiveIndex') && (
+            <input
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                color: 'white',
+                fontSize: '12px',
+                width: '40px',
+              }}
+              type="number"
+              placeholder="#"
+              min="0"
+              value={node.params.objectiveIndex ?? 0}
+              onChange={(e) => updateNode({ params: { ...node.params, objectiveIndex: parseInt(e.target.value) || 0 } })}
+            />
+          )}
+
+          {currentCheck?.params?.includes('choiceId') && (
+            <input
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                color: 'white',
+                fontSize: '12px',
+                width: '100px',
+              }}
+              type="text"
+              placeholder="Choice ID"
+              value={node.params.choiceId || ''}
+              onChange={(e) => updateNode({ params: { ...node.params, choiceId: e.target.value } })}
+            />
+          )}
+
+          {/* Remove button */}
+          <button
+            type="button"
+            style={{ ...styles.smallButton, backgroundColor: '#5a3a3a', marginLeft: 'auto' }}
+            onClick={removeNode}
+          >
+            ×
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ marginTop: '10px' }}>
+      {conditions ? (
+        renderConditionBlock(conditions)
+      ) : (
+        <div style={{
+          padding: '15px',
+          backgroundColor: '#1a1a2e',
+          borderRadius: '8px',
+          border: '2px dashed #4a4a6a',
+          textAlign: 'center',
+        }}>
+          <div style={{ color: '#808090', marginBottom: '10px' }}>
+            No discovery conditions set. Add a condition to require players to meet criteria before discovering this location.
+          </div>
+          <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              style={{ ...styles.smallButton, backgroundColor: BLOCK_COLORS.and.bg }}
+              onClick={() => onChange(createConditionNode('group'))}
+            >
+              + AND Group
+            </button>
+            <button
+              type="button"
+              style={{ ...styles.smallButton, backgroundColor: BLOCK_COLORS.or.bg }}
+              onClick={() => onChange({ ...createConditionNode('group'), operator: 'or' })}
+            >
+              + OR Group
+            </button>
+            {CONDITION_CATEGORIES.map(cat => (
+              <button
+                key={cat.id}
+                type="button"
+                style={{ ...styles.smallButton, backgroundColor: BLOCK_COLORS[cat.id]?.bg || '#5a5a5a' }}
+                onClick={() => onChange(createConditionNode('condition', cat.id))}
+                title={cat.label}
+              >
+                + {cat.icon} {cat.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const LocationCreator = ({
   items = [],
   allContent = {},
@@ -729,6 +1585,8 @@ const LocationCreator = ({
   const [iconModalOpen, setIconModalOpen] = useState(false);
   const [selectedNpc, setSelectedNpc] = useState('');
   const [selectedEnemy, setSelectedEnemy] = useState('');
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [editingDirection, setEditingDirection] = useState(null);
   const mapRef = useRef(null);
 
   // Compute dynamic tag suggestions from datapack content and user-created locations
@@ -746,7 +1604,19 @@ const LocationCreator = ({
   // Combine datapack content with user-created content for selection dropdowns
   const allNPCs = [...(datapackContent.npcs || []), ...npcs];
   const allEnemies = [...(datapackContent.enemies || []), ...enemies];
-  const allLocations = [...(datapackContent.locations || []), ...items];
+  const allItems = [...(datapackContent.items || []), ...(allContent.items || [])];
+  const allQuests = [...(datapackContent.quests || []), ...(allContent.quests || [])];
+  const allScenes = [...(datapackContent.scenes || []), ...(allContent.scenes || [])];
+
+  // Deduplicate locations by ID (user-created items take precedence)
+  const allLocations = useMemo(() => {
+    const locMap = new Map();
+    // Add datapack locations first
+    (datapackContent.locations || []).forEach(loc => locMap.set(loc.id, loc));
+    // User-created items override datapack ones with same ID
+    items.forEach(loc => locMap.set(loc.id, loc));
+    return Array.from(locMap.values());
+  }, [datapackContent.locations, items]);
 
   // Get regions from all locations (locations with locationType === 'region')
   const regions = allLocations.filter(loc => loc.locationType === 'region');
@@ -1051,16 +1921,22 @@ const LocationCreator = ({
               <label style={styles.label}>Type</label>
               <input
                 style={styles.input}
-                list="location-type-suggestions"
                 value={formData.type}
                 onChange={(e) => handleChange('type', e.target.value)}
                 placeholder="e.g., outdoor, dungeon, town"
               />
-              <datalist id="location-type-suggestions">
-                {SUGGESTED_LOCATION_TYPES.map(type => (
-                  <option key={type} value={type} />
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {SUGGESTED_LOCATION_TYPES.filter(t => t !== formData.type).map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                    onClick={() => handleChange('type', type)}
+                  >
+                    + {type}
+                  </button>
                 ))}
-              </datalist>
+              </div>
             </div>
           </div>
         </div>
@@ -1110,6 +1986,25 @@ const LocationCreator = ({
             </div>
           </div>
         </div>
+
+        {/* Discovery Conditions - shown when hidden is checked */}
+        {formData.hidden && (
+          <div style={styles.subsection}>
+            <div style={styles.subsectionTitle}>🔓 Discovery Requirements</div>
+            <div style={{ marginBottom: '10px', fontSize: '12px', color: '#808090' }}>
+              Define conditions that must be met before this location can be discovered by the player.
+              Use logic blocks to create complex requirements.
+            </div>
+            <ConditionBuilder
+              conditions={formData.discoveryConditions}
+              onChange={(conditions) => handleChange('discoveryConditions', conditions)}
+              items={allItems}
+              quests={allQuests}
+              scenes={allScenes}
+              locations={allLocations}
+            />
+          </div>
+        )}
 
         {/* Icon & Map Placement */}
         <div style={styles.subsection}>
@@ -1246,37 +2141,59 @@ const LocationCreator = ({
             gap: '10px',
             marginTop: '10px'
           }}>
-            {NAVIGATION_DIRECTIONS.map(dir => (
-              <div key={dir.id} style={styles.formGroup}>
-                <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span style={{ fontSize: '16px' }}>{dir.icon}</span> {dir.label}
-                </label>
-                <select
-                  style={styles.select}
-                  value={formData.navigation[dir.id] || ''}
-                  onChange={(e) => handleNavigationChange(dir.id, e.target.value)}
-                >
-                  <option value="">-- No link --</option>
-                  {items.filter(loc => loc.id !== formData.id).map(loc => (
-                    <option key={loc.id} value={loc.id}>{loc.name} ({loc.id})</option>
-                  ))}
-                </select>
-              </div>
-            ))}
+            {NAVIGATION_DIRECTIONS.map(dir => {
+              const linkedLoc = allLocations.find(l => l.id === formData.navigation[dir.id]);
+              return (
+                <div key={dir.id} style={styles.formGroup}>
+                  <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={{ fontSize: '16px' }}>{dir.icon}</span> {dir.label}
+                  </label>
+                  <button
+                    type="button"
+                    style={{
+                      ...styles.input,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      textAlign: 'left',
+                      backgroundColor: linkedLoc ? '#2a3a4a' : '#1a1a2e',
+                      border: linkedLoc ? '1px solid #4a6a8a' : '1px solid #4a4a6a',
+                    }}
+                    onClick={() => {
+                      setEditingDirection(dir);
+                      setLocationModalOpen(true);
+                    }}
+                  >
+                    <span style={{ color: linkedLoc ? '#ffd700' : '#808090' }}>
+                      {linkedLoc ? linkedLoc.name : '-- No link --'}
+                    </span>
+                    <span style={{ color: '#606080' }}>▼</span>
+                  </button>
+                </div>
+              );
+            })}
           </div>
 
-          {Object.keys(formData.navigation).length > 0 && (
+          {Object.keys(formData.navigation).filter(k => formData.navigation[k]).length > 0 && (
             <div style={styles.infoBox}>
               <strong>Active Navigation Links:</strong>
               <div style={{ marginTop: '5px' }}>
-                {Object.entries(formData.navigation).map(([dir, locId]) => {
+                {Object.entries(formData.navigation).filter(([_, locId]) => locId).map(([dir, locId]) => {
                   const dirInfo = NAVIGATION_DIRECTIONS.find(d => d.id === dir);
-                  const targetLoc = items.find(l => l.id === locId);
+                  const targetLoc = allLocations.find(l => l.id === locId);
                   return (
                     <div key={dir} style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '3px' }}>
                       <span>{dirInfo?.icon}</span>
                       <span>{dirInfo?.label}:</span>
                       <span style={{ color: '#ffd700' }}>{targetLoc?.name || locId}</span>
+                      <button
+                        type="button"
+                        style={{ ...styles.smallButton, backgroundColor: '#5a3a3a', marginLeft: '5px' }}
+                        onClick={() => handleNavigationChange(dir, '')}
+                      >
+                        ×
+                      </button>
                     </div>
                   );
                 })}
@@ -1686,6 +2603,23 @@ const LocationCreator = ({
         sprites={sprites}
         currentIcon={formData.icon}
         onSave={handleIconSave}
+      />
+
+      {/* Location Selection Modal for navigation directions */}
+      <LocationSelectModal
+        isOpen={locationModalOpen}
+        onClose={() => {
+          setLocationModalOpen(false);
+          setEditingDirection(null);
+        }}
+        onSelect={(locationId) => {
+          if (editingDirection) {
+            handleNavigationChange(editingDirection.id, locationId);
+          }
+        }}
+        locations={allLocations}
+        currentLocationId={formData.id}
+        directionInfo={editingDirection}
       />
     </div>
   );

@@ -555,16 +555,22 @@ const QuestCreator = ({
               <label style={styles.label}>Quest Type</label>
               <input
                 style={styles.input}
-                list="quest-type-suggestions"
                 value={formData.type}
                 onChange={(e) => handleChange('type', e.target.value)}
                 placeholder="e.g., main, side, daily"
               />
-              <datalist id="quest-type-suggestions">
-                {SUGGESTED_QUEST_TYPES.map(type => (
-                  <option key={type} value={type} />
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {SUGGESTED_QUEST_TYPES.filter(t => t !== formData.type).map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                    onClick={() => handleChange('type', type)}
+                  >
+                    + {type}
+                  </button>
                 ))}
-              </datalist>
+              </div>
             </div>
           </div>
           <div style={styles.thirdWidth}>

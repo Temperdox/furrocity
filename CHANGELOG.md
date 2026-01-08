@@ -11,6 +11,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### LocationCreator - Discovery Requirements Logic Builder
+- **Visual condition builder** for hidden location discovery requirements
+  - Appears when "Hidden (requires discovery)" is checked
+  - Block-based visual programming interface similar to Scratch/Blockly
+- **Logic blocks**:
+  - **AND Group** - All conditions must be true (green blocks)
+  - **OR Group** - Any condition can be true (orange blocks)
+  - **NOT** - Inverts the result of a condition (red blocks)
+- **Condition categories** with color-coded blocks:
+  - 📦 **Item** - hasItem, hasItemCount
+  - ⚔️ **Equipment** - hasEquipped, hasSlotEquipped
+  - 📊 **Player Stat** - statCheck (with operators: =, ≠, >, ≥, <, ≤), levelCheck
+  - 📜 **Quest** - questCompleted, questActive, questObjective
+  - 🎬 **Scene** - sceneCompleted, sceneChoice
+  - 🚩 **Game Flag** - flagSet, flagValue
+  - 📍 **Location** - visitedLocation, currentLocation
+- **Nestable conditions** - Create complex logic trees with unlimited depth
+- **Dynamic dropdowns** - Select from datapack items, quests, scenes, locations
+
+#### LocationCreator - Navigation Direction Modal
+- **Direction selection modal** - Click any direction (up, down, left, right, forward, back, enter, exit) to open a searchable modal
+  - Search bar with fuzzy matching for location names and IDs
+  - Results sorted by match quality (exact matches first, then prefix matches, then substring matches)
+  - Alphabetical sorting when no search query
+  - Visual feedback showing linked location name or "No link"
+  - Clear/remove link option with × button in active links list
+- **Fixed duplicate locations** in parent region/location dropdowns by deduplicating by ID
+- **Locations now selectable from datapack** - Direction links can now reference datapack locations, not just user-created ones
+
 #### Content Generator - Dynamic Tag Suggestions
 - **All Creator tabs now display dynamic clickable tag suggestions** below tag input fields
   - Tags are dynamically collected from datapack content, user-created content, and fallback defaults
@@ -21,17 +50,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ItemCreator, EnemyCreator, LocationCreator, SceneCreator, EffectCreator**: Updated with dynamic tags from respective content types
 - **SkillCreator, QuestCreator**: Added tag suggestion buttons (previously had no suggestions)
 
-#### Content Generator - Custom Input Fields
-- **All Creator tabs now support custom input** for label/category fields via input + datalist pattern
-  - Users can select from suggested values OR type custom values
-  - Autocomplete suggestions appear while typing
-- **NPCCreator**: `role` field now accepts custom roles
-- **ItemCreator**: `type` and `rarity` fields now accept custom values
-- **CharacterCreator**: `species`, `gender`, `bodyType`, `faceStyle` fields now accept custom values
-- **EnemyCreator**: `type` and `variant` fields now accept custom values
-- **LocationCreator**: `type` field now accepts custom values
-- **SkillCreator**: `type`, `category`, `targetType`, `damageType` fields now accept custom values
-- **QuestCreator**: `type` field now accepts custom values
+#### Content Generator - Clickable Button Suggestions
+- **All Creator tabs now use clickable button tags** for type/category/role fields
+  - Suggestions displayed as `+ value` buttons below input fields
+  - Users can type custom values OR click suggestions to select
+  - Consistent UI pattern across all creators
+- **NPCCreator**: `role` field with button suggestions
+- **ItemCreator**: `type` and `rarity` fields with button suggestions
+- **CharacterCreator**: `species`, `gender`, `bodyType`, `faceStyle` fields with button suggestions
+- **EnemyCreator**: `type` and `variant` fields with button suggestions
+- **LocationCreator**: `type` field with button suggestions
+- **SkillCreator**: `type`, `category`, `targetType`, `damageType` fields with button suggestions
+- **QuestCreator**: `type` field with button suggestions
 
 #### Content Generator - New Creator Tabs
 - **QuestCreator** - Full quest creation system with:

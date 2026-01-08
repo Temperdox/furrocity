@@ -516,16 +516,22 @@ const CharacterCreator = ({
                   <label style={styles.label}>Species</label>
                   <input
                     style={styles.input}
-                    list="species-suggestions"
                     value={formData.species}
                     onChange={(e) => handleChange('species', e.target.value)}
                     placeholder="e.g., human, wolf, elf"
                   />
-                  <datalist id="species-suggestions">
-                    {SUGGESTED_SPECIES.map(species => (
-                      <option key={species} value={species} />
+                  <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                    {SUGGESTED_SPECIES.filter(s => s !== formData.species).map(species => (
+                      <button
+                        key={species}
+                        type="button"
+                        style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                        onClick={() => handleChange('species', species)}
+                      >
+                        + {species}
+                      </button>
                     ))}
-                  </datalist>
+                  </div>
                 </div>
               </div>
               <div style={styles.thirdWidth}>
@@ -533,16 +539,22 @@ const CharacterCreator = ({
                   <label style={styles.label}>Gender</label>
                   <input
                     style={styles.input}
-                    list="gender-suggestions"
                     value={formData.gender}
                     onChange={(e) => handleChange('gender', e.target.value)}
                     placeholder="e.g., male, female, futa"
                   />
-                  <datalist id="gender-suggestions">
-                    {SUGGESTED_GENDERS.map(gender => (
-                      <option key={gender} value={gender} />
+                  <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                    {SUGGESTED_GENDERS.filter(g => g !== formData.gender).map(gender => (
+                      <button
+                        key={gender}
+                        type="button"
+                        style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                        onClick={() => handleChange('gender', gender)}
+                      >
+                        + {gender}
+                      </button>
                     ))}
-                  </datalist>
+                  </div>
                 </div>
               </div>
               <div style={styles.thirdWidth}>
@@ -550,16 +562,22 @@ const CharacterCreator = ({
                   <label style={styles.label}>Body Type</label>
                   <input
                     style={styles.input}
-                    list="bodytype-suggestions"
                     value={formData.bodyType}
                     onChange={(e) => handleChange('bodyType', e.target.value)}
                     placeholder="e.g., slender, curvy, muscular"
                   />
-                  <datalist id="bodytype-suggestions">
-                    {SUGGESTED_BODY_TYPES.map(bodyType => (
-                      <option key={bodyType} value={bodyType} />
+                  <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                    {SUGGESTED_BODY_TYPES.filter(b => b !== formData.bodyType).map(bodyType => (
+                      <button
+                        key={bodyType}
+                        type="button"
+                        style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                        onClick={() => handleChange('bodyType', bodyType)}
+                      >
+                        + {bodyType}
+                      </button>
                     ))}
-                  </datalist>
+                  </div>
                 </div>
               </div>
             </div>
@@ -704,16 +722,22 @@ const CharacterCreator = ({
                     <label style={styles.label}>Face Style</label>
                     <input
                       style={styles.input}
-                      list="facestyle-suggestions"
                       value={formData.paperdoll.faceStyle}
                       onChange={(e) => handleNestedChange('paperdoll', 'faceStyle', e.target.value)}
                       placeholder="e.g., default, cute, fierce"
                     />
-                    <datalist id="facestyle-suggestions">
-                      {SUGGESTED_FACE_STYLES.map(style => (
-                        <option key={style} value={style} />
+                    <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                      {SUGGESTED_FACE_STYLES.filter(s => s !== formData.paperdoll.faceStyle).map(style => (
+                        <button
+                          key={style}
+                          type="button"
+                          style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                          onClick={() => handleNestedChange('paperdoll', 'faceStyle', style)}
+                        >
+                          + {style}
+                        </button>
                       ))}
-                    </datalist>
+                    </div>
                   </div>
                 </div>
                 <div style={styles.halfWidth}>

@@ -568,16 +568,22 @@ const ItemCreator = ({
               <label style={styles.label}>Type</label>
               <input
                 style={styles.input}
-                list="item-type-suggestions"
                 value={formData.type}
                 onChange={(e) => handleChange('type', e.target.value)}
                 placeholder="e.g., weapon, armor, consumable"
               />
-              <datalist id="item-type-suggestions">
-                {SUGGESTED_TYPES.map(type => (
-                  <option key={type} value={type} />
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {SUGGESTED_TYPES.filter(t => t !== formData.type).map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                    onClick={() => handleChange('type', type)}
+                  >
+                    + {type}
+                  </button>
                 ))}
-              </datalist>
+              </div>
             </div>
           </div>
           <div style={styles.halfWidth}>
@@ -585,16 +591,22 @@ const ItemCreator = ({
               <label style={styles.label}>Rarity</label>
               <input
                 style={styles.input}
-                list="item-rarity-suggestions"
                 value={formData.rarity}
                 onChange={(e) => handleChange('rarity', e.target.value)}
                 placeholder="e.g., common, rare, legendary"
               />
-              <datalist id="item-rarity-suggestions">
-                {SUGGESTED_RARITIES.map(rarity => (
-                  <option key={rarity} value={rarity} />
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {SUGGESTED_RARITIES.filter(r => r !== formData.rarity).map(rarity => (
+                  <button
+                    key={rarity}
+                    type="button"
+                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                    onClick={() => handleChange('rarity', rarity)}
+                  >
+                    + {rarity}
+                  </button>
                 ))}
-              </datalist>
+              </div>
             </div>
           </div>
         </div>

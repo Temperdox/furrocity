@@ -481,16 +481,22 @@ const SkillCreator = ({
               <label style={styles.label}>Skill Type</label>
               <input
                 style={styles.input}
-                list="skill-type-suggestions"
                 value={formData.type}
                 onChange={(e) => handleChange('type', e.target.value)}
                 placeholder="e.g., active, passive, toggle"
               />
-              <datalist id="skill-type-suggestions">
-                {SUGGESTED_SKILL_TYPES.map(type => (
-                  <option key={type} value={type} />
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {SUGGESTED_SKILL_TYPES.filter(t => t !== formData.type).map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                    onClick={() => handleChange('type', type)}
+                  >
+                    + {type}
+                  </button>
                 ))}
-              </datalist>
+              </div>
             </div>
           </div>
           <div style={styles.thirdWidth}>
@@ -498,16 +504,22 @@ const SkillCreator = ({
               <label style={styles.label}>Category</label>
               <input
                 style={styles.input}
-                list="skill-category-suggestions"
                 value={formData.category}
                 onChange={(e) => handleChange('category', e.target.value)}
                 placeholder="e.g., combat, magic, utility"
               />
-              <datalist id="skill-category-suggestions">
-                {SUGGESTED_CATEGORIES.map(cat => (
-                  <option key={cat} value={cat} />
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {SUGGESTED_CATEGORIES.filter(c => c !== formData.category).map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                    onClick={() => handleChange('category', cat)}
+                  >
+                    + {cat}
+                  </button>
                 ))}
-              </datalist>
+              </div>
             </div>
           </div>
           <div style={styles.thirdWidth}>
@@ -515,16 +527,22 @@ const SkillCreator = ({
               <label style={styles.label}>Target</label>
               <input
                 style={styles.input}
-                list="skill-target-suggestions"
                 value={formData.targetType}
                 onChange={(e) => handleChange('targetType', e.target.value)}
                 placeholder="e.g., self, enemy, all_enemies"
               />
-              <datalist id="skill-target-suggestions">
-                {SUGGESTED_TARGET_TYPES.map(target => (
-                  <option key={target} value={target} />
+              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {SUGGESTED_TARGET_TYPES.filter(t => t !== formData.targetType).map(target => (
+                  <button
+                    key={target}
+                    type="button"
+                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                    onClick={() => handleChange('targetType', target)}
+                  >
+                    + {target}
+                  </button>
                 ))}
-              </datalist>
+              </div>
             </div>
           </div>
         </div>
@@ -635,16 +653,22 @@ const SkillCreator = ({
                   <label style={styles.label}>Damage Type</label>
                   <input
                     style={styles.input}
-                    list="damage-type-suggestions"
                     value={newEffect.damageType}
                     onChange={(e) => setNewEffect(prev => ({ ...prev, damageType: e.target.value }))}
                     placeholder="e.g., physical, fire, ice"
                   />
-                  <datalist id="damage-type-suggestions">
-                    {SUGGESTED_DAMAGE_TYPES.map(type => (
-                      <option key={type} value={type} />
+                  <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                    {SUGGESTED_DAMAGE_TYPES.filter(t => t !== newEffect.damageType).map(type => (
+                      <button
+                        key={type}
+                        type="button"
+                        style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
+                        onClick={() => setNewEffect(prev => ({ ...prev, damageType: type }))}
+                      >
+                        + {type}
+                      </button>
                     ))}
-                  </datalist>
+                  </div>
                 </div>
               )}
               {['buff_stat', 'debuff_stat'].includes(newEffect.type) && (
