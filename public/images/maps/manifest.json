@@ -1,0 +1,18 @@
+{
+  "global": [
+    { "filename": "world_map_example.png", "name": "World Map Example" },
+    { "filename": "world_map_terrain.png", "name": "World Map Terrain" },
+    { "filename": "world_map_political.png", "name": "World Map Political" }
+  ],
+  "kingdom": [
+    { "filename": "kingdom_template.png", "name": "Kingdom Template" },
+    { "filename": "kingdom_eldoria_example.png", "name": "Kingdom Eldoria" },
+    { "filename": "kingdom_shadowlands_example.png", "name": "Kingdom Shadowlands" }
+  ],
+  "local": [
+    { "filename": "village_inn_example.png", "name": "Village Inn" },
+    { "filename": "dungeon_floor1_example.png", "name": "Dungeon Floor 1" },
+    { "filename": "forest_clearing_example.png", "name": "Forest Clearing" },
+    { "filename": "shop_interior_example.png", "name": "Shop Interior" }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "challengeModifiers": [
+    {
+      "id": "easy_corrupt",
+      "name": "Easily Corrupted",
+      "description": "Corruption builds faster",
+      "statPoints": 2,
+      "effect": { "corruptionRate": 1.5 }
+    },
+    {
+      "id": "weak_restraints",
+      "name": "Weak Against Restraints",
+      "description": "Harder to break free",
+      "statPoints": 2,
+      "effect": { "restraintResist": 0.7 }
+    },
+    {
+      "id": "low_nsfw_resist",
+      "name": "Susceptible",
+      "description": "Harder to resist advances",
+      "statPoints": 2,
+      "effect": { "nsfwResist": 0.7 }
+    },
+    {
+      "id": "curse_vulnerable",
+      "name": "Curse Magnet",
+      "description": "Harder to resist and break curses",
+      "statPoints": 3,
+      "effect": { "curseResist": 0.6, "curseBreak": 0.6 }
+    },
+    {
+      "id": "hypno_weak",
+      "name": "Weak-Willed",
+      "description": "Easily hypnotized",
+      "statPoints": 2,
+      "effect": { "hypnoResist": 0.7 }
+    },
+    {
+      "id": "addiction_prone",
+      "name": "Addictive Personality",
+      "description": "Addictions form faster",
+      "statPoints": 2,
+      "effect": { "addictionRate": 1.5 }
+    },
+    {
+      "id": "disease_prone",
+      "name": "Fragile Constitution",
+      "description": "More susceptible to diseases",
+      "statPoints": 2,
+      "effect": { "diseaseResist": 0.5 }
+    },
+    {
+      "id": "slow_recovery",
+      "name": "Slow Recovery",
+      "description": "Stamina recovers slower",
+      "statPoints": 1,
+      "effect": { "staminaRegen": 0.7 }
+    },
+    {
+      "id": "glass_cannon",
+      "name": "Glass Cannon",
+      "description": "Deal more damage, take more damage",
+      "statPoints": 2,
+      "effect": { "damageDealt": 1.3, "damageTaken": 1.3 }
+    }
+  ]
+}

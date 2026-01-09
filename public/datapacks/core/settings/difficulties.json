@@ -1,0 +1,37 @@
+{
+  "difficulties": [
+    {
+      "id": "easy",
+      "name": "Story Mode",
+      "description": "Relaxed gameplay, focus on narrative.",
+      "statMultiplier": 1.2,
+      "encounterRateMultiplier": 0.5,
+      "canSaveAnywhere": true
+    },
+    {
+      "id": "normal",
+      "name": "Adventure",
+      "description": "Balanced challenge.",
+      "statMultiplier": 1.0,
+      "encounterRateMultiplier": 1.0,
+      "canSaveAnywhere": true
+    },
+    {
+      "id": "hard",
+      "name": "Nightmare",
+      "description": "Brutal difficulty. Save only in safe zones.",
+      "statMultiplier": 0.8,
+      "encounterRateMultiplier": 1.5,
+      "canSaveAnywhere": false
+    },
+    {
+      "id": "nightmare",
+      "name": "Corruption",
+      "description": "One life. Maximum corruption. No mercy.",
+      "statMultiplier": 0.6,
+      "encounterRateMultiplier": 2.0,
+      "canSaveAnywhere": false,
+      "permadeath": true
+    }
+  ]
+}

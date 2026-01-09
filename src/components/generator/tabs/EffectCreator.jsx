@@ -1,197 +1,32 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
+import { FormInput, FormSelect, TagInput, Button, NumericModifierInput, CollapsibleSection } from '../../ui/shared';
+import { useFormDraft } from '../../../hooks/useFormDraft';
+import './CreatorStyles.css';
 
-const styles = {
-  container: {
-    display: 'flex',
-    gap: '20px',
-    height: '100%',
-  },
-  formSection: {
-    flex: '1',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '20px',
-    overflowY: 'auto',
-  },
-  listSection: {
-    width: '320px',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '15px',
-    overflowY: 'auto',
-  },
-  sectionTitle: {
-    color: '#ffd700',
-    fontSize: '18px',
-    marginBottom: '15px',
-    borderBottom: '1px solid #4a4a6a',
-    paddingBottom: '10px',
-  },
-  formGroup: {
-    marginBottom: '15px',
-  },
-  label: {
-    display: 'block',
-    color: '#a0a0c0',
-    marginBottom: '5px',
-    fontSize: '13px',
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  select: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  textarea: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    minHeight: '80px',
-    resize: 'vertical',
-    boxSizing: 'border-box',
-  },
-  row: {
-    display: 'flex',
-    gap: '15px',
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  thirdWidth: {
-    flex: 1,
-  },
-  button: {
-    padding: '10px 20px',
-    borderRadius: '6px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    transition: 'all 0.2s ease',
-    marginRight: '10px',
-  },
-  primaryButton: {
-    backgroundColor: '#4a7c4a',
-    color: 'white',
-  },
-  secondaryButton: {
-    backgroundColor: '#4a4a6a',
-    color: 'white',
-  },
-  smallButton: {
-    padding: '4px 8px',
-    borderRadius: '4px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '11px',
-  },
-  tagInput: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '5px',
-    padding: '8px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    minHeight: '40px',
-  },
-  tag: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '3px 8px',
-    backgroundColor: '#3a3a5a',
-    borderRadius: '12px',
-    fontSize: '12px',
-    color: '#d0d0e0',
-  },
-  tagRemove: {
-    marginLeft: '5px',
-    cursor: 'pointer',
-    color: '#ff6666',
-  },
-  listItem: {
-    padding: '12px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '6px',
-    marginBottom: '8px',
-    cursor: 'pointer',
-    border: '1px solid transparent',
-    transition: 'all 0.2s ease',
-  },
-  listItemHover: {
-    borderColor: '#4a4a6a',
-  },
-  listItemName: {
-    color: '#ffd700',
-    fontSize: '14px',
-    fontWeight: 'bold',
-  },
-  listItemDetails: {
-    color: '#808090',
-    fontSize: '12px',
-    marginTop: '4px',
-  },
-  listItemActions: {
-    display: 'flex',
-    gap: '5px',
-    marginTop: '8px',
-  },
-  emptyList: {
-    color: '#606080',
-    textAlign: 'center',
-    padding: '30px',
-    fontSize: '14px',
-  },
-  subsection: {
-    marginTop: '20px',
-    padding: '15px',
-    backgroundColor: '#1e1e35',
-    borderRadius: '6px',
-  },
-  subsectionTitle: {
-    color: '#c0c0e0',
-    fontSize: '14px',
-    marginBottom: '12px',
-    fontWeight: 'bold',
-  },
-  modifierItem: {
-    backgroundColor: '#252540',
-    borderRadius: '6px',
-    padding: '10px',
-    marginTop: '8px',
-    border: '1px solid #3a3a5a',
-  },
-};
+const DRAFT_KEY = 'contentGenerator_draft_effects';
 
 const EFFECT_TYPES = [
-  { value: 'buff', label: 'Buff', color: '#4a7c4a' },
-  { value: 'debuff', label: 'Debuff', color: '#7c4a4a' },
-  { value: 'status', label: 'Status', color: '#7c7c4a' },
-  { value: 'curse', label: 'Curse', color: '#7c4a7c' },
-  { value: 'addiction', label: 'Addiction', color: '#4a4a7c' },
-  { value: 'restraint', label: 'Restraint', color: '#5a5a5a' },
-  { value: 'environment', label: 'Environment', color: '#4a7c7c' },
-  { value: 'instant', label: 'Instant', color: '#7c7c7c' },
+  { value: 'buff', label: 'Buff' },
+  { value: 'debuff', label: 'Debuff' },
+  { value: 'status', label: 'Status' },
+  { value: 'curse', label: 'Curse' },
+  { value: 'addiction', label: 'Addiction' },
+  { value: 'restraint', label: 'Restraint' },
+  { value: 'environment', label: 'Environment' },
+  { value: 'instant', label: 'Instant' },
 ];
+
+const EFFECT_TYPE_COLORS = {
+  buff: 'var(--color-accent-success)',
+  debuff: 'var(--color-accent-danger)',
+  status: 'var(--color-accent-warning)',
+  curse: 'var(--color-accent-secondary)',
+  addiction: 'var(--color-accent-info)',
+  restraint: 'var(--color-text-muted)',
+  environment: '#4a7c7c',
+  instant: 'var(--color-border)',
+};
 
 const STACK_BEHAVIORS = [
   { value: 'refresh', label: 'Refresh Duration' },
@@ -213,19 +48,12 @@ const STAT_MODIFIERS = [
   'charm', 'luck', 'corruptionResistance',
 ];
 
-const OPERATIONS = [
-  { value: 'flat', label: 'Flat (+/-)' },
-  { value: 'percent', label: 'Percent (+/- %)' },
-  { value: 'set', label: 'Set (=)' },
-];
 
-// Fallback tags when no dynamic tags available
-const FALLBACK_TAGS = [
-  'buff', 'debuff', 'dot', 'hot', 'status',
-  'poison', 'fire', 'ice', 'lightning', 'holy',
-  'curse', 'nsfw', 'arousal', 'corruption',
-  'restraint', 'stun', 'slow', 'bleed',
-];
+const TAG_CATEGORIES = {
+  type: ['buff', 'debuff', 'dot', 'hot', 'status'],
+  element: ['poison', 'fire', 'ice', 'lightning', 'holy'],
+  special: ['curse', 'nsfw', 'arousal', 'corruption', 'restraint', 'stun', 'slow', 'bleed'],
+};
 
 const DEFAULT_EFFECT = {
   id: '',
@@ -250,7 +78,7 @@ const DEFAULT_EFFECT = {
 
 const DEFAULT_MODIFIER = {
   stat: 'attack',
-  operation: 'flat',
+  operation: 'add',
   value: 10,
 };
 
@@ -267,15 +95,30 @@ const EffectCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_EFFECT });
-  const [tagInput, setTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [collapsedSections, setCollapsedSections] = useState({
+    duration: false,
+    icon: true,
+    modifiers: false,
+    tags: false,
+  });
 
-  // Compute dynamic tag suggestions from datapack content and user-created effects
+  const toggleSection = (section) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
+  const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
+    defaultValues: DEFAULT_EFFECT,
+  });
+
   const suggestedTags = useMemo(() => {
     return collectTags({
       datapackContent,
       userContent: items,
-      commonTags: FALLBACK_TAGS,
+      commonTags: Object.values(TAG_CATEGORIES).flat(),
       contentType: 'effects',
     });
   }, [datapackContent, items]);
@@ -305,24 +148,6 @@ const EffectCreator = ({
     }));
   };
 
-  const handleAddTag = (tag) => {
-    if (tag && !formData.tags.includes(tag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag],
-      }));
-    }
-    setTagInput('');
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(t => t !== tagToRemove),
-    }));
-  };
-
-  // Modifier management
   const handleAddModifier = () => {
     setFormData(prev => ({
       ...prev,
@@ -361,6 +186,7 @@ const EffectCreator = ({
       onUpdate(editingItem._id, formData);
     } else {
       onAdd(formData);
+      clearDraft();
     }
 
     setFormData({ ...DEFAULT_EFFECT });
@@ -372,326 +198,238 @@ const EffectCreator = ({
   };
 
   return (
-    <div style={styles.container}>
+    <div className="creator-container">
       {/* Form Section */}
-      <div style={styles.formSection}>
-        <h3 style={styles.sectionTitle}>
-          {editingItem ? '✏️ Edit Effect' : '➕ Create New Effect'}
+      <div className="creator-form">
+        <h3 className="creator-form-section-title">
+          {editingItem ? 'Edit Effect' : 'Create New Effect'}
         </h3>
 
         {/* Basic Info */}
-        <div style={styles.row}>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>ID *</label>
-              <input
-                style={styles.input}
-                value={formData.id}
-                onChange={(e) => handleChange('id', e.target.value.toLowerCase().replace(/\s/g, '_'))}
-                placeholder="unique_effect_id"
-              />
-            </div>
-          </div>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Name *</label>
-              <input
-                style={styles.input}
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="Effect Name"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Description</label>
-          <textarea
-            style={styles.textarea}
-            value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
-            placeholder="What this effect does..."
-          />
-        </div>
-
-        <div style={styles.row}>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Type</label>
-              <select
-                style={styles.select}
-                value={formData.type}
-                onChange={(e) => handleChange('type', e.target.value)}
-              >
-                {EFFECT_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Stack Behavior</label>
-              <select
-                style={styles.select}
-                value={formData.stackBehavior}
-                onChange={(e) => handleChange('stackBehavior', e.target.value)}
-              >
-                {STACK_BEHAVIORS.map(s => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {formData.stackBehavior === 'stack' && (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Max Stacks</label>
-            <input
-              style={styles.input}
-              type="number"
-              min="1"
-              value={formData.maxStacks}
-              onChange={(e) => handleChange('maxStacks', parseInt(e.target.value) || 1)}
+        <div className="creator-form-section">
+          <div className="creator-form-row">
+            <FormInput
+              label="ID"
+              required
+              value={formData.id}
+              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
+              placeholder="unique_effect_id"
+            />
+            <FormInput
+              label="Name"
+              required
+              value={formData.name}
+              onChange={(v) => handleChange('name', v)}
+              placeholder="Effect Name"
             />
           </div>
-        )}
+
+          <FormInput
+            label="Description"
+            type="textarea"
+            value={formData.description}
+            onChange={(v) => handleChange('description', v)}
+            placeholder="What this effect does..."
+            rows={3}
+          />
+
+          <div className="creator-form-row">
+            <FormSelect
+              label="Type"
+              value={formData.type}
+              onChange={(v) => handleChange('type', v)}
+              options={EFFECT_TYPES}
+            />
+            <FormSelect
+              label="Stack Behavior"
+              value={formData.stackBehavior}
+              onChange={(v) => handleChange('stackBehavior', v)}
+              options={STACK_BEHAVIORS}
+            />
+          </div>
+
+          {formData.stackBehavior === 'stack' && (
+            <FormInput
+              label="Max Stacks"
+              type="number"
+              value={formData.maxStacks}
+              onChange={(v) => handleChange('maxStacks', v)}
+              min={1}
+            />
+          )}
+        </div>
 
         {/* Duration */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Duration</div>
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Duration Type</label>
-                <select
-                  style={styles.select}
-                  value={formData.duration.type}
-                  onChange={(e) => handleNestedChange('duration', 'type', e.target.value)}
-                >
-                  {DURATION_TYPES.map(d => (
-                    <option key={d.value} value={d.value}>{d.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+        <CollapsibleSection
+          title="Duration"
+          isCollapsed={collapsedSections.duration}
+          onToggle={() => toggleSection('duration')}
+        >
+          <div className="creator-form-row">
+            <FormSelect
+              label="Duration Type"
+              value={formData.duration.type}
+              onChange={(v) => handleNestedChange('duration', 'type', v)}
+              options={DURATION_TYPES}
+            />
             {formData.duration.type === 'turns' && (
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Turn Count</label>
-                  <input
-                    style={styles.input}
-                    type="number"
-                    min="1"
-                    value={formData.duration.value}
-                    onChange={(e) => handleNestedChange('duration', 'value', parseInt(e.target.value) || 5)}
-                  />
-                </div>
-              </div>
+              <FormInput
+                label="Turn Count"
+                type="number"
+                value={formData.duration.value}
+                onChange={(v) => handleNestedChange('duration', 'value', v)}
+                min={1}
+              />
             )}
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Icon */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Icon</div>
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Sprite Sheet ID</label>
-                <input
-                  style={styles.input}
-                  value={formData.icon.sheetId}
-                  onChange={(e) => handleNestedChange('icon', 'sheetId', e.target.value)}
-                  placeholder="effects"
-                />
-              </div>
-            </div>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Icon ID</label>
-                <input
-                  style={styles.input}
-                  value={formData.icon.iconId}
-                  onChange={(e) => handleNestedChange('icon', 'iconId', e.target.value)}
-                  placeholder="effect_icon"
-                />
-              </div>
-            </div>
+        <CollapsibleSection
+          title="Icon"
+          isCollapsed={collapsedSections.icon}
+          onToggle={() => toggleSection('icon')}
+        >
+          <div className="creator-form-row">
+            <FormInput
+              label="Sprite Sheet ID"
+              value={formData.icon.sheetId}
+              onChange={(v) => handleNestedChange('icon', 'sheetId', v)}
+              placeholder="effects"
+            />
+            <FormInput
+              label="Icon ID"
+              value={formData.icon.iconId}
+              onChange={(v) => handleNestedChange('icon', 'iconId', v)}
+              placeholder="effect_icon"
+            />
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Stat Modifiers */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Stat Modifiers</div>
+        <CollapsibleSection
+          title="Stat Modifiers"
+          isCollapsed={collapsedSections.modifiers}
+          onToggle={() => toggleSection('modifiers')}
+          badge={formData.modifiers.length > 0 ? formData.modifiers.length : null}
+        >
           {formData.modifiers.map((mod, index) => (
-            <div key={index} style={styles.modifierItem}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ color: '#a0a0c0', fontSize: '12px' }}>Modifier #{index + 1}</span>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                  onClick={() => handleRemoveModifier(index)}
-                >
+            <div key={index} className="array-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
+                <span className="text-secondary text-sm">Modifier #{index + 1}</span>
+                <Button variant="danger" size="sm" onClick={() => handleRemoveModifier(index)}>
                   Remove
-                </button>
+                </Button>
               </div>
-              <div style={styles.row}>
-                <div style={styles.thirdWidth}>
-                  <select
-                    style={styles.select}
-                    value={mod.stat}
-                    onChange={(e) => handleUpdateModifier(index, { stat: e.target.value })}
-                  >
-                    {STAT_MODIFIERS.map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-                <div style={styles.thirdWidth}>
-                  <select
-                    style={styles.select}
-                    value={mod.operation}
-                    onChange={(e) => handleUpdateModifier(index, { operation: e.target.value })}
-                  >
-                    {OPERATIONS.map(o => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div style={styles.thirdWidth}>
-                  <input
-                    style={styles.input}
-                    type="number"
-                    value={mod.value}
-                    onChange={(e) => handleUpdateModifier(index, { value: parseInt(e.target.value) || 0 })}
-                    placeholder="Value"
-                  />
-                </div>
+              <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'flex-start' }}>
+                <FormSelect
+                  value={mod.stat}
+                  onChange={(v) => handleUpdateModifier(index, { stat: v })}
+                  options={STAT_MODIFIERS.map(s => ({ value: s, label: s }))}
+                  style={{ minWidth: '160px' }}
+                />
+                <NumericModifierInput
+                  value={mod}
+                  onChange={(newMod) => handleUpdateModifier(index, newMod)}
+                  showLabel={false}
+                  allowRandom={true}
+                />
               </div>
             </div>
           ))}
-          <button
-            style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white', marginTop: '10px' }}
-            onClick={handleAddModifier}
-          >
+
+          <Button variant="success" size="sm" onClick={handleAddModifier} className="mt-sm">
             + Add Modifier
-          </button>
-        </div>
+          </Button>
+        </CollapsibleSection>
 
         {/* Tags */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Tags</div>
-          <div style={styles.tagInput}>
-            {formData.tags.map(tag => (
-              <span key={tag} style={styles.tag}>
-                {tag}
-                <span style={styles.tagRemove} onClick={() => handleRemoveTag(tag)}>×</span>
-              </span>
-            ))}
-            <input
-              style={{ ...styles.input, border: 'none', backgroundColor: 'transparent', flex: 1, minWidth: '100px', padding: '2px' }}
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddTag(tagInput)}
-              placeholder="Add tag..."
-            />
-          </div>
-          <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {suggestedTags.filter(t => !formData.tags.includes(t)).slice(0, 20).map(tag => (
-              <button
-                key={tag}
-                style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                onClick={() => handleAddTag(tag)}
-              >
-                + {tag}
-              </button>
-            ))}
-          </div>
-        </div>
+        <CollapsibleSection
+          title="Tags"
+          isCollapsed={collapsedSections.tags}
+          onToggle={() => toggleSection('tags')}
+        >
+          <TagInput
+            value={formData.tags}
+            onChange={(v) => handleChange('tags', v)}
+            suggestions={suggestedTags}
+            categories={TAG_CATEGORIES}
+            placeholder="Add tag..."
+            showSuggestions
+          />
+        </CollapsibleSection>
 
         {/* Action Buttons */}
-        <div style={{ marginTop: '20px' }}>
-          <button
-            style={{ ...styles.button, ...styles.primaryButton }}
-            onClick={handleSubmit}
-          >
-            {editingItem ? '💾 Update Effect' : '➕ Add Effect'}
-          </button>
+        <div className="creator-actions">
+          <Button variant="success" onClick={handleSubmit}>
+            {editingItem ? 'Update Effect' : 'Add Effect'}
+          </Button>
           {editingItem && (
-            <button
-              style={{ ...styles.button, ...styles.secondaryButton }}
-              onClick={handleCancel}
-            >
+            <Button variant="ghost" onClick={handleCancel}>
               Cancel
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {/* List Section */}
-      <div style={styles.listSection}>
-        <h3 style={styles.sectionTitle}>📋 Created Effects ({items.length})</h3>
+      <div className="creator-list">
+        <h3 className="creator-form-section-title">
+          Created Effects
+          <span className="count-badge">{items.length}</span>
+        </h3>
 
         {items.length === 0 ? (
-          <div style={styles.emptyList}>
-            No effects created yet.<br />
+          <div className="empty-list">
+            No effects created yet.
+            <br />
             Use the form to create your first effect.
           </div>
         ) : (
-          items.map(item => {
-            const effectType = EFFECT_TYPES.find(t => t.value === item.type);
-            return (
-              <div
-                key={item._id}
-                style={{
-                  ...styles.listItem,
-                  ...(hoveredItem === item._id ? styles.listItemHover : {}),
-                  ...(editingItem?._id === item._id ? { borderColor: '#ffd700' } : {}),
-                }}
-                onMouseEnter={() => setHoveredItem(item._id)}
-                onMouseLeave={() => setHoveredItem(null)}
-              >
-                <div style={styles.listItemName}>
-                  ✨ {item.name}
-                  <span style={{
-                    marginLeft: '8px',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    fontSize: '10px',
-                    backgroundColor: effectType?.color || '#4a4a6a',
-                    color: 'white',
-                  }}>
+          items.map(item => (
+            <div
+              key={item._id}
+              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
+              onMouseEnter={() => setHoveredItem(item._id)}
+              onMouseLeave={() => setHoveredItem(null)}
+            >
+              <div className="creator-item-info">
+                <div className="creator-item-name">
+                  {item.name}
+                  <span
+                    className="rarity-badge"
+                    style={{ backgroundColor: EFFECT_TYPE_COLORS[item.type] || 'var(--color-border)' }}
+                  >
                     {item.type}
                   </span>
                 </div>
-                <div style={styles.listItemDetails}>
+                <div className="creator-item-id">
                   ID: {item.id} | {item.duration?.type === 'turns' ? `${item.duration.value} turns` : item.duration?.type}
                 </div>
-                <div style={styles.listItemActions}>
-                  <button
-                    style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white' }}
-                    onClick={() => onEdit(item)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    style={{ ...styles.smallButton, backgroundColor: '#4a4a7c', color: 'white' }}
-                    onClick={() => onDuplicate(item)}
-                  >
-                    Duplicate
-                  </button>
-                  <button
-                    style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                    onClick={() => onDelete(item._id)}
-                  >
-                    Delete
-                  </button>
-                </div>
+                {item.tags?.length > 0 && (
+                  <div className="creator-item-tags">
+                    {item.tags.slice(0, 4).map(tag => (
+                      <span key={tag} className="tag-chip">{tag}</span>
+                    ))}
+                    {item.tags.length > 4 && (
+                      <span className="tag-chip more">+{item.tags.length - 4}</span>
+                    )}
+                  </div>
+                )}
               </div>
-            );
-          })
+              <div className="creator-item-actions">
+                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
+                  Edit
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
+                  Duplicate
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
+                  Delete
+                </Button>
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>

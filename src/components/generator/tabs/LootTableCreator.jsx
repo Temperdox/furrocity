@@ -1,196 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { collectTags } from '../DatapackLoader';
+import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { useFormDraft } from '../../../hooks/useFormDraft';
+import './CreatorStyles.css';
 
-const styles = {
-  container: {
-    display: 'flex',
-    gap: '20px',
-    height: '100%',
-  },
-  formSection: {
-    flex: '1',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '20px',
-    overflowY: 'auto',
-  },
-  listSection: {
-    width: '320px',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '15px',
-    overflowY: 'auto',
-  },
-  sectionTitle: {
-    color: '#ffd700',
-    fontSize: '18px',
-    marginBottom: '15px',
-    borderBottom: '1px solid #4a4a6a',
-    paddingBottom: '10px',
-  },
-  formGroup: {
-    marginBottom: '15px',
-  },
-  label: {
-    display: 'block',
-    color: '#a0a0c0',
-    marginBottom: '5px',
-    fontSize: '13px',
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  select: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  textarea: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    minHeight: '60px',
-    resize: 'vertical',
-    boxSizing: 'border-box',
-  },
-  row: {
-    display: 'flex',
-    gap: '15px',
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  thirdWidth: {
-    flex: 1,
-  },
-  button: {
-    padding: '10px 20px',
-    borderRadius: '6px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    transition: 'all 0.2s ease',
-    marginRight: '10px',
-  },
-  primaryButton: {
-    backgroundColor: '#4a7c4a',
-    color: 'white',
-  },
-  secondaryButton: {
-    backgroundColor: '#4a4a6a',
-    color: 'white',
-  },
-  smallButton: {
-    padding: '4px 8px',
-    borderRadius: '4px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '11px',
-  },
-  tagInput: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '5px',
-    padding: '8px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    minHeight: '40px',
-  },
-  tag: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '3px 8px',
-    backgroundColor: '#3a3a5a',
-    borderRadius: '12px',
-    fontSize: '12px',
-    color: '#d0d0e0',
-  },
-  tagRemove: {
-    marginLeft: '5px',
-    cursor: 'pointer',
-    color: '#ff6666',
-  },
-  listItem: {
-    padding: '12px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '6px',
-    marginBottom: '8px',
-    cursor: 'pointer',
-    border: '1px solid transparent',
-    transition: 'all 0.2s ease',
-  },
-  listItemHover: {
-    borderColor: '#4a4a6a',
-  },
-  listItemName: {
-    color: '#ffd700',
-    fontSize: '14px',
-    fontWeight: 'bold',
-  },
-  listItemDetails: {
-    color: '#808090',
-    fontSize: '12px',
-    marginTop: '4px',
-  },
-  listItemActions: {
-    display: 'flex',
-    gap: '5px',
-    marginTop: '8px',
-  },
-  emptyList: {
-    color: '#606080',
-    textAlign: 'center',
-    padding: '30px',
-    fontSize: '14px',
-  },
-  subsection: {
-    marginTop: '20px',
-    padding: '15px',
-    backgroundColor: '#1e1e35',
-    borderRadius: '6px',
-  },
-  subsectionTitle: {
-    color: '#c0c0e0',
-    fontSize: '14px',
-    marginBottom: '12px',
-    fontWeight: 'bold',
-  },
-  entryCard: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: '6px',
-    padding: '12px',
-    marginBottom: '10px',
-    border: '1px solid #3a3a5a',
-  },
-  weightBar: {
-    height: '6px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '3px',
-    marginTop: '8px',
-    overflow: 'hidden',
-  },
-  weightFill: {
-    height: '100%',
-    backgroundColor: '#4aca4a',
-    borderRadius: '3px',
-  },
+const DRAFT_KEY = 'contentGenerator_draft_lootTables';
+
+const TAG_CATEGORIES = {
+  source: ['enemy', 'boss', 'chest', 'fishing', 'mining', 'gathering'],
+  tier: ['common', 'uncommon', 'rare', 'epic', 'legendary'],
+  region: ['forest', 'dungeon', 'cave', 'village', 'castle'],
 };
 
 const RARITY_OPTIONS = [
@@ -204,13 +23,13 @@ const RARITY_OPTIONS = [
 ];
 
 const RARITY_COLORS = {
-  any: '#a0a0c0',
+  any: 'var(--color-text-secondary)',
   common: '#9ca3af',
   uncommon: '#22c55e',
   rare: '#3b82f6',
   epic: '#a855f7',
   legendary: '#f97316',
-  mythic: '#ffd700',
+  mythic: 'var(--color-accent-primary)',
 };
 
 const DEFAULT_LOOT_TABLE = {
@@ -250,13 +69,42 @@ const LootTableCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_LOOT_TABLE });
-  const [tagInput, setTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
   const [newEntry, setNewEntry] = useState({ ...DEFAULT_ENTRY });
   const [newGuaranteed, setNewGuaranteed] = useState({ itemId: '', count: 1 });
+  const [collapsedSections, setCollapsedSections] = useState({
+    rollSettings: false,
+    goldDrops: false,
+    guaranteedDrops: false,
+    lootPool: false,
+    tags: true,
+  });
+
+  const toggleSection = (section) => {
+    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
+    defaultValues: DEFAULT_LOOT_TABLE,
+  });
+
+  const suggestedTags = useMemo(() => {
+    return collectTags({
+      datapackContent,
+      userContent: items,
+      commonTags: Object.values(TAG_CATEGORIES).flat(),
+      contentType: 'lootTables',
+    });
+  }, [datapackContent, items]);
 
   // Combine datapack content with user-created content
   const allItems = [...(datapackContent.items || []), ...(allContent?.items || [])];
+  const itemOptions = useMemo(() => {
+    return allItems.map(item => ({
+      value: item.id,
+      label: `${item.name || item.id} (${item.rarity || 'common'})`,
+    }));
+  }, [allItems]);
 
   useEffect(() => {
     if (editingItem) {
@@ -277,27 +125,10 @@ const LootTableCreator = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleGoldChange = (field, value) => {
+  const handleNestedChange = (parent, field, value) => {
     setFormData(prev => ({
       ...prev,
-      goldRange: { ...prev.goldRange, [field]: value },
-    }));
-  };
-
-  const handleAddTag = (tag) => {
-    if (tag && !formData.tags.includes(tag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag],
-      }));
-    }
-    setTagInput('');
-  };
-
-  const handleRemoveTag = (tag) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(t => t !== tag),
+      [parent]: { ...prev[parent], [field]: value },
     }));
   };
 
@@ -352,12 +183,16 @@ const LootTableCreator = ({
       return;
     }
 
-    const lootTableData = { ...formData };
+    if (!editingItem && items.some(item => item.id === formData.id)) {
+      alert('A loot table with this ID already exists');
+      return;
+    }
 
     if (editingItem) {
-      onUpdate(editingItem._id, lootTableData);
+      onUpdate(editingItem._id, formData);
     } else {
-      onAdd(lootTableData);
+      onAdd(formData);
+      clearDraft();
     }
 
     setFormData({ ...DEFAULT_LOOT_TABLE });
@@ -372,222 +207,198 @@ const LootTableCreator = ({
   const totalWeight = formData.entries.reduce((sum, entry) => sum + entry.weight, 0);
 
   return (
-    <div style={styles.container}>
+    <div className="creator-container">
       {/* Form Section */}
-      <div style={styles.formSection}>
-        <h3 style={styles.sectionTitle}>
+      <div className="creator-form">
+        <h3 className="creator-form-section-title">
           {editingItem ? 'Edit Loot Table' : 'Create New Loot Table'}
         </h3>
 
         {/* Basic Info */}
-        <div style={styles.row}>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Loot Table ID *</label>
-              <input
-                style={styles.input}
-                value={formData.id}
-                onChange={(e) => handleChange('id', e.target.value.toLowerCase().replace(/\s+/g, '_'))}
-                placeholder="forest_common_loot"
-              />
-            </div>
+        <div className="creator-form-section">
+          <div className="creator-form-row">
+            <FormInput
+              label="ID"
+              required
+              value={formData.id}
+              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
+              placeholder="forest_common_loot"
+            />
+            <FormInput
+              label="Name"
+              required
+              value={formData.name}
+              onChange={(v) => handleChange('name', v)}
+              placeholder="Forest Common Loot"
+            />
           </div>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Name *</label>
-              <input
-                style={styles.input}
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="Forest Common Loot"
-              />
-            </div>
-          </div>
-        </div>
 
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Description</label>
-          <textarea
-            style={styles.textarea}
+          <FormInput
+            label="Description"
+            type="textarea"
             value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
+            onChange={(v) => handleChange('description', v)}
             placeholder="Describe when this loot table is used..."
+            rows={2}
           />
         </div>
 
         {/* Roll Settings */}
-        <div style={styles.row}>
-          <div style={styles.thirdWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Number of Rolls</label>
-              <input
-                style={styles.input}
-                type="number"
-                value={formData.rolls}
-                onChange={(e) => handleChange('rolls', parseInt(e.target.value) || 1)}
-                min="1"
-              />
-            </div>
-          </div>
-          <div style={styles.thirdWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Bonus Roll Chance (%)</label>
-              <input
-                style={styles.input}
-                type="number"
-                value={formData.bonusRollChance}
-                onChange={(e) => handleChange('bonusRollChance', parseFloat(e.target.value) || 0)}
-                min="0"
-                max="100"
-              />
-            </div>
-          </div>
-          <div style={styles.thirdWidth}>
-            <div style={styles.formGroup}>
-              <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '25px' }}>
+        <CollapsibleSection
+          title="Roll Settings"
+          isCollapsed={collapsedSections.rollSettings}
+          onToggle={() => toggleSection('rollSettings')}
+        >
+          <div className="creator-form-row cols-3">
+            <FormInput
+              label="Number of Rolls"
+              type="number"
+              value={formData.rolls}
+              onChange={(v) => handleChange('rolls', v)}
+              min={1}
+            />
+            <FormInput
+              label="Bonus Roll Chance (%)"
+              type="number"
+              value={formData.bonusRollChance}
+              onChange={(v) => handleChange('bonusRollChance', v)}
+              min={0}
+              max={100}
+            />
+            <div className="checkbox-row" style={{ marginTop: 'var(--space-lg)' }}>
+              <label className="checkbox-label">
                 <input
                   type="checkbox"
                   checked={formData.levelScaling}
                   onChange={(e) => handleChange('levelScaling', e.target.checked)}
                 />
-                Scale with Level
+                <span className="checkbox-text">Scale with Level</span>
               </label>
             </div>
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Gold Range */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Gold Drops</div>
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Minimum Gold</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.goldRange.min}
-                  onChange={(e) => handleGoldChange('min', parseInt(e.target.value) || 0)}
-                  min="0"
-                />
-              </div>
-            </div>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Maximum Gold</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.goldRange.max}
-                  onChange={(e) => handleGoldChange('max', parseInt(e.target.value) || 0)}
-                  min="0"
-                />
-              </div>
-            </div>
+        <CollapsibleSection
+          title="Gold Drops"
+          isCollapsed={collapsedSections.goldDrops}
+          onToggle={() => toggleSection('goldDrops')}
+        >
+          <div className="creator-form-row">
+            <FormInput
+              label="Minimum Gold"
+              type="number"
+              value={formData.goldRange.min}
+              onChange={(v) => handleNestedChange('goldRange', 'min', v)}
+              min={0}
+            />
+            <FormInput
+              label="Maximum Gold"
+              type="number"
+              value={formData.goldRange.max}
+              onChange={(v) => handleNestedChange('goldRange', 'max', v)}
+              min={0}
+            />
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Guaranteed Drops */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Guaranteed Drops (Always drop)</div>
-
+        <CollapsibleSection
+          title="Guaranteed Drops"
+          isCollapsed={collapsedSections.guaranteedDrops}
+          onToggle={() => toggleSection('guaranteedDrops')}
+          badge={formData.guaranteedDrops.length > 0 ? formData.guaranteedDrops.length : null}
+        >
           {formData.guaranteedDrops.map((drop, index) => {
             const itemData = allItems.find(i => i.id === drop.itemId);
             return (
-              <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                <span style={{ color: '#4aca4a', flex: 1 }}>
-                  {drop.count}x {itemData?.name || drop.itemId}
-                </span>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                  onClick={() => handleRemoveGuaranteed(index)}
-                >
+              <div key={index} className="array-item">
+                <div className="array-item-content">
+                  <span style={{ color: 'var(--color-accent-success)' }}>
+                    {drop.count}x {itemData?.name || drop.itemId}
+                  </span>
+                </div>
+                <Button variant="danger" size="sm" onClick={() => handleRemoveGuaranteed(index)}>
                   ×
-                </button>
+                </Button>
               </div>
             );
           })}
 
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              <select
-                style={styles.select}
+          <div className="subsection">
+            <div className="creator-form-row cols-3">
+              <FormSelect
+                label="Item"
                 value={newGuaranteed.itemId}
-                onChange={(e) => setNewGuaranteed(prev => ({ ...prev, itemId: e.target.value }))}
-              >
-                <option value="">Select item...</option>
-                {allItems.map(item => (
-                  <option key={item.id} value={item.id}>{item.name || item.id}</option>
-                ))}
-              </select>
-            </div>
-            <div style={{ width: '100px' }}>
-              <input
-                style={styles.input}
+                onChange={(v) => setNewGuaranteed(prev => ({ ...prev, itemId: v }))}
+                options={itemOptions}
+                placeholder="Select item..."
+              />
+              <FormInput
+                label="Count"
                 type="number"
                 value={newGuaranteed.count}
-                onChange={(e) => setNewGuaranteed(prev => ({ ...prev, count: parseInt(e.target.value) || 1 }))}
-                min="1"
-                placeholder="Count"
+                onChange={(v) => setNewGuaranteed(prev => ({ ...prev, count: v }))}
+                min={1}
               />
+              <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                <Button
+                  variant="success"
+                  size="sm"
+                  onClick={handleAddGuaranteed}
+                  disabled={!newGuaranteed.itemId}
+                >
+                  + Add Guaranteed
+                </Button>
+              </div>
             </div>
-            <button
-              style={{ ...styles.button, ...styles.primaryButton, padding: '8px 16px' }}
-              onClick={handleAddGuaranteed}
-              disabled={!newGuaranteed.itemId}
-            >
-              + Add
-            </button>
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Loot Entries */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>
-            Loot Pool (Weighted Random)
-            {totalWeight > 0 && <span style={{ fontWeight: 'normal', color: '#808090' }}> - Total Weight: {totalWeight}</span>}
-          </div>
-
+        <CollapsibleSection
+          title="Loot Pool (Weighted Random)"
+          isCollapsed={collapsedSections.lootPool}
+          onToggle={() => toggleSection('lootPool')}
+          badge={formData.entries.length > 0 ? `${formData.entries.length}${totalWeight > 0 ? ` | ${totalWeight}w` : ''}` : null}
+        >
           {formData.entries.map((entry, index) => {
             const itemData = allItems.find(i => i.id === entry.itemId);
             const probability = totalWeight > 0 ? ((entry.weight / totalWeight) * 100).toFixed(1) : 0;
             return (
-              <div key={index} style={styles.entryCard}>
+              <div key={index} className="array-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ color: RARITY_COLORS[entry.rarity] || '#a0a0c0', fontWeight: 'bold' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                      <span style={{ color: RARITY_COLORS[entry.rarity] || 'var(--color-text-secondary)', fontWeight: 'var(--font-weight-semibold)' }}>
                         {itemData?.name || entry.itemId}
                       </span>
                       {entry.rarity !== 'any' && (
-                        <span style={{ fontSize: '11px', color: RARITY_COLORS[entry.rarity], textTransform: 'capitalize' }}>
-                          ({entry.rarity})
+                        <span className="rarity-badge" style={{ backgroundColor: RARITY_COLORS[entry.rarity], textTransform: 'capitalize' }}>
+                          {entry.rarity}
                         </span>
                       )}
                     </div>
-                    <div style={{ color: '#808090', fontSize: '12px', marginTop: '4px' }}>
+                    <div className="text-muted text-sm" style={{ marginTop: 'var(--space-xxs)' }}>
                       {entry.minCount === entry.maxCount ? `${entry.minCount}x` : `${entry.minCount}-${entry.maxCount}x`}
                       {' | '}Weight: {entry.weight} ({probability}%)
                     </div>
-                    <div style={styles.weightBar}>
-                      <div style={{ ...styles.weightFill, width: `${probability}%` }} />
+                    <div style={{ height: '6px', backgroundColor: 'var(--color-bg-primary)', borderRadius: 'var(--radius-full)', marginTop: 'var(--space-xs)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${probability}%`, backgroundColor: 'var(--color-accent-success)', borderRadius: 'var(--radius-full)' }} />
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '5px' }}>
+                  <div style={{ display: 'flex', gap: 'var(--space-xs)', alignItems: 'center' }}>
                     <input
-                      style={{ ...styles.input, width: '70px', padding: '4px 8px' }}
                       type="number"
+                      className="stat-input"
                       value={entry.weight}
                       onChange={(e) => handleUpdateEntry(index, 'weight', parseInt(e.target.value) || 1)}
-                      min="1"
+                      min={1}
                       title="Weight"
                     />
-                    <button
-                      style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                      onClick={() => handleRemoveEntry(index)}
-                    >
+                    <Button variant="danger" size="sm" onClick={() => handleRemoveEntry(index)}>
                       ×
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -595,165 +406,143 @@ const LootTableCreator = ({
           })}
 
           {/* Add New Entry */}
-          <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#252540', borderRadius: '6px' }}>
-            <div style={styles.row}>
-              <div style={{ flex: 2 }}>
-                <label style={styles.label}>Item</label>
-                <select
-                  style={styles.select}
-                  value={newEntry.itemId}
-                  onChange={(e) => setNewEntry(prev => ({ ...prev, itemId: e.target.value }))}
-                >
-                  <option value="">Select item...</option>
-                  {allItems.map(item => (
-                    <option key={item.id} value={item.id}>{item.name || item.id} ({item.rarity || 'common'})</option>
-                  ))}
-                </select>
-              </div>
-              <div style={{ width: '120px' }}>
-                <label style={styles.label}>Rarity Filter</label>
-                <select
-                  style={styles.select}
-                  value={newEntry.rarity}
-                  onChange={(e) => setNewEntry(prev => ({ ...prev, rarity: e.target.value }))}
-                >
-                  {RARITY_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
+          <div className="subsection">
+            <div className="subsection-title">Add Loot Entry</div>
+            <div className="creator-form-row">
+              <FormSelect
+                label="Item"
+                value={newEntry.itemId}
+                onChange={(v) => setNewEntry(prev => ({ ...prev, itemId: v }))}
+                options={itemOptions}
+                placeholder="Select item..."
+              />
+              <FormSelect
+                label="Rarity Filter"
+                value={newEntry.rarity}
+                onChange={(v) => setNewEntry(prev => ({ ...prev, rarity: v }))}
+                options={RARITY_OPTIONS}
+              />
             </div>
-            <div style={styles.row}>
-              <div style={styles.thirdWidth}>
-                <label style={styles.label}>Weight</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={newEntry.weight}
-                  onChange={(e) => setNewEntry(prev => ({ ...prev, weight: parseInt(e.target.value) || 1 }))}
-                  min="1"
-                />
-              </div>
-              <div style={styles.thirdWidth}>
-                <label style={styles.label}>Min Count</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={newEntry.minCount}
-                  onChange={(e) => setNewEntry(prev => ({ ...prev, minCount: parseInt(e.target.value) || 1 }))}
-                  min="1"
-                />
-              </div>
-              <div style={styles.thirdWidth}>
-                <label style={styles.label}>Max Count</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={newEntry.maxCount}
-                  onChange={(e) => setNewEntry(prev => ({ ...prev, maxCount: parseInt(e.target.value) || 1 }))}
-                  min="1"
-                />
-              </div>
+            <div className="creator-form-row cols-4">
+              <FormInput
+                label="Weight"
+                type="number"
+                value={newEntry.weight}
+                onChange={(v) => setNewEntry(prev => ({ ...prev, weight: v }))}
+                min={1}
+              />
+              <FormInput
+                label="Min Count"
+                type="number"
+                value={newEntry.minCount}
+                onChange={(v) => setNewEntry(prev => ({ ...prev, minCount: v }))}
+                min={1}
+              />
+              <FormInput
+                label="Max Count"
+                type="number"
+                value={newEntry.maxCount}
+                onChange={(v) => setNewEntry(prev => ({ ...prev, maxCount: v }))}
+                min={1}
+              />
               <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                <button
-                  style={{ ...styles.button, ...styles.primaryButton, padding: '8px 16px' }}
+                <Button
+                  variant="success"
+                  size="sm"
                   onClick={handleAddEntry}
                   disabled={!newEntry.itemId}
                 >
-                  + Add
-                </button>
+                  + Add Entry
+                </Button>
               </div>
             </div>
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Tags */}
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Tags</label>
-          <div style={styles.tagInput}>
-            {formData.tags.map(tag => (
-              <span key={tag} style={styles.tag}>
-                {tag}
-                <span style={styles.tagRemove} onClick={() => handleRemoveTag(tag)}>×</span>
-              </span>
-            ))}
-            <input
-              style={{ border: 'none', background: 'transparent', color: 'white', outline: 'none', minWidth: '100px', flex: 1 }}
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && tagInput.trim()) {
-                  e.preventDefault();
-                  handleAddTag(tagInput.trim());
-                }
-              }}
-              placeholder="Add tag..."
-            />
-          </div>
-        </div>
+        <CollapsibleSection
+          title="Tags"
+          isCollapsed={collapsedSections.tags}
+          onToggle={() => toggleSection('tags')}
+          badge={formData.tags.length > 0 ? formData.tags.length : null}
+        >
+          <TagInput
+            value={formData.tags}
+            onChange={(v) => handleChange('tags', v)}
+            suggestions={suggestedTags}
+            categories={TAG_CATEGORIES}
+            placeholder="Add tag..."
+            showSuggestions
+          />
+        </CollapsibleSection>
 
-        {/* Actions */}
-        <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-          <button
-            style={{ ...styles.button, ...styles.primaryButton }}
-            onClick={handleSubmit}
-          >
-            {editingItem ? 'Update Loot Table' : 'Create Loot Table'}
-          </button>
+        {/* Action Buttons */}
+        <div className="creator-actions">
+          <Button variant="success" onClick={handleSubmit}>
+            {editingItem ? 'Update Loot Table' : 'Add Loot Table'}
+          </Button>
           {editingItem && (
-            <button
-              style={{ ...styles.button, ...styles.secondaryButton }}
-              onClick={handleCancel}
-            >
-              Cancel Edit
-            </button>
+            <Button variant="ghost" onClick={handleCancel}>
+              Cancel
+            </Button>
           )}
         </div>
       </div>
 
       {/* List Section */}
-      <div style={styles.listSection}>
-        <h3 style={styles.sectionTitle}>Created Loot Tables ({items.length})</h3>
+      <div className="creator-list">
+        <h3 className="creator-form-section-title">
+          Created Loot Tables
+          <span className="count-badge">{items.length}</span>
+        </h3>
 
         {items.length === 0 ? (
-          <div style={styles.emptyList}>
-            No loot tables created yet.<br />
+          <div className="empty-list">
+            No loot tables created yet.
+            <br />
             Use the form to create your first loot table.
           </div>
         ) : (
           items.map(item => (
             <div
               key={item._id || item.id}
-              style={{
-                ...styles.listItem,
-                ...(hoveredItem === item._id ? styles.listItemHover : {}),
-              }}
+              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
               onMouseEnter={() => setHoveredItem(item._id)}
               onMouseLeave={() => setHoveredItem(null)}
-              onClick={() => onEdit(item)}
             >
-              <div style={styles.listItemName}>{item.name}</div>
-              <div style={styles.listItemDetails}>
-                {item.entries?.length || 0} items | {item.rolls || 1} roll(s)
-              </div>
-              {(item.goldRange?.min > 0 || item.goldRange?.max > 0) && (
-                <div style={styles.listItemDetails}>
-                  Gold: {item.goldRange.min}-{item.goldRange.max}
+              <div className="creator-item-info">
+                <div className="creator-item-name">
+                  {item.name}
                 </div>
-              )}
-              <div style={styles.listItemActions}>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#4a4a6a', color: 'white' }}
-                  onClick={(e) => { e.stopPropagation(); onDuplicate(item); }}
-                >
+                <div className="creator-item-id">
+                  ID: {item.id} | {item.entries?.length || 0} items | {item.rolls || 1} roll(s)
+                </div>
+                {(item.goldRange?.min > 0 || item.goldRange?.max > 0) && (
+                  <div className="creator-item-id">
+                    Gold: {item.goldRange.min}-{item.goldRange.max}
+                  </div>
+                )}
+                {item.tags?.length > 0 && (
+                  <div className="creator-item-tags">
+                    {item.tags.slice(0, 4).map(tag => (
+                      <span key={tag} className="tag-chip">{tag}</span>
+                    ))}
+                    {item.tags.length > 4 && (
+                      <span className="tag-chip more">+{item.tags.length - 4}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="creator-item-actions">
+                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
+                  Edit
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
                   Duplicate
-                </button>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                  onClick={(e) => { e.stopPropagation(); onDelete(item._id); }}
-                >
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
                   Delete
-                </button>
+                </Button>
               </div>
             </div>
           ))

@@ -1,0 +1,46 @@
+{
+  "restraints": {
+    "pin": {
+      "id": "pin",
+      "name": "Pinned",
+      "hp": 20,
+      "breakDifficulty": 1,
+      "description": "Held down by weight"
+    },
+    "hold": {
+      "id": "hold",
+      "name": "Grabbed",
+      "hp": 30,
+      "breakDifficulty": 1.2,
+      "description": "Arms restrained"
+    },
+    "bear_hug": {
+      "id": "bear_hug",
+      "name": "Bear Hug",
+      "hp": 50,
+      "breakDifficulty": 1.5,
+      "description": "Crushing grip"
+    },
+    "rope_bind": {
+      "id": "rope_bind",
+      "name": "Rope Bound",
+      "hp": 40,
+      "breakDifficulty": 1.3,
+      "description": "Tied with rope"
+    },
+    "chain_bind": {
+      "id": "chain_bind",
+      "name": "Chained",
+      "hp": 60,
+      "breakDifficulty": 1.8,
+      "description": "Locked in chains"
+    },
+    "magic_bind": {
+      "id": "magic_bind",
+      "name": "Magical Bonds",
+      "hp": 45,
+      "breakDifficulty": 2.0,
+      "description": "Arcane restraints"
+    }
+  }
+}

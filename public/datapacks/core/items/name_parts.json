@@ -1,0 +1,22 @@
+{
+  "itemNameParts": {
+    "prefixes": {
+      "common": ["Worn", "Old", "Simple", "Basic", "Plain"],
+      "uncommon": ["Sturdy", "Fine", "Polished", "Quality", "Reinforced"],
+      "rare": ["Masterwork", "Enchanted", "Gleaming", "Runic", "Blessed"],
+      "epic": ["Arcane", "Legendary", "Heroic", "Majestic", "Radiant"],
+      "legendary": ["Mythic", "Ancient", "Celestial", "Primordial", "Eternal"],
+      "mythical": ["Godforged", "Transcendent", "Omnipotent", "Infinite", "Cosmic"],
+      "divine": ["Divine", "Holy", "Sacred", "Hallowed", "Sanctified"]
+    },
+    "curseAdjectives": ["Cursed", "Tainted", "Corrupted", "Defiled", "Wicked", "Twisted", "Profane"],
+    "suffixes": {
+      "strength": ["of Might", "of the Titan", "of Power", "of Brawn", "of the Giant"],
+      "evasion": ["of Shadows", "of the Wind", "of Swiftness", "of Agility", "of the Phantom"],
+      "vitality": ["of Endurance", "of the Oak", "of Fortitude", "of Resilience", "of Life"],
+      "intelligence": ["of Wisdom", "of the Sage", "of Knowledge", "of the Scholar", "of Insight"],
+      "willpower": ["of Resolve", "of the Paladin", "of Spirit", "of the Monk", "of Determination"],
+      "corruption": ["of Purity", "of Cleansing", "of the Light", "of Sanctity", "of Grace"]
+    }
+  }
+}

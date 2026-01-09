@@ -1,0 +1,89 @@
+{
+  "skills": {
+    "power_strike": {
+      "id": "power_strike",
+      "name": "Power Strike",
+      "type": "active",
+      "category": "combat",
+      "cost": { "stamina": 15 },
+      "effect": { "damage": 1.5 },
+      "cooldown": 2,
+      "description": "A powerful blow dealing 150% damage"
+    },
+    "dodge_roll": {
+      "id": "dodge_roll",
+      "name": "Dodge Roll",
+      "type": "active",
+      "category": "combat",
+      "cost": { "stamina": 10 },
+      "effect": { "evasionBoost": 50, "duration": 1 },
+      "cooldown": 3,
+      "description": "Quick dodge, +50% evasion for 1 turn"
+    },
+    "guard": {
+      "id": "guard",
+      "name": "Guard",
+      "type": "active",
+      "category": "combat",
+      "cost": { "stamina": 5 },
+      "effect": { "defenseBoost": 100, "duration": 1 },
+      "cooldown": 2,
+      "description": "Defensive stance, double defense for 1 turn"
+    },
+    "iron_will": {
+      "id": "iron_will",
+      "name": "Iron Will",
+      "type": "passive",
+      "category": "resistance",
+      "effect": { "willpowerBoost": 20 },
+      "description": "+20% willpower"
+    },
+    "mental_fortress": {
+      "id": "mental_fortress",
+      "name": "Mental Fortress",
+      "type": "active",
+      "category": "resistance",
+      "cost": { "stamina": 20 },
+      "effect": { "hypnoResist": 100, "duration": 3 },
+      "cooldown": 5,
+      "description": "Immunity to hypnosis for 3 turns"
+    },
+    "second_wind": {
+      "id": "second_wind",
+      "name": "Second Wind",
+      "type": "active",
+      "category": "recovery",
+      "cost": { "stamina": 0 },
+      "effect": { "staminaRestore": 30, "hpRestore": 10 },
+      "cooldown": 10,
+      "description": "Recover 30% stamina and 10% HP"
+    },
+    "meditation": {
+      "id": "meditation",
+      "name": "Meditation",
+      "type": "active",
+      "category": "recovery",
+      "cost": { "stamina": 5 },
+      "effect": { "corruptionReduce": 5 },
+      "cooldown": 5,
+      "description": "Reduce corruption by 5"
+    }
+  },
+  "skillTrees": {
+    "warrior": {
+      "name": "Warrior",
+      "skills": ["power_strike", "guard", "iron_will"],
+      "requirements": { "strength": 5 }
+    },
+    "rogue": {
+      "name": "Rogue",
+      "skills": ["dodge_roll", "stealth_strike"],
+      "requirements": { "evasion": 5 }
+    },
+    "mystic": {
+      "name": "Mystic",
+      "skills": ["mental_fortress", "meditation"],
+      "requirements": { "willpower": 5 }
+    }
+  }
+}

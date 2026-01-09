@@ -1,224 +1,74 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
+import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { useFormDraft } from '../../../hooks/useFormDraft';
+import './CreatorStyles.css';
 
-// Fallback skill tags when no dynamic tags available
-const FALLBACK_SKILL_TAGS = [
-  'combat', 'defense', 'magic', 'utility', 'recovery',
-  'fire', 'ice', 'lightning', 'holy', 'dark',
-  'aoe', 'single_target', 'self', 'buff', 'debuff',
-  'nsfw', 'corruption', 'seduction',
-];
+const DRAFT_KEY = 'contentGenerator_draft_skills';
 
-const styles = {
-  container: {
-    display: 'flex',
-    gap: '20px',
-    height: '100%',
-  },
-  formSection: {
-    flex: '1',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '20px',
-    overflowY: 'auto',
-  },
-  listSection: {
-    width: '320px',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '15px',
-    overflowY: 'auto',
-  },
-  sectionTitle: {
-    color: '#ffd700',
-    fontSize: '18px',
-    marginBottom: '15px',
-    borderBottom: '1px solid #4a4a6a',
-    paddingBottom: '10px',
-  },
-  formGroup: {
-    marginBottom: '15px',
-  },
-  label: {
-    display: 'block',
-    color: '#a0a0c0',
-    marginBottom: '5px',
-    fontSize: '13px',
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  select: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  textarea: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    minHeight: '80px',
-    resize: 'vertical',
-    boxSizing: 'border-box',
-  },
-  row: {
-    display: 'flex',
-    gap: '15px',
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  thirdWidth: {
-    flex: 1,
-  },
-  button: {
-    padding: '10px 20px',
-    borderRadius: '6px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    transition: 'all 0.2s ease',
-    marginRight: '10px',
-  },
-  primaryButton: {
-    backgroundColor: '#4a7c4a',
-    color: 'white',
-  },
-  secondaryButton: {
-    backgroundColor: '#4a4a6a',
-    color: 'white',
-  },
-  smallButton: {
-    padding: '4px 8px',
-    borderRadius: '4px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '11px',
-  },
-  tagInput: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '5px',
-    padding: '8px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    minHeight: '40px',
-  },
-  tag: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '3px 8px',
-    backgroundColor: '#3a3a5a',
-    borderRadius: '12px',
-    fontSize: '12px',
-    color: '#d0d0e0',
-  },
-  tagRemove: {
-    marginLeft: '5px',
-    cursor: 'pointer',
-    color: '#ff6666',
-  },
-  listItem: {
-    padding: '12px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '6px',
-    marginBottom: '8px',
-    cursor: 'pointer',
-    border: '1px solid transparent',
-    transition: 'all 0.2s ease',
-  },
-  listItemHover: {
-    borderColor: '#4a4a6a',
-  },
-  listItemName: {
-    color: '#ffd700',
-    fontSize: '14px',
-    fontWeight: 'bold',
-  },
-  listItemDetails: {
-    color: '#808090',
-    fontSize: '12px',
-    marginTop: '4px',
-  },
-  listItemActions: {
-    display: 'flex',
-    gap: '5px',
-    marginTop: '8px',
-  },
-  emptyList: {
-    color: '#606080',
-    textAlign: 'center',
-    padding: '30px',
-    fontSize: '14px',
-  },
-  subsection: {
-    marginTop: '20px',
-    padding: '15px',
-    backgroundColor: '#1e1e35',
-    borderRadius: '6px',
-  },
-  subsectionTitle: {
-    color: '#c0c0e0',
-    fontSize: '14px',
-    marginBottom: '12px',
-    fontWeight: 'bold',
-  },
-  effectCard: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: '6px',
-    padding: '10px',
-    marginBottom: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  typeBadge: {
-    display: 'inline-block',
-    padding: '2px 8px',
-    borderRadius: '4px',
-    fontSize: '11px',
-    fontWeight: 'bold',
-  },
+const TAG_CATEGORIES = {
+  combat: ['combat', 'defense', 'magic', 'utility', 'recovery'],
+  element: ['fire', 'ice', 'lightning', 'holy', 'dark', 'poison'],
+  target: ['aoe', 'single_target', 'self', 'buff', 'debuff'],
+  special: ['nsfw', 'corruption', 'seduction', 'restraint'],
 };
 
-// Suggested skill types - users can also type custom values
-const SUGGESTED_SKILL_TYPES = [
-  'active', 'passive', 'toggle', 'reaction', 'charged', 'channeled',
+const SKILL_TYPES = [
+  { value: 'active', label: 'Active' },
+  { value: 'passive', label: 'Passive' },
+  { value: 'toggle', label: 'Toggle' },
+  { value: 'reaction', label: 'Reaction' },
+  { value: 'charged', label: 'Charged' },
+  { value: 'channeled', label: 'Channeled' },
 ];
 
-// Suggested categories - users can also type custom values
-const SUGGESTED_CATEGORIES = [
-  'combat', 'defense', 'magic', 'utility', 'recovery', 'resistance',
-  'stealth', 'movement', 'nsfw', 'support', 'debuff',
+const SKILL_TYPE_COLORS = {
+  active: 'var(--color-accent-success)',
+  passive: 'var(--color-accent-info)',
+  toggle: '#7a5a3a',
+  reaction: 'var(--color-accent-secondary)',
+  charged: 'var(--color-accent-warning)',
+  channeled: '#3a7a7a',
+};
+
+const CATEGORIES = [
+  { value: 'combat', label: 'Combat' },
+  { value: 'defense', label: 'Defense' },
+  { value: 'magic', label: 'Magic' },
+  { value: 'utility', label: 'Utility' },
+  { value: 'recovery', label: 'Recovery' },
+  { value: 'resistance', label: 'Resistance' },
+  { value: 'stealth', label: 'Stealth' },
+  { value: 'movement', label: 'Movement' },
+  { value: 'nsfw', label: 'NSFW' },
+  { value: 'support', label: 'Support' },
+  { value: 'debuff', label: 'Debuff' },
 ];
 
-// Suggested target types - users can also type custom values
-const SUGGESTED_TARGET_TYPES = [
-  'self', 'enemy', 'ally', 'all_enemies', 'all_allies', 'everyone', 'area', 'random',
+const TARGET_TYPES = [
+  { value: 'self', label: 'Self' },
+  { value: 'enemy', label: 'Enemy' },
+  { value: 'ally', label: 'Ally' },
+  { value: 'all_enemies', label: 'All Enemies' },
+  { value: 'all_allies', label: 'All Allies' },
+  { value: 'everyone', label: 'Everyone' },
+  { value: 'area', label: 'Area' },
+  { value: 'random', label: 'Random' },
 ];
 
-// Suggested damage types - users can also type custom values
-const SUGGESTED_DAMAGE_TYPES = [
-  'physical', 'fire', 'ice', 'lightning', 'poison', 'psychic',
-  'holy', 'dark', 'true', 'chaos', 'nature', 'arcane',
+const DAMAGE_TYPES = [
+  { value: 'physical', label: 'Physical' },
+  { value: 'fire', label: 'Fire' },
+  { value: 'ice', label: 'Ice' },
+  { value: 'lightning', label: 'Lightning' },
+  { value: 'poison', label: 'Poison' },
+  { value: 'psychic', label: 'Psychic' },
+  { value: 'holy', label: 'Holy' },
+  { value: 'dark', label: 'Dark' },
+  { value: 'true', label: 'True' },
+  { value: 'chaos', label: 'Chaos' },
+  { value: 'nature', label: 'Nature' },
+  { value: 'arcane', label: 'Arcane' },
 ];
 
 const EFFECT_TYPES = [
@@ -239,7 +89,17 @@ const EFFECT_TYPES = [
   { value: 'teleport', label: 'Teleport' },
 ];
 
-const STATS = ['strength', 'vitality', 'evasion', 'speed', 'willpower', 'charm', 'intelligence', 'defense', 'attack'];
+const STATS = [
+  { value: 'strength', label: 'Strength' },
+  { value: 'vitality', label: 'Vitality' },
+  { value: 'evasion', label: 'Evasion' },
+  { value: 'speed', label: 'Speed' },
+  { value: 'willpower', label: 'Willpower' },
+  { value: 'charm', label: 'Charm' },
+  { value: 'intelligence', label: 'Intelligence' },
+  { value: 'defense', label: 'Defense' },
+  { value: 'attack', label: 'Attack' },
+];
 
 const DEFAULT_SKILL = {
   id: '',
@@ -292,21 +152,41 @@ const SkillCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_SKILL });
-  const [tagInput, setTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
   const [newEffect, setNewEffect] = useState({ ...DEFAULT_EFFECT });
+  const [collapsedSections, setCollapsedSections] = useState({
+    cost: false,
+    effects: false,
+    requirements: true,
+    tags: true,
+  });
+
+  const toggleSection = (section) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
+  const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
+    defaultValues: DEFAULT_SKILL,
+  });
 
   // Compute dynamic tag suggestions
   const suggestedTags = useMemo(() => {
     return collectTags({
       datapackContent,
       userContent: items,
-      commonTags: FALLBACK_SKILL_TAGS,
+      commonTags: Object.values(TAG_CATEGORIES).flat(),
+      contentType: 'skills',
     });
   }, [datapackContent, items]);
 
   // Combine datapack content with user-created content
   const allEffects = [...(datapackContent.effects || []), ...(allContent?.effects || [])];
+  const effectOptions = useMemo(() => {
+    return allEffects.map(eff => ({ value: eff.id, label: eff.name || eff.id }));
+  }, [allEffects]);
 
   useEffect(() => {
     if (editingItem) {
@@ -327,34 +207,10 @@ const SkillCreator = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleCostChange = (field, value) => {
+  const handleNestedChange = (parent, field, value) => {
     setFormData(prev => ({
       ...prev,
-      cost: { ...prev.cost, [field]: value },
-    }));
-  };
-
-  const handleRequirementChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      requirements: { ...prev.requirements, [field]: value },
-    }));
-  };
-
-  const handleAddTag = (tag) => {
-    if (tag && !formData.tags.includes(tag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag],
-      }));
-    }
-    setTagInput('');
-  };
-
-  const handleRemoveTag = (tag) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(t => t !== tag),
+      [parent]: { ...prev[parent], [field]: value },
     }));
   };
 
@@ -382,12 +238,16 @@ const SkillCreator = ({
       return;
     }
 
-    const skillData = { ...formData };
+    if (!editingItem && items.some(item => item.id === formData.id)) {
+      alert('A skill with this ID already exists');
+      return;
+    }
 
     if (editingItem) {
-      onUpdate(editingItem._id, skillData);
+      onUpdate(editingItem._id, formData);
     } else {
-      onAdd(skillData);
+      onAdd(formData);
+      clearDraft();
     }
 
     setFormData({ ...DEFAULT_SKILL });
@@ -421,445 +281,306 @@ const SkillCreator = ({
     }
   };
 
-  const getTypeBadgeColor = (type) => {
-    switch (type) {
-      case 'active': return '#4a7c4a';
-      case 'passive': return '#3a5a7a';
-      case 'toggle': return '#7a5a3a';
-      case 'reaction': return '#5a3a7a';
-      default: return '#4a4a6a';
-    }
-  };
-
   return (
-    <div style={styles.container}>
+    <div className="creator-container">
       {/* Form Section */}
-      <div style={styles.formSection}>
-        <h3 style={styles.sectionTitle}>
+      <div className="creator-form">
+        <h3 className="creator-form-section-title">
           {editingItem ? 'Edit Skill' : 'Create New Skill'}
         </h3>
 
         {/* Basic Info */}
-        <div style={styles.row}>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Skill ID *</label>
-              <input
-                style={styles.input}
-                value={formData.id}
-                onChange={(e) => handleChange('id', e.target.value.toLowerCase().replace(/\s+/g, '_'))}
-                placeholder="power_strike"
-              />
-            </div>
+        <div className="creator-form-section">
+          <div className="creator-form-row">
+            <FormInput
+              label="ID"
+              required
+              value={formData.id}
+              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
+              placeholder="power_strike"
+            />
+            <FormInput
+              label="Name"
+              required
+              value={formData.name}
+              onChange={(v) => handleChange('name', v)}
+              placeholder="Power Strike"
+            />
           </div>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Name *</label>
-              <input
-                style={styles.input}
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="Power Strike"
-              />
-            </div>
-          </div>
-        </div>
 
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Description</label>
-          <textarea
-            style={styles.textarea}
+          <FormInput
+            label="Description"
+            type="textarea"
             value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
+            onChange={(v) => handleChange('description', v)}
             placeholder="Describe what this skill does..."
+            rows={3}
           />
-        </div>
 
-        <div style={styles.row}>
-          <div style={styles.thirdWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Skill Type</label>
-              <input
-                style={styles.input}
-                value={formData.type}
-                onChange={(e) => handleChange('type', e.target.value)}
-                placeholder="e.g., active, passive, toggle"
-              />
-              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                {SUGGESTED_SKILL_TYPES.filter(t => t !== formData.type).map(type => (
-                  <button
-                    key={type}
-                    type="button"
-                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                    onClick={() => handleChange('type', type)}
-                  >
-                    + {type}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div style={styles.thirdWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Category</label>
-              <input
-                style={styles.input}
-                value={formData.category}
-                onChange={(e) => handleChange('category', e.target.value)}
-                placeholder="e.g., combat, magic, utility"
-              />
-              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                {SUGGESTED_CATEGORIES.filter(c => c !== formData.category).map(cat => (
-                  <button
-                    key={cat}
-                    type="button"
-                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                    onClick={() => handleChange('category', cat)}
-                  >
-                    + {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div style={styles.thirdWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Target</label>
-              <input
-                style={styles.input}
-                value={formData.targetType}
-                onChange={(e) => handleChange('targetType', e.target.value)}
-                placeholder="e.g., self, enemy, all_enemies"
-              />
-              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                {SUGGESTED_TARGET_TYPES.filter(t => t !== formData.targetType).map(target => (
-                  <button
-                    key={target}
-                    type="button"
-                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                    onClick={() => handleChange('targetType', target)}
-                  >
-                    + {target}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="creator-form-row cols-3">
+            <FormSelect
+              label="Skill Type"
+              value={formData.type}
+              onChange={(v) => handleChange('type', v)}
+              options={SKILL_TYPES}
+            />
+            <FormSelect
+              label="Category"
+              value={formData.category}
+              onChange={(v) => handleChange('category', v)}
+              options={CATEGORIES}
+            />
+            <FormSelect
+              label="Target"
+              value={formData.targetType}
+              onChange={(v) => handleChange('targetType', v)}
+              options={TARGET_TYPES}
+            />
           </div>
         </div>
 
-        {/* Cost */}
+        {/* Cost (only for non-passive skills) */}
         {formData.type !== 'passive' && (
-          <div style={styles.subsection}>
-            <div style={styles.subsectionTitle}>Skill Cost</div>
-            <div style={styles.row}>
-              <div style={styles.thirdWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Stamina Cost</label>
-                  <input
-                    style={styles.input}
-                    type="number"
-                    value={formData.cost.stamina}
-                    onChange={(e) => handleCostChange('stamina', parseInt(e.target.value) || 0)}
-                    min="0"
-                  />
-                </div>
-              </div>
-              <div style={styles.thirdWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>HP Cost</label>
-                  <input
-                    style={styles.input}
-                    type="number"
-                    value={formData.cost.hp}
-                    onChange={(e) => handleCostChange('hp', parseInt(e.target.value) || 0)}
-                    min="0"
-                  />
-                </div>
-              </div>
-              <div style={styles.thirdWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Cooldown (turns)</label>
-                  <input
-                    style={styles.input}
-                    type="number"
-                    value={formData.cooldown}
-                    onChange={(e) => handleChange('cooldown', parseInt(e.target.value) || 0)}
-                    min="0"
-                  />
-                </div>
-              </div>
+          <CollapsibleSection
+            title="Skill Cost"
+            isCollapsed={collapsedSections.cost}
+            onToggle={() => toggleSection('cost')}
+          >
+            <div className="creator-form-row cols-3">
+              <FormInput
+                label="Stamina Cost"
+                type="number"
+                value={formData.cost.stamina}
+                onChange={(v) => handleNestedChange('cost', 'stamina', v)}
+                min={0}
+              />
+              <FormInput
+                label="HP Cost"
+                type="number"
+                value={formData.cost.hp}
+                onChange={(v) => handleNestedChange('cost', 'hp', v)}
+                min={0}
+              />
+              <FormInput
+                label="Cooldown (turns)"
+                type="number"
+                value={formData.cooldown}
+                onChange={(v) => handleChange('cooldown', v)}
+                min={0}
+              />
             </div>
-          </div>
+          </CollapsibleSection>
         )}
 
         {/* Effects */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Skill Effects</div>
-
+        <CollapsibleSection
+          title="Skill Effects"
+          isCollapsed={collapsedSections.effects}
+          onToggle={() => toggleSection('effects')}
+          badge={formData.effects.length > 0 ? formData.effects.length : null}
+        >
           {formData.effects.map((effect, index) => (
-            <div key={index} style={styles.effectCard}>
-              <span style={{ color: '#4aca4a' }}>
-                {getEffectDescription(effect)}
-                {effect.chance < 100 && ` (${effect.chance}% chance)`}
-              </span>
-              <button
-                style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                onClick={() => handleRemoveEffect(index)}
-              >
+            <div key={index} className="array-item">
+              <div className="array-item-content">
+                <span style={{ color: 'var(--color-accent-success)' }}>
+                  {getEffectDescription(effect)}
+                  {effect.chance < 100 && ` (${effect.chance}% chance)`}
+                </span>
+              </div>
+              <Button variant="danger" size="sm" onClick={() => handleRemoveEffect(index)}>
                 ×
-              </button>
+              </Button>
             </div>
           ))}
 
           {/* Add New Effect */}
-          <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#252540', borderRadius: '6px' }}>
-            <div style={styles.row}>
-              <div style={styles.thirdWidth}>
-                <label style={styles.label}>Effect Type</label>
-                <select
-                  style={styles.select}
-                  value={newEffect.type}
-                  onChange={(e) => setNewEffect(prev => ({ ...prev, type: e.target.value }))}
-                >
-                  {EFFECT_TYPES.map(type => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div style={styles.thirdWidth}>
-                <label style={styles.label}>Value</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={newEffect.value}
-                  onChange={(e) => setNewEffect(prev => ({ ...prev, value: parseInt(e.target.value) || 0 }))}
-                />
-              </div>
-              <div style={styles.thirdWidth}>
-                <label style={styles.label}>Chance (%)</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={newEffect.chance}
-                  onChange={(e) => setNewEffect(prev => ({ ...prev, chance: parseInt(e.target.value) || 100 }))}
-                  min="0"
-                  max="100"
-                />
-              </div>
+          <div className="subsection">
+            <div className="subsection-title">Add Effect</div>
+            <div className="creator-form-row cols-3">
+              <FormSelect
+                label="Effect Type"
+                value={newEffect.type}
+                onChange={(v) => setNewEffect(prev => ({ ...prev, type: v }))}
+                options={EFFECT_TYPES}
+              />
+              <FormInput
+                label="Value"
+                type="number"
+                value={newEffect.value}
+                onChange={(v) => setNewEffect(prev => ({ ...prev, value: v }))}
+              />
+              <FormInput
+                label="Chance (%)"
+                type="number"
+                value={newEffect.chance}
+                onChange={(v) => setNewEffect(prev => ({ ...prev, chance: v }))}
+                min={0}
+                max={100}
+              />
             </div>
-            <div style={styles.row}>
+
+            <div className="creator-form-row cols-3">
               {newEffect.type === 'damage' && (
-                <div style={styles.thirdWidth}>
-                  <label style={styles.label}>Damage Type</label>
-                  <input
-                    style={styles.input}
-                    value={newEffect.damageType}
-                    onChange={(e) => setNewEffect(prev => ({ ...prev, damageType: e.target.value }))}
-                    placeholder="e.g., physical, fire, ice"
-                  />
-                  <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                    {SUGGESTED_DAMAGE_TYPES.filter(t => t !== newEffect.damageType).map(type => (
-                      <button
-                        key={type}
-                        type="button"
-                        style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                        onClick={() => setNewEffect(prev => ({ ...prev, damageType: type }))}
-                      >
-                        + {type}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <FormSelect
+                  label="Damage Type"
+                  value={newEffect.damageType}
+                  onChange={(v) => setNewEffect(prev => ({ ...prev, damageType: v }))}
+                  options={DAMAGE_TYPES}
+                />
               )}
               {['buff_stat', 'debuff_stat'].includes(newEffect.type) && (
-                <div style={styles.thirdWidth}>
-                  <label style={styles.label}>Target Stat</label>
-                  <select
-                    style={styles.select}
-                    value={newEffect.targetStat}
-                    onChange={(e) => setNewEffect(prev => ({ ...prev, targetStat: e.target.value }))}
-                  >
-                    <option value="">Select stat...</option>
-                    {STATS.map(stat => (
-                      <option key={stat} value={stat}>{stat.charAt(0).toUpperCase() + stat.slice(1)}</option>
-                    ))}
-                  </select>
-                </div>
+                <FormSelect
+                  label="Target Stat"
+                  value={newEffect.targetStat}
+                  onChange={(v) => setNewEffect(prev => ({ ...prev, targetStat: v }))}
+                  options={STATS}
+                  placeholder="Select stat..."
+                />
               )}
               {['buff_stat', 'debuff_stat', 'apply_effect'].includes(newEffect.type) && (
-                <div style={styles.thirdWidth}>
-                  <label style={styles.label}>Duration (turns)</label>
-                  <input
-                    style={styles.input}
-                    type="number"
-                    value={newEffect.duration}
-                    onChange={(e) => setNewEffect(prev => ({ ...prev, duration: parseInt(e.target.value) || 0 }))}
-                    min="0"
-                  />
-                </div>
+                <FormInput
+                  label="Duration (turns)"
+                  type="number"
+                  value={newEffect.duration}
+                  onChange={(v) => setNewEffect(prev => ({ ...prev, duration: v }))}
+                  min={0}
+                />
               )}
               {newEffect.type === 'apply_effect' && (
-                <div style={styles.thirdWidth}>
-                  <label style={styles.label}>Status Effect</label>
-                  <select
-                    style={styles.select}
-                    value={newEffect.effectId}
-                    onChange={(e) => setNewEffect(prev => ({ ...prev, effectId: e.target.value }))}
-                  >
-                    <option value="">Select effect...</option>
-                    {allEffects.map(eff => (
-                      <option key={eff.id} value={eff.id}>{eff.name || eff.id}</option>
-                    ))}
-                  </select>
-                </div>
+                <FormSelect
+                  label="Status Effect"
+                  value={newEffect.effectId}
+                  onChange={(v) => setNewEffect(prev => ({ ...prev, effectId: v }))}
+                  options={effectOptions}
+                  placeholder="Select effect..."
+                />
               )}
-              <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                <button
-                  style={{ ...styles.button, ...styles.primaryButton, padding: '8px 16px' }}
-                  onClick={handleAddEffect}
-                >
-                  + Add
-                </button>
-              </div>
             </div>
+
+            <Button variant="success" size="sm" onClick={handleAddEffect} className="mt-sm">
+              + Add Effect
+            </Button>
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Requirements */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Requirements</div>
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Required Level</label>
+        <CollapsibleSection
+          title="Requirements"
+          isCollapsed={collapsedSections.requirements}
+          onToggle={() => toggleSection('requirements')}
+        >
+          <div className="creator-form-row">
+            <FormInput
+              label="Required Level"
+              type="number"
+              value={formData.requirements.level}
+              onChange={(v) => handleNestedChange('requirements', 'level', v)}
+              min={1}
+            />
+            <div className="checkbox-row" style={{ marginTop: 'var(--space-lg)' }}>
+              <label className="checkbox-label">
                 <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.requirements.level}
-                  onChange={(e) => handleRequirementChange('level', parseInt(e.target.value) || 1)}
-                  min="1"
+                  type="checkbox"
+                  checked={formData.isNSFW}
+                  onChange={(e) => handleChange('isNSFW', e.target.checked)}
                 />
-              </div>
-            </div>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '25px' }}>
-                  <input
-                    type="checkbox"
-                    checked={formData.isNSFW}
-                    onChange={(e) => handleChange('isNSFW', e.target.checked)}
-                  />
-                  NSFW Skill
-                </label>
-              </div>
+                <span className="checkbox-text">NSFW Skill</span>
+              </label>
             </div>
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Tags */}
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Tags</label>
-          <div style={styles.tagInput}>
-            {formData.tags.map(tag => (
-              <span key={tag} style={styles.tag}>
-                {tag}
-                <span style={styles.tagRemove} onClick={() => handleRemoveTag(tag)}>×</span>
-              </span>
-            ))}
-            <input
-              style={{ border: 'none', background: 'transparent', color: 'white', outline: 'none', minWidth: '100px', flex: 1 }}
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && tagInput.trim()) {
-                  e.preventDefault();
-                  handleAddTag(tagInput.trim());
-                }
-              }}
-              placeholder="Add tag..."
-            />
-          </div>
-          <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {suggestedTags.filter(t => !formData.tags.includes(t)).slice(0, 15).map(tag => (
-              <button
-                key={tag}
-                style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                onClick={() => handleAddTag(tag)}
-              >
-                + {tag}
-              </button>
-            ))}
-          </div>
-        </div>
+        <CollapsibleSection
+          title="Tags"
+          isCollapsed={collapsedSections.tags}
+          onToggle={() => toggleSection('tags')}
+          badge={formData.tags.length > 0 ? formData.tags.length : null}
+        >
+          <TagInput
+            value={formData.tags}
+            onChange={(v) => handleChange('tags', v)}
+            suggestions={suggestedTags}
+            categories={TAG_CATEGORIES}
+            placeholder="Add tag..."
+            showSuggestions
+          />
+        </CollapsibleSection>
 
-        {/* Actions */}
-        <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-          <button
-            style={{ ...styles.button, ...styles.primaryButton }}
-            onClick={handleSubmit}
-          >
-            {editingItem ? 'Update Skill' : 'Create Skill'}
-          </button>
+        {/* Action Buttons */}
+        <div className="creator-actions">
+          <Button variant="success" onClick={handleSubmit}>
+            {editingItem ? 'Update Skill' : 'Add Skill'}
+          </Button>
           {editingItem && (
-            <button
-              style={{ ...styles.button, ...styles.secondaryButton }}
-              onClick={handleCancel}
-            >
-              Cancel Edit
-            </button>
+            <Button variant="ghost" onClick={handleCancel}>
+              Cancel
+            </Button>
           )}
         </div>
       </div>
 
       {/* List Section */}
-      <div style={styles.listSection}>
-        <h3 style={styles.sectionTitle}>Created Skills ({items.length})</h3>
+      <div className="creator-list">
+        <h3 className="creator-form-section-title">
+          Created Skills
+          <span className="count-badge">{items.length}</span>
+        </h3>
 
         {items.length === 0 ? (
-          <div style={styles.emptyList}>
-            No skills created yet.<br />
+          <div className="empty-list">
+            No skills created yet.
+            <br />
             Use the form to create your first skill.
           </div>
         ) : (
           items.map(item => (
             <div
               key={item._id || item.id}
-              style={{
-                ...styles.listItem,
-                ...(hoveredItem === item._id ? styles.listItemHover : {}),
-              }}
+              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
               onMouseEnter={() => setHoveredItem(item._id)}
               onMouseLeave={() => setHoveredItem(null)}
-              onClick={() => onEdit(item)}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={styles.listItemName}>{item.name}</div>
-                <span style={{ ...styles.typeBadge, backgroundColor: getTypeBadgeColor(item.type) }}>
-                  {item.type}
-                </span>
+              <div className="creator-item-info">
+                <div className="creator-item-name">
+                  {item.name}
+                  <span
+                    className="rarity-badge"
+                    style={{ backgroundColor: SKILL_TYPE_COLORS[item.type] || 'var(--color-border)' }}
+                  >
+                    {item.type}
+                  </span>
+                </div>
+                <div className="creator-item-id">
+                  ID: {item.id} | {item.category}
+                  {item.cost?.stamina > 0 && ` | ${item.cost.stamina} Stamina`}
+                  {item.cooldown > 0 && ` | ${item.cooldown}t CD`}
+                </div>
+                <div className="creator-item-id">
+                  {item.effects?.length || 0} effects
+                  {item.isNSFW && ' | NSFW'}
+                </div>
+                {item.tags?.length > 0 && (
+                  <div className="creator-item-tags">
+                    {item.tags.slice(0, 4).map(tag => (
+                      <span key={tag} className="tag-chip">{tag}</span>
+                    ))}
+                    {item.tags.length > 4 && (
+                      <span className="tag-chip more">+{item.tags.length - 4}</span>
+                    )}
+                  </div>
+                )}
               </div>
-              <div style={styles.listItemDetails}>
-                {item.category}
-                {item.cost?.stamina > 0 && ` | ${item.cost.stamina} Stamina`}
-                {item.cooldown > 0 && ` | ${item.cooldown}t CD`}
-              </div>
-              <div style={styles.listItemDetails}>
-                {item.effects?.length || 0} effects
-                {item.isNSFW && ' | NSFW'}
-              </div>
-              <div style={styles.listItemActions}>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#4a4a6a', color: 'white' }}
-                  onClick={(e) => { e.stopPropagation(); onDuplicate(item); }}
-                >
+              <div className="creator-item-actions">
+                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
+                  Edit
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
                   Duplicate
-                </button>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                  onClick={(e) => { e.stopPropagation(); onDelete(item._id); }}
-                >
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
                   Delete
-                </button>
+                </Button>
               </div>
             </div>
           ))

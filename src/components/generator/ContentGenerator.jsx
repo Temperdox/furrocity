@@ -22,6 +22,9 @@ import SpriteSheetManager from './tabs/SpriteSheetManager';
 import QuestCreator from './tabs/QuestCreator';
 import LootTableCreator from './tabs/LootTableCreator';
 import SkillCreator from './tabs/SkillCreator';
+import SubstanceCreator from './tabs/SubstanceCreator';
+import EncounterTableCreator from './tabs/EncounterTableCreator';
+import MerchantCreator from './tabs/MerchantCreator';
 
 const styles = {
   overlay: {
@@ -240,6 +243,9 @@ const TABS = [
   { id: 'enemies', label: 'Enemies', icon: '👹' },
   { id: 'skills', label: 'Skills', icon: '⚡' },
   { id: 'effects', label: 'Effects', icon: '✨' },
+  { id: 'substances', label: 'Substances', icon: '💊' },
+  { id: 'encounterTables', label: 'Encounters', icon: '⚔️' },
+  { id: 'merchants', label: 'Merchants', icon: '🪙' },
   { id: 'lootTables', label: 'Loot Tables', icon: '🎁' },
   { id: 'characters', label: 'Characters', icon: '🧑' },
   { id: 'sprites', label: 'Sprites', icon: '🖼️' },
@@ -308,6 +314,9 @@ const ContentGenerator = ({ onClose }) => {
     enemies: [],
     skills: [],
     effects: [],
+    substances: [],
+    encounterTables: [],
+    merchants: [],
     lootTables: [],
     characters: [],
     sprites: [],
@@ -570,21 +579,38 @@ const ContentGenerator = ({ onClose }) => {
     }
   }, [handleImportFiles]);
 
+  // Map tab types to contentType values for consistent categorization
+  const TAB_TO_CONTENT_TYPE = {
+    items: 'item',
+    scenes: 'scene',
+    quests: 'quest',
+    locations: 'location',
+    npcs: 'npc',
+    enemies: 'enemy',
+    skills: 'skill',
+    effects: 'effect',
+    lootTables: 'lootTable',
+    characters: 'character',
+    sprites: 'sprite',
+  };
+
   // Add new content item
   const handleAddContent = useCallback((type, item) => {
+    const contentType = TAB_TO_CONTENT_TYPE[type] || type;
     setContent(prev => ({
       ...prev,
-      [type]: [...prev[type], { ...item, _id: Date.now().toString() }],
+      [type]: [...prev[type], { ...item, contentType, _id: Date.now().toString() }],
     }));
     setEditingItem(null);
   }, []);
 
   // Update existing content item
   const handleUpdateContent = useCallback((type, itemId, updatedItem) => {
+    const contentType = TAB_TO_CONTENT_TYPE[type] || type;
     setContent(prev => ({
       ...prev,
       [type]: prev[type].map(item =>
-        item._id === itemId ? { ...updatedItem, _id: itemId } : item
+        item._id === itemId ? { ...updatedItem, contentType, _id: itemId } : item
       ),
     }));
     setEditingItem(null);
@@ -605,10 +631,12 @@ const ContentGenerator = ({ onClose }) => {
 
   // Duplicate content item
   const handleDuplicateContent = useCallback((type, item) => {
+    const contentType = TAB_TO_CONTENT_TYPE[type] || type;
     const duplicated = {
       ...item,
       id: `${item.id}_copy`,
       name: `${item.name} (Copy)`,
+      contentType,
       _id: Date.now().toString(),
     };
     setContent(prev => ({
@@ -850,6 +878,12 @@ const ContentGenerator = ({ onClose }) => {
         return <SkillCreator {...commonProps} />;
       case 'effects':
         return <EffectCreator {...commonProps} />;
+      case 'substances':
+        return <SubstanceCreator {...commonProps} />;
+      case 'encounterTables':
+        return <EncounterTableCreator {...commonProps} />;
+      case 'merchants':
+        return <MerchantCreator {...commonProps} />;
       case 'lootTables':
         return <LootTableCreator {...commonProps} />;
       case 'characters':

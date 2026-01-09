@@ -1,0 +1,26 @@
+{
+  "fetishTags": [
+    { "id": "vanilla", "name": "Vanilla", "category": "general", "defaultEnabled": true },
+    { "id": "bondage", "name": "Bondage", "category": "restraints", "defaultEnabled": false },
+    { "id": "hypnosis", "name": "Hypnosis", "category": "mind", "defaultEnabled": false },
+    { "id": "corruption", "name": "Corruption", "category": "transformation", "defaultEnabled": false },
+    { "id": "monster", "name": "Monster", "category": "partners", "defaultEnabled": false },
+    { "id": "tentacles", "name": "Tentacles", "category": "partners", "defaultEnabled": false },
+    { "id": "machines", "name": "Machines", "category": "partners", "defaultEnabled": false },
+    { "id": "group", "name": "Group", "category": "general", "defaultEnabled": false },
+    { "id": "exhibition", "name": "Exhibition", "category": "general", "defaultEnabled": false },
+    { "id": "voyeur", "name": "Voyeurism", "category": "general", "defaultEnabled": false },
+    { "id": "size_diff", "name": "Size Difference", "category": "general", "defaultEnabled": false },
+    { "id": "transformation", "name": "Transformation", "category": "transformation", "defaultEnabled": false },
+    { "id": "clothing_damage", "name": "Clothing Damage", "category": "general", "defaultEnabled": true },
+    { "id": "restraint_escape", "name": "Restraint Escape", "category": "restraints", "defaultEnabled": true }
+  ],
+  "sensitiveBodyParts": [
+    { "id": "chest", "name": "Chest", "description": "Increased sensitivity to chest stimulation" },
+    { "id": "mouth", "name": "Mouth", "description": "Increased sensitivity to oral stimulation" },
+    { "id": "rear", "name": "Rear", "description": "Increased sensitivity to rear stimulation" },
+    { "id": "genitals", "name": "Genitals", "description": "Increased sensitivity to genital stimulation" },
+    { "id": "neck", "name": "Neck", "description": "Increased sensitivity to neck stimulation" },
+    { "id": "ears", "name": "Ears", "description": "Increased sensitivity to ear stimulation" }
+  ]
+}

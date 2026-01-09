@@ -1,0 +1,321 @@
+/**
+ * Design Tokens - Global CSS Variables for Furrocity
+ *
+ * This file defines the design system foundation.
+ * All components should use these variables for consistent styling.
+ */
+
+:root {
+  /* ===== Colors - Dark Theme ===== */
+
+  /* Backgrounds */
+  --color-bg-primary: #1a1a2e;
+  --color-bg-secondary: #252540;
+  --color-bg-tertiary: #2d2d4a;
+  --color-bg-input: #1a1a2e;
+  --color-bg-hover: #353555;
+  --color-bg-active: #404060;
+  --color-bg-overlay: rgba(0, 0, 0, 0.5);
+  --color-bg-tooltip: #1a1a2e;
+
+  /* Text */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a0a0c0;
+  --color-text-muted: #808090;
+  --color-text-disabled: #606070;
+  --color-text-inverse: #1a1a2e;
+
+  /* Accent Colors */
+  --color-accent-primary: #ffd700;      /* Gold - primary actions */
+  --color-accent-secondary: #7c3aed;    /* Purple - secondary actions */
+  --color-accent-success: #4ade80;      /* Green - success states */
+  --color-accent-danger: #ef4444;       /* Red - danger/delete */
+  --color-accent-warning: #f59e0b;      /* Orange - warnings */
+  --color-accent-info: #3b82f6;         /* Blue - info */
+
+  /* Accent Hover States */
+  --color-accent-primary-hover: #ffed4a;
+  --color-accent-secondary-hover: #8b5cf6;
+  --color-accent-success-hover: #22c55e;
+  --color-accent-danger-hover: #dc2626;
+  --color-accent-warning-hover: #d97706;
+  --color-accent-info-hover: #2563eb;
+
+  /* Borders */
+  --color-border: #4a4a6a;
+  --color-border-light: #3a3a5a;
+  --color-border-focus: #7c3aed;
+  --color-border-error: #ef4444;
+  --color-border-success: #4ade80;
+
+  /* Game-specific Colors */
+  --color-rarity-common: #9ca3af;
+  --color-rarity-uncommon: #22c55e;
+  --color-rarity-rare: #3b82f6;
+  --color-rarity-epic: #a855f7;
+  --color-rarity-legendary: #f59e0b;
+  --color-rarity-mythic: #ef4444;
+  --color-rarity-cursed: #7c3aed;
+
+  /* Status Effect Colors */
+  --color-status-buff: #4ade80;
+  --color-status-debuff: #ef4444;
+  --color-status-neutral: #60a5fa;
+
+  /* ===== Spacing Scale (rem-based) ===== */
+  --space-xxs: 0.125rem;  /* 2px */
+  --space-xs: 0.25rem;    /* 4px */
+  --space-sm: 0.5rem;     /* 8px */
+  --space-md: 1rem;       /* 16px */
+  --space-lg: 1.5rem;     /* 24px */
+  --space-xl: 2rem;       /* 32px */
+  --space-2xl: 3rem;      /* 48px */
+  --space-3xl: 4rem;      /* 64px */
+
+  /* ===== Border Radius ===== */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+
+  /* ===== Font Sizes ===== */
+  --font-xxs: 0.625rem;   /* 10px */
+  --font-xs: 0.75rem;     /* 12px */
+  --font-sm: 0.8125rem;   /* 13px */
+  --font-md: 0.875rem;    /* 14px */
+  --font-lg: 1rem;        /* 16px */
+  --font-xl: 1.125rem;    /* 18px */
+  --font-2xl: 1.25rem;    /* 20px */
+  --font-3xl: 1.5rem;     /* 24px */
+  --font-4xl: 2rem;       /* 32px */
+
+  /* ===== Font Weights ===== */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ===== Line Heights ===== */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ===== Shadows ===== */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 10px rgba(124, 58, 237, 0.5);
+  --shadow-glow-gold: 0 0 10px rgba(255, 215, 0, 0.5);
+
+  /* ===== Transitions ===== */
+  --transition-fast: 0.1s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+  --transition-slower: 0.5s ease;
+
+  /* ===== Z-Index Scale ===== */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+  --z-toast: 800;
+
+  /* ===== Component-Specific Variables ===== */
+
+  /* Inputs */
+  --input-height: 38px;
+  --input-height-sm: 32px;
+  --input-height-lg: 44px;
+  --input-padding-x: var(--space-sm);
+  --input-padding-y: var(--space-xs);
+
+  /* Buttons */
+  --button-height: 38px;
+  --button-height-sm: 32px;
+  --button-height-lg: 44px;
+  --button-padding-x: var(--space-md);
+  --button-padding-y: var(--space-sm);
+
+  /* Cards */
+  --card-padding: var(--space-md);
+  --card-border-radius: var(--radius-lg);
+
+  /* Modals */
+  --modal-width-sm: 400px;
+  --modal-width-md: 600px;
+  --modal-width-lg: 800px;
+  --modal-width-xl: 1000px;
+
+  /* Tags/Chips */
+  --tag-height: 24px;
+  --tag-padding-x: var(--space-sm);
+  --tag-font-size: var(--font-xs);
+  --tag-border-radius: var(--radius-full);
+
+  /* Sidebar/Panel Widths */
+  --sidebar-width: 280px;
+  --panel-width-sm: 300px;
+  --panel-width-md: 400px;
+  --panel-width-lg: 500px;
+
+  /* Content Generator Specific */
+  --creator-form-width: 45%;
+  --creator-list-width: 55%;
+  --creator-gap: var(--space-lg);
+
+  --full-width: 100vw;
+}
+
+/* ===== Dark Mode Adjustments (if needed for future light mode support) ===== */
+@media (prefers-color-scheme: light) {
+  :root.auto-theme {
+    /* Override with light theme values here if auto-theme class is used */
+  }
+}
+
+/* ===== Utility Classes ===== */
+
+/* Text Colors */
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-muted { color: var(--color-text-muted); }
+.text-success { color: var(--color-accent-success); }
+.text-danger { color: var(--color-accent-danger); }
+.text-warning { color: var(--color-accent-warning); }
+.text-gold { color: var(--color-accent-primary); }
+.text-purple { color: var(--color-accent-secondary); }
+
+/* Background Colors */
+.bg-primary { background-color: var(--color-bg-primary); }
+.bg-secondary { background-color: var(--color-bg-secondary); }
+.bg-tertiary { background-color: var(--color-bg-tertiary); }
+
+/* Rarity Colors */
+.rarity-common { color: var(--color-rarity-common); }
+.rarity-uncommon { color: var(--color-rarity-uncommon); }
+.rarity-rare { color: var(--color-rarity-rare); }
+.rarity-epic { color: var(--color-rarity-epic); }
+.rarity-legendary { color: var(--color-rarity-legendary); }
+.rarity-mythic { color: var(--color-rarity-mythic); }
+.rarity-cursed { color: var(--color-rarity-cursed); }
+
+/* Font Sizes */
+.text-xs { font-size: var(--font-xs); }
+.text-sm { font-size: var(--font-sm); }
+.text-md { font-size: var(--font-md); }
+.text-lg { font-size: var(--font-lg); }
+.text-xl { font-size: var(--font-xl); }
+
+/* Font Weights */
+.font-normal { font-weight: var(--font-weight-normal); }
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+
+/* Spacing - Margin */
+.m-0 { margin: 0; }
+.m-xs { margin: var(--space-xs); }
+.m-sm { margin: var(--space-sm); }
+.m-md { margin: var(--space-md); }
+.m-lg { margin: var(--space-lg); }
+
+.mt-0 { margin-top: 0; }
+.mt-xs { margin-top: var(--space-xs); }
+.mt-sm { margin-top: var(--space-sm); }
+.mt-md { margin-top: var(--space-md); }
+.mt-lg { margin-top: var(--space-lg); }
+
+.mb-0 { margin-bottom: 0; }
+.mb-xs { margin-bottom: var(--space-xs); }
+.mb-sm { margin-bottom: var(--space-sm); }
+.mb-md { margin-bottom: var(--space-md); }
+.mb-lg { margin-bottom: var(--space-lg); }
+
+/* Spacing - Padding */
+.p-0 { padding: 0; }
+.p-xs { padding: var(--space-xs); }
+.p-sm { padding: var(--space-sm); }
+.p-md { padding: var(--space-md); }
+.p-lg { padding: var(--space-lg); }
+
+/* Flex Utilities */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+.gap-xs { gap: var(--space-xs); }
+.gap-sm { gap: var(--space-sm); }
+.gap-md { gap: var(--space-md); }
+.gap-lg { gap: var(--space-lg); }
+.flex-1 { flex: 1; }
+
+/* Grid Utilities */
+.grid { display: grid; }
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Border Radius */
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* Shadows */
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+
+/* Transitions */
+.transition-fast { transition: all var(--transition-fast); }
+.transition-normal { transition: all var(--transition-normal); }
+.transition-slow { transition: all var(--transition-slow); }
+
+/* Cursor */
+.cursor-pointer { cursor: pointer; }
+.cursor-default { cursor: default; }
+.cursor-not-allowed { cursor: not-allowed; }
+
+/* Overflow */
+.overflow-hidden { overflow: hidden; }
+.overflow-auto { overflow: auto; }
+.overflow-y-auto { overflow-y: auto; }
+
+/* Width/Height */
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.min-h-0 { min-height: 0; }
+
+/* Position */
+.relative { position: relative; }
+.absolute { position: absolute; }
+.fixed { position: fixed; }
+.sticky { position: sticky; }
+
+/* Visibility */
+.hidden { display: none; }
+.invisible { visibility: hidden; }
+.opacity-0 { opacity: 0; }
+.opacity-50 { opacity: 0.5; }
+.opacity-100 { opacity: 1; }
+
+/* Truncation */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

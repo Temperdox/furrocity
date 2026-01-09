@@ -1,293 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { FormInput, Button, ChipSelect } from '../../ui/shared';
+import { useFormDraft } from '../../../hooks/useFormDraft';
+import './CreatorStyles.css';
 
-const styles = {
-  container: {
-    display: 'flex',
-    gap: '20px',
-    height: '100%',
-  },
-  formSection: {
-    flex: '1',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '20px',
-    overflowY: 'auto',
-  },
-  listSection: {
-    width: '300px',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '15px',
-    overflowY: 'auto',
-  },
-  sectionTitle: {
-    color: '#ffd700',
-    fontSize: '18px',
-    marginBottom: '15px',
-    borderBottom: '1px solid #4a4a6a',
-    paddingBottom: '10px',
-  },
-  formGroup: {
-    marginBottom: '15px',
-  },
-  label: {
-    display: 'block',
-    color: '#a0a0c0',
-    marginBottom: '5px',
-    fontSize: '13px',
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  row: {
-    display: 'flex',
-    gap: '15px',
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  quarterWidth: {
-    flex: 0.5,
-  },
-  button: {
-    padding: '10px 20px',
-    borderRadius: '6px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    transition: 'all 0.2s ease',
-    marginRight: '10px',
-  },
-  primaryButton: {
-    backgroundColor: '#4a7c4a',
-    color: 'white',
-  },
-  secondaryButton: {
-    backgroundColor: '#4a4a6a',
-    color: 'white',
-  },
-  dangerButton: {
-    backgroundColor: '#7c4a4a',
-    color: 'white',
-  },
-  smallButton: {
-    padding: '4px 8px',
-    borderRadius: '4px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '11px',
-  },
-  listItem: {
-    padding: '12px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '6px',
-    marginBottom: '8px',
-    cursor: 'pointer',
-    border: '1px solid transparent',
-    transition: 'all 0.2s ease',
-  },
-  listItemHover: {
-    borderColor: '#4a4a6a',
-  },
-  listItemName: {
-    color: '#ffd700',
-    fontSize: '14px',
-    fontWeight: 'bold',
-  },
-  listItemDetails: {
-    color: '#808090',
-    fontSize: '12px',
-    marginTop: '4px',
-  },
-  listItemActions: {
-    display: 'flex',
-    gap: '5px',
-    marginTop: '8px',
-  },
-  emptyList: {
-    color: '#606080',
-    textAlign: 'center',
-    padding: '30px',
-    fontSize: '14px',
-  },
-  subsection: {
-    marginTop: '20px',
-    padding: '15px',
-    backgroundColor: '#1e1e35',
-    borderRadius: '6px',
-  },
-  subsectionTitle: {
-    color: '#c0c0e0',
-    fontSize: '14px',
-    marginBottom: '12px',
-    fontWeight: 'bold',
-  },
-  uploadArea: {
-    border: '2px dashed #4a4a6a',
-    borderRadius: '8px',
-    padding: '30px',
-    textAlign: 'center',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    backgroundColor: '#1a1a2e',
-  },
-  uploadAreaHover: {
-    borderColor: '#ffd700',
-    backgroundColor: '#252540',
-  },
-  spritePreview: {
-    position: 'relative',
-    overflow: 'auto',
-    maxHeight: '400px',
-    backgroundColor: '#0a0a15',
-    borderRadius: '8px',
-    border: '1px solid #4a4a6a',
-  },
-  gridOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    pointerEvents: 'none',
-  },
-  cellHighlight: {
-    position: 'absolute',
-    border: '2px solid #ffd700',
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
-    cursor: 'pointer',
-    transition: 'all 0.1s ease',
-    boxSizing: 'border-box',
-  },
-  cellLinked: {
-    backgroundColor: 'rgba(74, 124, 74, 0.4)',
-    border: '2px solid #4a7c4a',
-  },
-  cellHovered: {
-    backgroundColor: 'rgba(255, 215, 0, 0.4)',
-  },
-  infoBox: {
-    padding: '10px 15px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '6px',
-    border: '1px solid #4a4a6a',
-    color: '#a0a0c0',
-    fontSize: '12px',
-    marginTop: '10px',
-  },
-  // Modal styles
-  modalOverlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 20000,
-  },
-  modal: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: '12px',
-    border: '2px solid #4a4a6a',
-    width: '600px',
-    maxHeight: '80vh',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  modalHeader: {
-    padding: '15px 20px',
-    borderBottom: '1px solid #4a4a6a',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  modalTitle: {
-    color: '#ffd700',
-    fontSize: '18px',
-    fontWeight: 'bold',
-    margin: 0,
-  },
-  modalBody: {
-    padding: '20px',
-    overflowY: 'auto',
-    flex: 1,
-  },
-  modalFooter: {
-    padding: '15px 20px',
-    borderTop: '1px solid #4a4a6a',
-    display: 'flex',
-    justifyContent: 'flex-end',
-    gap: '10px',
-  },
-  tabs: {
-    display: 'flex',
-    gap: '5px',
-    marginBottom: '15px',
-  },
-  tab: {
-    padding: '8px 16px',
-    backgroundColor: '#252540',
-    border: 'none',
-    borderRadius: '4px',
-    color: '#a0a0c0',
-    cursor: 'pointer',
-    fontSize: '13px',
-    transition: 'all 0.2s ease',
-  },
-  tabActive: {
-    backgroundColor: '#4a4a6a',
-    color: '#ffd700',
-  },
-  linkList: {
-    maxHeight: '300px',
-    overflowY: 'auto',
-  },
-  linkItem: {
-    padding: '10px',
-    backgroundColor: '#252540',
-    borderRadius: '4px',
-    marginBottom: '5px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  linkItemHover: {
-    backgroundColor: '#3a3a5a',
-  },
-  linkItemSelected: {
-    backgroundColor: '#4a7c4a',
-    color: 'white',
-  },
-  cellPreview: {
-    width: '64px',
-    height: '64px',
-    backgroundColor: '#0a0a15',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-};
+const DRAFT_KEY = 'contentGenerator_draft_spriteSheets';
 
 const DEFAULT_SPRITE_SHEET = {
   id: '',
   name: '',
   imagePath: '',
-  imageData: '', // base64 for preview
+  imageData: '',
   cellWidth: 32,
   cellHeight: 32,
   marginX: 0,
@@ -296,7 +19,7 @@ const DEFAULT_SPRITE_SHEET = {
   offsetY: 0,
   columns: 0,
   rows: 0,
-  linkedCells: {}, // { "row_col": { type: "item"|"location", targetId: "...", name: "..." } }
+  linkedCells: {},
 };
 
 // Cell Link Modal Component
@@ -337,7 +60,6 @@ const CellLinkModal = ({
     onClose();
   };
 
-  // Calculate cell preview
   const getCellStyle = () => {
     if (!spriteSheet.imageData) return {};
     const { row, col } = cellPosition;
@@ -355,54 +77,60 @@ const CellLinkModal = ({
 
   const filteredItems = activeTab === 'items' ? items : locations;
 
+  const tabOptions = [
+    { value: 'items', label: `Items (${items.length})` },
+    { value: 'locations', label: `Locations (${locations.length})` },
+  ];
+
   return createPortal(
-    <div style={styles.modalOverlay} onClick={onClose}>
-      <div style={styles.modal} onClick={e => e.stopPropagation()}>
-        <div style={styles.modalHeader}>
-          <h3 style={styles.modalTitle}>Link Cell ({cellPosition.row}, {cellPosition.col})</h3>
-          <button
-            style={{ ...styles.button, ...styles.dangerButton, marginRight: 0 }}
-            onClick={onClose}
-          >
-            X
-          </button>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ width: '600px', maxHeight: '80vh' }}>
+        <div className="modal-header">
+          <h3 className="modal-title">Link Cell ({cellPosition.row}, {cellPosition.col})</h3>
+          <Button variant="danger" size="sm" onClick={onClose}>X</Button>
         </div>
 
-        <div style={styles.modalBody}>
+        <div className="modal-body">
           {/* Cell Preview */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
-            <div style={{ ...styles.cellPreview, ...getCellStyle() }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
+            <div style={{
+              ...getCellStyle(),
+              backgroundColor: 'var(--color-bg-primary)',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-border)',
+              minWidth: '64px',
+              minHeight: '64px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }} />
             <div>
-              <div style={{ color: '#ffd700', fontSize: '14px', fontWeight: 'bold' }}>
+              <div style={{ color: 'var(--color-accent-primary)', fontWeight: 'var(--font-weight-semibold)' }}>
                 Cell Position: Row {cellPosition.row}, Column {cellPosition.col}
               </div>
-              <div style={{ color: '#808090', fontSize: '12px', marginTop: '4px' }}>
+              <div className="text-muted text-sm" style={{ marginTop: 'var(--space-xxs)' }}>
                 {currentLink ? `Currently linked to: ${currentLink.name}` : 'Not linked'}
               </div>
             </div>
           </div>
 
           {/* Tabs */}
-          <div style={styles.tabs}>
-            <button
-              style={{ ...styles.tab, ...(activeTab === 'items' ? styles.tabActive : {}) }}
-              onClick={() => setActiveTab('items')}
-            >
-              Items ({items.length})
-            </button>
-            <button
-              style={{ ...styles.tab, ...(activeTab === 'locations' ? styles.tabActive : {}) }}
-              onClick={() => setActiveTab('locations')}
-            >
-              Locations ({locations.length})
-            </button>
+          <div style={{ marginBottom: 'var(--space-md)' }}>
+            <ChipSelect
+              value={activeTab}
+              onChange={setActiveTab}
+              options={tabOptions}
+              multiple={false}
+              showCheckbox={false}
+            />
           </div>
 
           {/* List */}
-          <div style={styles.linkList}>
+          <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
             {filteredItems.length === 0 ? (
-              <div style={styles.emptyList}>
-                No {activeTab} created yet.<br />
+              <div className="empty-list" style={{ padding: 'var(--space-lg)' }}>
+                No {activeTab} created yet.
+                <br />
                 Create some {activeTab} first to link them.
               </div>
             ) : (
@@ -411,11 +139,8 @@ const CellLinkModal = ({
                 return (
                   <div
                     key={item._id || item.id}
-                    style={{
-                      ...styles.linkItem,
-                      ...(hoveredItem === item.id && !isSelected ? styles.linkItemHover : {}),
-                      ...(isSelected ? styles.linkItemSelected : {}),
-                    }}
+                    className={`creator-item-card ${hoveredItem === item.id ? 'hovered' : ''} ${isSelected ? 'editing' : ''}`}
+                    style={{ cursor: 'pointer', marginBottom: 'var(--space-xs)' }}
                     onMouseEnter={() => setHoveredItem(item.id)}
                     onMouseLeave={() => setHoveredItem(null)}
                     onClick={() => setSelectedTarget({
@@ -424,15 +149,13 @@ const CellLinkModal = ({
                       name: item.name
                     })}
                   >
-                    <div>
-                      <div style={{ fontWeight: 'bold', color: isSelected ? 'white' : '#ffd700' }}>
-                        {activeTab === 'items' ? '⚔️' : '🏠'} {item.name}
+                    <div className="creator-item-info">
+                      <div className="creator-item-name">
+                        {activeTab === 'items' ? '' : ''} {item.name}
+                        {isSelected && <span style={{ marginLeft: 'var(--space-sm)', color: 'var(--color-accent-success)' }}>Selected</span>}
                       </div>
-                      <div style={{ fontSize: '11px', color: isSelected ? '#ccc' : '#808090', marginTop: '2px' }}>
-                        ID: {item.id}
-                      </div>
+                      <div className="creator-item-id">ID: {item.id}</div>
                     </div>
-                    {isSelected && <span style={{ fontSize: '16px' }}>✓</span>}
                   </div>
                 );
               })
@@ -440,28 +163,18 @@ const CellLinkModal = ({
           </div>
         </div>
 
-        <div style={styles.modalFooter}>
+        <div className="modal-footer">
           {currentLink && (
-            <button
-              style={{ ...styles.button, ...styles.dangerButton }}
-              onClick={handleClear}
-            >
+            <Button variant="danger" onClick={handleClear}>
               Remove Link
-            </button>
+            </Button>
           )}
-          <button
-            style={{ ...styles.button, ...styles.secondaryButton }}
-            onClick={onClose}
-          >
+          <Button variant="ghost" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            style={{ ...styles.button, ...styles.primaryButton }}
-            onClick={handleSave}
-            disabled={!selectedTarget}
-          >
+          </Button>
+          <Button variant="success" onClick={handleSave} disabled={!selectedTarget}>
             Save Link
-          </button>
+          </Button>
         </div>
       </div>
     </div>,
@@ -490,7 +203,10 @@ const SpriteSheetManager = ({
   const fileInputRef = useRef(null);
   const imageRef = useRef(null);
 
-  // Get items and locations from allContent
+  const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
+    defaultValues: DEFAULT_SPRITE_SHEET,
+  });
+
   const contentItems = allContent.items || [];
   const contentLocations = allContent.locations || [];
 
@@ -501,7 +217,6 @@ const SpriteSheetManager = ({
         ...editingItem,
         linkedCells: editingItem.linkedCells || {},
       });
-      // If editing and has image, calculate size
       if (editingItem.imageData) {
         const img = new Image();
         img.onload = () => {
@@ -530,7 +245,6 @@ const SpriteSheetManager = ({
     const newData = { ...formData, [field]: value };
     setFormData(newData);
 
-    // Recalculate grid size if cell dimensions change
     if (['cellWidth', 'cellHeight', 'marginX', 'marginY', 'offsetX', 'offsetY'].includes(field) && imageSize.width > 0) {
       const cols = Math.floor((imageSize.width - newData.offsetX) / (newData.cellWidth + newData.marginX));
       const rows = Math.floor((imageSize.height - newData.offsetY) / (newData.cellHeight + newData.marginY));
@@ -641,6 +355,7 @@ const SpriteSheetManager = ({
       onUpdate(editingItem._id, formData);
     } else {
       onAdd(formData);
+      clearDraft();
     }
 
     setFormData({ ...DEFAULT_SPRITE_SHEET });
@@ -653,7 +368,6 @@ const SpriteSheetManager = ({
     onCancelEdit();
   };
 
-  // Generate cell grid
   const renderCells = () => {
     const cells = [];
     for (let row = 0; row < formData.rows; row++) {
@@ -669,13 +383,20 @@ const SpriteSheetManager = ({
           <div
             key={key}
             style={{
-              ...styles.cellHighlight,
-              ...(isLinked ? styles.cellLinked : {}),
-              ...(isHovered ? styles.cellHovered : {}),
+              position: 'absolute',
               left: `${x}px`,
               top: `${y}px`,
               width: `${formData.cellWidth}px`,
               height: `${formData.cellHeight}px`,
+              border: isLinked ? '2px solid var(--color-accent-success)' : '2px solid var(--color-accent-primary)',
+              backgroundColor: isLinked
+                ? 'rgba(74, 124, 74, 0.4)'
+                : isHovered
+                  ? 'rgba(255, 215, 0, 0.4)'
+                  : 'rgba(255, 215, 0, 0.2)',
+              cursor: 'pointer',
+              boxSizing: 'border-box',
+              transition: 'all 0.1s ease',
               pointerEvents: 'auto',
             }}
             onMouseEnter={() => setHoveredCell({ row, col })}
@@ -692,42 +413,36 @@ const SpriteSheetManager = ({
   const linkedCount = Object.keys(formData.linkedCells).length;
 
   return (
-    <div style={styles.container}>
+    <div className="creator-container">
       {/* Form Section */}
-      <div style={styles.formSection}>
-        <h3 style={styles.sectionTitle}>
-          {editingItem ? '✏️ Edit Sprite Sheet' : '➕ Add Sprite Sheet'}
+      <div className="creator-form">
+        <h3 className="creator-form-section-title">
+          {editingItem ? 'Edit Sprite Sheet' : 'Add Sprite Sheet'}
         </h3>
 
         {/* Basic Info */}
-        <div style={styles.row}>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>ID *</label>
-              <input
-                style={styles.input}
-                value={formData.id}
-                onChange={(e) => handleChange('id', e.target.value.toLowerCase().replace(/\s/g, '_'))}
-                placeholder="unique_sheet_id"
-              />
-            </div>
-          </div>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Name *</label>
-              <input
-                style={styles.input}
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="Sprite Sheet Name"
-              />
-            </div>
+        <div className="creator-form-section">
+          <div className="creator-form-row">
+            <FormInput
+              label="ID"
+              required
+              value={formData.id}
+              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
+              placeholder="unique_sheet_id"
+            />
+            <FormInput
+              label="Name"
+              required
+              value={formData.name}
+              onChange={(v) => handleChange('name', v)}
+              placeholder="Sprite Sheet Name"
+            />
           </div>
         </div>
 
         {/* Upload Area */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Sprite Sheet Image</div>
+        <div className="creator-form-section">
+          <h4 className="creator-form-section-title">Sprite Sheet Image</h4>
           <input
             type="file"
             ref={fileInputRef}
@@ -737,8 +452,13 @@ const SpriteSheetManager = ({
           />
           <div
             style={{
-              ...styles.uploadArea,
-              ...(isDragging ? styles.uploadAreaHover : {}),
+              border: isDragging ? '2px dashed var(--color-accent-primary)' : '2px dashed var(--color-border)',
+              borderRadius: 'var(--radius-lg)',
+              padding: 'var(--space-xl)',
+              textAlign: 'center',
+              cursor: 'pointer',
+              backgroundColor: isDragging ? 'var(--color-bg-tertiary)' : 'var(--color-bg-primary)',
+              transition: 'all var(--transition-normal)',
             }}
             onClick={() => fileInputRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -746,105 +466,78 @@ const SpriteSheetManager = ({
             onDrop={handleDrop}
           >
             {formData.imageData ? (
-              <div style={{ color: '#4a7c4a' }}>
-                ✓ Image loaded: {formData.imagePath}<br />
-                <span style={{ fontSize: '12px', color: '#808090' }}>
+              <div style={{ color: 'var(--color-accent-success)' }}>
+                Image loaded: {formData.imagePath}
+                <br />
+                <span className="text-muted text-sm">
                   {imageSize.width}x{imageSize.height}px
                 </span>
               </div>
             ) : (
-              <div style={{ color: '#a0a0c0' }}>
-                📁 Click or drag to upload sprite sheet<br />
-                <span style={{ fontSize: '12px', color: '#606080' }}>
-                  Supports PNG, JPG, GIF
-                </span>
+              <div className="text-muted">
+                Click or drag to upload sprite sheet
+                <br />
+                <span className="text-sm">Supports PNG, JPG, GIF</span>
               </div>
             )}
           </div>
         </div>
 
         {/* Cell Configuration */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Cell Configuration</div>
-          <div style={styles.row}>
-            <div style={styles.quarterWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Cell Width</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.cellWidth}
-                  onChange={(e) => handleChange('cellWidth', parseInt(e.target.value) || 1)}
-                  min="1"
-                />
-              </div>
-            </div>
-            <div style={styles.quarterWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Cell Height</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.cellHeight}
-                  onChange={(e) => handleChange('cellHeight', parseInt(e.target.value) || 1)}
-                  min="1"
-                />
-              </div>
-            </div>
-            <div style={styles.quarterWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Margin X</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.marginX}
-                  onChange={(e) => handleChange('marginX', parseInt(e.target.value) || 0)}
-                  min="0"
-                />
-              </div>
-            </div>
-            <div style={styles.quarterWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Margin Y</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.marginY}
-                  onChange={(e) => handleChange('marginY', parseInt(e.target.value) || 0)}
-                  min="0"
-                />
-              </div>
-            </div>
+        <div className="creator-form-section">
+          <h4 className="creator-form-section-title">Cell Configuration</h4>
+          <div className="creator-form-row cols-4">
+            <FormInput
+              label="Cell Width"
+              type="number"
+              value={formData.cellWidth}
+              onChange={(v) => handleChange('cellWidth', v)}
+              min={1}
+            />
+            <FormInput
+              label="Cell Height"
+              type="number"
+              value={formData.cellHeight}
+              onChange={(v) => handleChange('cellHeight', v)}
+              min={1}
+            />
+            <FormInput
+              label="Margin X"
+              type="number"
+              value={formData.marginX}
+              onChange={(v) => handleChange('marginX', v)}
+              min={0}
+            />
+            <FormInput
+              label="Margin Y"
+              type="number"
+              value={formData.marginY}
+              onChange={(v) => handleChange('marginY', v)}
+              min={0}
+            />
           </div>
-          <div style={styles.row}>
-            <div style={styles.quarterWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Offset X</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.offsetX}
-                  onChange={(e) => handleChange('offsetX', parseInt(e.target.value) || 0)}
-                  min="0"
-                />
-              </div>
-            </div>
-            <div style={styles.quarterWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Offset Y</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.offsetY}
-                  onChange={(e) => handleChange('offsetY', parseInt(e.target.value) || 0)}
-                  min="0"
-                />
-              </div>
-            </div>
-            <div style={styles.halfWidth}>
-              <div style={styles.infoBox}>
-                Grid: {formData.columns} x {formData.rows} = {formData.columns * formData.rows} cells<br />
-                Linked: {linkedCount} cells
+          <div className="creator-form-row cols-4">
+            <FormInput
+              label="Offset X"
+              type="number"
+              value={formData.offsetX}
+              onChange={(v) => handleChange('offsetX', v)}
+              min={0}
+            />
+            <FormInput
+              label="Offset Y"
+              type="number"
+              value={formData.offsetY}
+              onChange={(v) => handleChange('offsetY', v)}
+              min={0}
+            />
+            <div style={{ gridColumn: 'span 2' }}>
+              <div className="subsection" style={{ marginTop: 0 }}>
+                <div className="text-sm">
+                  Grid: <strong>{formData.columns} x {formData.rows}</strong> = {formData.columns * formData.rows} cells
+                  <br />
+                  Linked: <strong style={{ color: 'var(--color-accent-success)' }}>{linkedCount}</strong> cells
+                </div>
               </div>
             </div>
           </div>
@@ -852,11 +545,18 @@ const SpriteSheetManager = ({
 
         {/* Sprite Preview with Grid */}
         {formData.imageData && (
-          <div style={styles.subsection}>
-            <div style={styles.subsectionTitle}>
-              Preview - Click cells to link them to Items or Locations
-            </div>
-            <div style={styles.spritePreview}>
+          <div className="creator-form-section">
+            <h4 className="creator-form-section-title">
+              Preview - Click cells to link to Items or Locations
+            </h4>
+            <div style={{
+              position: 'relative',
+              overflow: 'auto',
+              maxHeight: '400px',
+              backgroundColor: 'var(--color-bg-primary)',
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--color-border)',
+            }}>
               <div style={{ position: 'relative', display: 'inline-block' }}>
                 <img
                   ref={imageRef}
@@ -864,86 +564,70 @@ const SpriteSheetManager = ({
                   alt="Sprite Sheet"
                   style={{ display: 'block' }}
                 />
-                <div style={styles.gridOverlay}>
+                <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}>
                   {renderCells()}
                 </div>
               </div>
             </div>
-            <div style={styles.infoBox}>
-              🟡 Yellow = Hoverable cell | 🟢 Green = Linked cell<br />
-              Click a cell to open the link modal
+            <div className="form-helper mt-sm">
+              Yellow = Hoverable cell | Green = Linked cell
             </div>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div style={{ marginTop: '20px' }}>
-          <button
-            style={{ ...styles.button, ...styles.primaryButton }}
-            onClick={handleSubmit}
-          >
-            {editingItem ? '💾 Update Sprite Sheet' : '➕ Add Sprite Sheet'}
-          </button>
+        <div className="creator-actions">
+          <Button variant="success" onClick={handleSubmit}>
+            {editingItem ? 'Update Sprite Sheet' : 'Add Sprite Sheet'}
+          </Button>
           {editingItem && (
-            <button
-              style={{ ...styles.button, ...styles.secondaryButton }}
-              onClick={handleCancel}
-            >
+            <Button variant="ghost" onClick={handleCancel}>
               Cancel
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {/* List Section */}
-      <div style={styles.listSection}>
-        <h3 style={styles.sectionTitle}>📋 Sprite Sheets ({items.length})</h3>
+      <div className="creator-list">
+        <h3 className="creator-form-section-title">
+          Sprite Sheets
+          <span className="count-badge">{items.length}</span>
+        </h3>
 
         {items.length === 0 ? (
-          <div style={styles.emptyList}>
-            No sprite sheets added yet.<br />
+          <div className="empty-list">
+            No sprite sheets added yet.
+            <br />
             Upload a sprite sheet to get started.
           </div>
         ) : (
           items.map(item => (
             <div
               key={item._id}
-              style={{
-                ...styles.listItem,
-                ...(hoveredItem === item._id ? styles.listItemHover : {}),
-                ...(editingItem?._id === item._id ? { borderColor: '#ffd700' } : {}),
-              }}
+              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
               onMouseEnter={() => setHoveredItem(item._id)}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <div style={styles.listItemName}>
-                🖼️ {item.name}
+              <div className="creator-item-info">
+                <div className="creator-item-name">{item.name}</div>
+                <div className="creator-item-id">
+                  ID: {item.id} | {item.cellWidth}x{item.cellHeight} | {item.columns}x{item.rows} cells
+                </div>
+                <div className="creator-item-id" style={{ color: 'var(--color-accent-success)' }}>
+                  {Object.keys(item.linkedCells || {}).length} linked cells
+                </div>
               </div>
-              <div style={styles.listItemDetails}>
-                ID: {item.id} | {item.cellWidth}x{item.cellHeight} | {item.columns}x{item.rows} cells
-              </div>
-              <div style={{ ...styles.listItemDetails, color: '#4a7c4a' }}>
-                {Object.keys(item.linkedCells || {}).length} linked cells
-              </div>
-              <div style={styles.listItemActions}>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white' }}
-                  onClick={() => onEdit(item)}
-                >
+              <div className="creator-item-actions">
+                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
                   Edit
-                </button>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#4a4a7c', color: 'white' }}
-                  onClick={() => onDuplicate(item)}
-                >
-                  Duplicate
-                </button>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                  onClick={() => onDelete(item._id)}
-                >
-                  Delete
-                </button>
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
+                  Dup
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
+                  Del
+                </Button>
               </div>
             </div>
           ))

@@ -71,6 +71,26 @@
     "characters": {
       "path": "characters/",
       "autoLoad": true
+    },
+    "settings": {
+      "path": "settings/",
+      "autoLoad": true
+    },
+    "combat": {
+      "path": "combat/",
+      "autoLoad": true
+    },
+    "progression": {
+      "path": "progression/",
+      "autoLoad": true
+    },
+    "skills": {
+      "path": "skills/",
+      "autoLoad": true
+    },
+    "display": {
+      "path": "display/",
+      "autoLoad": true
     }
   }
 }

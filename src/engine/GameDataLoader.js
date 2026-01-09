@@ -45,7 +45,7 @@ async function loadDirectory(packId, contentPath) {
 
   // Known file patterns for each content type
   const knownFiles = {
-    items: ['weapons_armor.json', 'clothing_paperdoll.json', 'consumables.json', 'materials.json'],
+    items: ['weapons_armor.json', 'clothing_paperdoll.json', 'consumables.json', 'materials.json', 'rarities.json', 'name_parts.json'],
     enemies: ['forest_enemies.json', 'dungeon_enemies.json', 'demon_enemies.json', 'town_enemies.json'],
     locations: ['world_locations.json', 'regions.json', 'dungeons.json', 'kingdoms.json'],
     effects: ['core_effects.json', 'buffs.json', 'debuffs.json', 'curses.json'],
@@ -55,6 +55,11 @@ async function loadDirectory(packId, contentPath) {
     substances: ['core_substances.json'],
     loot_tables: ['forest_loot.json', 'global_loot.json', 'town_loot.json', 'dungeon_loot.json'],
     encounter_tables: ['game_enemy_tables.json', 'forest_encounters.json', 'town_encounters.json', 'dungeon_encounters.json'],
+    settings: ['difficulties.json', 'challenge_modifiers.json', 'content_tags.json'],
+    combat: ['restraints.json'],
+    progression: ['achievements.json'],
+    skills: ['skills.json'],
+    display: ['paperdoll_config.json'],
   };
 
   const filesToTry = knownFiles[contentPath] || [];
@@ -243,7 +248,23 @@ class GameDataLoader {
         encounterTables: {},
         characters: [],
         scenes: {},
-        effects: []
+        effects: [],
+        // New content types from datapacks
+        difficulties: [],
+        challengeModifiers: [],
+        fetishTags: [],
+        sensitiveBodyParts: [],
+        itemRarities: [],
+        curseRarities: [],
+        itemNameParts: null,
+        restraints: {},
+        achievements: {},
+        achievementRarities: {},
+        skills: {},
+        skillTrees: {},
+        paperdollLayers: {},
+        paperdollItemMapping: {},
+        bodyRegionDisplay: []
       };
 
       // Load content from each pack
@@ -320,6 +341,75 @@ class GameDataLoader {
         // Load effects
         const effects = await loadDirectory(packId, 'effects');
         this.cache.effects.push(...effects);
+
+        // Load settings (difficulties, modifiers, tags)
+        const settingsData = await loadJson(`${packId}/settings/difficulties.json`);
+        if (settingsData?.difficulties) {
+          this.cache.difficulties = settingsData.difficulties;
+        }
+
+        const modifiersData = await loadJson(`${packId}/settings/challenge_modifiers.json`);
+        if (modifiersData?.challengeModifiers) {
+          this.cache.challengeModifiers = modifiersData.challengeModifiers;
+        }
+
+        const contentTagsData = await loadJson(`${packId}/settings/content_tags.json`);
+        if (contentTagsData?.fetishTags) {
+          this.cache.fetishTags = contentTagsData.fetishTags;
+        }
+        if (contentTagsData?.sensitiveBodyParts) {
+          this.cache.sensitiveBodyParts = contentTagsData.sensitiveBodyParts;
+        }
+
+        // Load item rarities and name parts
+        const raritiesData = await loadJson(`${packId}/items/rarities.json`);
+        if (raritiesData?.itemRarities) {
+          this.cache.itemRarities = raritiesData.itemRarities;
+        }
+        if (raritiesData?.curseRarities) {
+          this.cache.curseRarities = raritiesData.curseRarities;
+        }
+
+        const namePartsData = await loadJson(`${packId}/items/name_parts.json`);
+        if (namePartsData?.itemNameParts) {
+          this.cache.itemNameParts = namePartsData.itemNameParts;
+        }
+
+        // Load combat restraints
+        const restraintsData = await loadJson(`${packId}/combat/restraints.json`);
+        if (restraintsData?.restraints) {
+          this.cache.restraints = { ...this.cache.restraints, ...restraintsData.restraints };
+        }
+
+        // Load achievements
+        const achievementsData = await loadJson(`${packId}/progression/achievements.json`);
+        if (achievementsData?.achievements) {
+          this.cache.achievements = { ...this.cache.achievements, ...achievementsData.achievements };
+        }
+        if (achievementsData?.achievementRarities) {
+          this.cache.achievementRarities = achievementsData.achievementRarities;
+        }
+
+        // Load skills
+        const skillsData = await loadJson(`${packId}/skills/skills.json`);
+        if (skillsData?.skills) {
+          this.cache.skills = { ...this.cache.skills, ...skillsData.skills };
+        }
+        if (skillsData?.skillTrees) {
+          this.cache.skillTrees = { ...this.cache.skillTrees, ...skillsData.skillTrees };
+        }
+
+        // Load paperdoll config
+        const paperdollData = await loadJson(`${packId}/display/paperdoll_config.json`);
+        if (paperdollData?.paperdollLayers) {
+          this.cache.paperdollLayers = paperdollData.paperdollLayers;
+        }
+        if (paperdollData?.paperdollItemMapping) {
+          this.cache.paperdollItemMapping = paperdollData.paperdollItemMapping;
+        }
+        if (paperdollData?.bodyRegionDisplay) {
+          this.cache.bodyRegionDisplay = paperdollData.bodyRegionDisplay;
+        }
       }
 
       this.loaded = true;
@@ -332,7 +422,10 @@ class GameDataLoader {
         locations: this.cache.locations.length,
         encounterTables: Object.keys(this.cache.encounterTables).length,
         characters: this.cache.characters.length,
-        scenes: Object.keys(this.cache.scenes).length
+        scenes: Object.keys(this.cache.scenes).length,
+        difficulties: this.cache.difficulties.length,
+        skills: Object.keys(this.cache.skills).length,
+        achievements: Object.keys(this.cache.achievements).length
       });
 
       return this.cache;
@@ -348,7 +441,22 @@ class GameDataLoader {
         encounterTables: {},
         characters: [],
         scenes: {},
-        effects: []
+        effects: [],
+        difficulties: [],
+        challengeModifiers: [],
+        fetishTags: [],
+        sensitiveBodyParts: [],
+        itemRarities: [],
+        curseRarities: [],
+        itemNameParts: null,
+        restraints: {},
+        achievements: {},
+        achievementRarities: {},
+        skills: {},
+        skillTrees: {},
+        paperdollLayers: {},
+        paperdollItemMapping: {},
+        bodyRegionDisplay: []
       };
       return this.cache;
     } finally {
@@ -482,6 +590,93 @@ class GameDataLoader {
       ...this.cache.scenes
     };
 
+    // Merge difficulties - datapack takes precedence if non-empty
+    if (this.cache.difficulties?.length > 0) {
+      merged.difficulties = this.cache.difficulties;
+    }
+
+    // Merge challenge modifiers - datapack takes precedence if non-empty
+    if (this.cache.challengeModifiers?.length > 0) {
+      merged.challengeModifiers = this.cache.challengeModifiers;
+    }
+
+    // Merge fetish tags - datapack takes precedence if non-empty
+    if (this.cache.fetishTags?.length > 0) {
+      merged.fetishTags = this.cache.fetishTags;
+    }
+
+    // Merge sensitive body parts - datapack takes precedence if non-empty
+    if (this.cache.sensitiveBodyParts?.length > 0) {
+      merged.sensitiveBodyParts = this.cache.sensitiveBodyParts;
+    }
+
+    // Merge item rarities - datapack takes precedence if non-empty
+    if (this.cache.itemRarities?.length > 0) {
+      merged.itemRarities = this.cache.itemRarities;
+    }
+
+    // Merge curse rarities - datapack takes precedence if non-empty
+    if (this.cache.curseRarities?.length > 0) {
+      merged.curseRarities = this.cache.curseRarities;
+    }
+
+    // Merge item name parts - datapack takes precedence if exists
+    if (this.cache.itemNameParts) {
+      merged.itemNameParts = this.cache.itemNameParts;
+    }
+
+    // Merge restraints - datapack takes precedence
+    if (Object.keys(this.cache.restraints || {}).length > 0) {
+      merged.restraints = {
+        ...(existingGameData.restraints || {}),
+        ...this.cache.restraints
+      };
+    }
+
+    // Merge achievements - datapack takes precedence
+    if (Object.keys(this.cache.achievements || {}).length > 0) {
+      merged.achievements = {
+        ...(existingGameData.achievements || {}),
+        ...this.cache.achievements
+      };
+    }
+
+    // Merge achievement rarities - datapack takes precedence if exists
+    if (Object.keys(this.cache.achievementRarities || {}).length > 0) {
+      merged.achievementRarities = this.cache.achievementRarities;
+    }
+
+    // Merge skills - datapack takes precedence
+    if (Object.keys(this.cache.skills || {}).length > 0) {
+      merged.skills = {
+        ...(existingGameData.skills || {}),
+        ...this.cache.skills
+      };
+    }
+
+    // Merge skill trees - datapack takes precedence
+    if (Object.keys(this.cache.skillTrees || {}).length > 0) {
+      merged.skillTrees = {
+        ...(existingGameData.skillTrees || {}),
+        ...this.cache.skillTrees
+      };
+    }
+
+    // Merge paperdoll layers - datapack takes precedence if exists
+    if (Object.keys(this.cache.paperdollLayers || {}).length > 0) {
+      merged.paperdollLayers = this.cache.paperdollLayers;
+    }
+
+    // Merge paperdoll item mapping - datapack takes precedence if exists
+    if (Object.keys(this.cache.paperdollItemMapping || {}).length > 0) {
+      merged.paperdollItemMapping = this.cache.paperdollItemMapping;
+    }
+
+    // Merge body region display - datapack takes precedence if non-empty
+    if (this.cache.bodyRegionDisplay?.length > 0) {
+      merged.bodyRegionDisplay = this.cache.bodyRegionDisplay;
+    }
+
     console.log('[GameDataLoader] Merged GameData:', {
       enemies: Object.keys(merged.enemies).length,
       lootTables: Object.keys(merged.lootTables).length,
@@ -491,7 +686,10 @@ class GameDataLoader {
       locations: merged.locations.length,
       enemyTables: Object.keys(merged.enemyTables).length,
       characters: merged.characters.length,
-      scenes: Object.keys(merged.scenes).length
+      scenes: Object.keys(merged.scenes).length,
+      difficulties: merged.difficulties?.length || 0,
+      skills: Object.keys(merged.skills || {}).length,
+      achievements: Object.keys(merged.achievements || {}).length
     });
 
     return merged;

@@ -1,0 +1,19 @@
+{
+  "itemRarities": [
+    { "id": "common", "name": "Common", "color": "#9CA3AF", "dropWeight": 50, "statMultiplier": 1.0 },
+    { "id": "uncommon", "name": "Uncommon", "color": "#22C55E", "dropWeight": 25, "statMultiplier": 1.2 },
+    { "id": "rare", "name": "Rare", "color": "#3B82F6", "dropWeight": 15, "statMultiplier": 1.5 },
+    { "id": "epic", "name": "Epic", "color": "#A855F7", "dropWeight": 7, "statMultiplier": 1.8 },
+    { "id": "legendary", "name": "Legendary", "color": "#F59E0B", "dropWeight": 2.5, "statMultiplier": 2.2 },
+    { "id": "mythical", "name": "Mythical", "color": "#EC4899", "dropWeight": 0.4, "statMultiplier": 2.8 },
+    { "id": "divine", "name": "Divine", "color": "#FBBF24", "dropWeight": 0.1, "statMultiplier": 3.5, "glowEffect": true }
+  ],
+  "curseRarities": [
+    { "id": "minor", "name": "Minor", "color": "#6B7280", "severity": 1 },
+    { "id": "dreadful", "name": "Dreadful", "color": "#7C3AED", "severity": 2 },
+    { "id": "malicious", "name": "Malicious", "color": "#DC2626", "severity": 3 },
+    { "id": "malignant", "name": "Malignant", "color": "#991B1B", "severity": 4 },
+    { "id": "evil", "name": "Evil", "color": "#450A0A", "severity": 5 },
+    { "id": "diabolical", "name": "Diabolical", "color": "#000000", "severity": 6, "glowEffect": true }
+  ]
+}

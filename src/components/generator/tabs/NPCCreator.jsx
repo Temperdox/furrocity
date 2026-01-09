@@ -1,211 +1,50 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
+import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { useFormDraft } from '../../../hooks/useFormDraft';
+import './CreatorStyles.css';
 
-const styles = {
-  container: {
-    display: 'flex',
-    gap: '20px',
-    height: '100%',
-  },
-  formSection: {
-    flex: '1',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '20px',
-    overflowY: 'auto',
-  },
-  listSection: {
-    width: '320px',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '15px',
-    overflowY: 'auto',
-  },
-  sectionTitle: {
-    color: '#ffd700',
-    fontSize: '18px',
-    marginBottom: '15px',
-    borderBottom: '1px solid #4a4a6a',
-    paddingBottom: '10px',
-  },
-  formGroup: {
-    marginBottom: '15px',
-  },
-  label: {
-    display: 'block',
-    color: '#a0a0c0',
-    marginBottom: '5px',
-    fontSize: '13px',
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  select: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  textarea: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    minHeight: '80px',
-    resize: 'vertical',
-    boxSizing: 'border-box',
-  },
-  row: {
-    display: 'flex',
-    gap: '15px',
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  button: {
-    padding: '10px 20px',
-    borderRadius: '6px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    transition: 'all 0.2s ease',
-    marginRight: '10px',
-  },
-  primaryButton: {
-    backgroundColor: '#4a7c4a',
-    color: 'white',
-  },
-  secondaryButton: {
-    backgroundColor: '#4a4a6a',
-    color: 'white',
-  },
-  smallButton: {
-    padding: '4px 8px',
-    borderRadius: '4px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '11px',
-  },
-  tagInput: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '5px',
-    padding: '8px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    minHeight: '40px',
-  },
-  tag: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '3px 8px',
-    backgroundColor: '#3a3a5a',
-    borderRadius: '12px',
-    fontSize: '12px',
-    color: '#d0d0e0',
-  },
-  tagRemove: {
-    marginLeft: '5px',
-    cursor: 'pointer',
-    color: '#ff6666',
-  },
-  listItem: {
-    padding: '12px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '6px',
-    marginBottom: '8px',
-    cursor: 'pointer',
-    border: '1px solid transparent',
-    transition: 'all 0.2s ease',
-  },
-  listItemHover: {
-    borderColor: '#4a4a6a',
-  },
-  listItemName: {
-    color: '#ffd700',
-    fontSize: '14px',
-    fontWeight: 'bold',
-  },
-  listItemDetails: {
-    color: '#808090',
-    fontSize: '12px',
-    marginTop: '4px',
-  },
-  listItemActions: {
-    display: 'flex',
-    gap: '5px',
-    marginTop: '8px',
-  },
-  emptyList: {
-    color: '#606080',
-    textAlign: 'center',
-    padding: '30px',
-    fontSize: '14px',
-  },
-  subsection: {
-    marginTop: '20px',
-    padding: '15px',
-    backgroundColor: '#1e1e35',
-    borderRadius: '6px',
-  },
-  subsectionTitle: {
-    color: '#c0c0e0',
-    fontSize: '14px',
-    marginBottom: '12px',
-    fontWeight: 'bold',
-  },
-  dialogueItem: {
-    backgroundColor: '#252540',
-    borderRadius: '6px',
-    padding: '10px',
-    marginTop: '8px',
-    border: '1px solid #3a3a5a',
-  },
+const DRAFT_KEY = 'contentGenerator_draft_npcs';
+
+const TAG_CATEGORIES = {
+  type: ['merchant', 'quest', 'companion', 'romance', 'nsfw'],
+  disposition: ['friendly', 'hostile', 'neutral', 'mysterious'],
+  species: ['human', 'elf', 'demon', 'beast', 'undead'],
 };
 
-// Suggested roles - users can also type custom values
-const SUGGESTED_ROLES = [
-  'merchant', 'quest_giver', 'companion', 'innkeeper', 'blacksmith',
-  'healer', 'guard', 'villager', 'romance', 'antagonist', 'bartender',
-  'trainer', 'banker', 'mayor', 'priest', 'thief', 'scholar',
+const ROLE_OPTIONS = [
+  { value: 'merchant', label: 'Merchant' },
+  { value: 'quest_giver', label: 'Quest Giver' },
+  { value: 'companion', label: 'Companion' },
+  { value: 'innkeeper', label: 'Innkeeper' },
+  { value: 'blacksmith', label: 'Blacksmith' },
+  { value: 'healer', label: 'Healer' },
+  { value: 'guard', label: 'Guard' },
+  { value: 'villager', label: 'Villager' },
+  { value: 'romance', label: 'Romance' },
+  { value: 'antagonist', label: 'Antagonist' },
+  { value: 'bartender', label: 'Bartender' },
+  { value: 'trainer', label: 'Trainer' },
+  { value: 'banker', label: 'Banker' },
+  { value: 'mayor', label: 'Mayor' },
+  { value: 'priest', label: 'Priest' },
+  { value: 'thief', label: 'Thief' },
+  { value: 'scholar', label: 'Scholar' },
 ];
 
-// Fallback NPC tags when no dynamic tags available
-const FALLBACK_NPC_TAGS = [
-  'merchant', 'quest', 'companion', 'romance', 'nsfw',
-  'friendly', 'hostile', 'neutral', 'mysterious',
-  'human', 'elf', 'demon', 'beast', 'undead',
-];
-
-// Fallback item tags for merchant buy/sell config
-const FALLBACK_ITEM_TAGS = [
-  'weapon', 'armor', 'consumable', 'material', 'quest', 'misc',
-  'nsfw', 'toy', 'clothing', 'jewelry', 'food', 'potion',
-];
+const ITEM_TAG_CATEGORIES = {
+  type: ['weapon', 'armor', 'consumable', 'material', 'quest', 'misc'],
+  nsfw: ['nsfw', 'toy', 'clothing', 'jewelry'],
+  general: ['food', 'potion', 'scroll', 'key'],
+};
 
 const DEFAULT_NPC = {
   id: '',
   name: '',
   description: '',
   role: 'villager',
-  defaultLocationId: '',  // Home location when no schedule matches
-  schedule: [],  // Time-based location schedule
+  defaultLocationId: '',
+  schedule: [],
   factionId: '',
   nsfwEnabled: false,
   canBeSeduced: false,
@@ -250,36 +89,52 @@ const NPCCreator = ({
   datapackContent = {},
   datapackLoading = false,
 }) => {
-  // Combine datapack locations with user-created locations
-  // Filter locations to exclude any enemy objects that may have been incorrectly included
-  const allLocations = [...(datapackContent.locations || []), ...locations]
-    .filter(loc => {
-      const hasLocationFields = loc.locationType || loc.parentRegion || loc.connectedLocations || loc.navigation;
-      const hasEnemyFields = loc.tier !== undefined || loc.maxHp !== undefined || loc.nsfwActions !== undefined || loc.loot !== undefined;
-      return hasLocationFields || !hasEnemyFields;
-    });
   const [formData, setFormData] = useState({ ...DEFAULT_NPC });
-  const [tagInput, setTagInput] = useState('');
-  const [acceptedTagInput, setAcceptedTagInput] = useState('');
-  const [rejectedTagInput, setRejectedTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [collapsedSections, setCollapsedSections] = useState({
+    schedule: true,
+    nsfw: true,
+    dialogue: false,
+    merchant: false,
+    tags: false,
+  });
 
-  // Compute dynamic NPC tag suggestions
-  const suggestedNpcTags = useMemo(() => {
+  const toggleSection = (section) => {
+    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
+    defaultValues: DEFAULT_NPC,
+  });
+
+  // Combine datapack locations with user-created locations
+  const allLocations = useMemo(() => {
+    return [...(datapackContent.locations || []), ...locations]
+      .filter(loc => {
+        const hasLocationFields = loc.locationType || loc.parentRegion || loc.connectedLocations || loc.navigation;
+        const hasEnemyFields = loc.tier !== undefined || loc.maxHp !== undefined || loc.nsfwActions !== undefined || loc.loot !== undefined;
+        return hasLocationFields || !hasEnemyFields;
+      });
+  }, [datapackContent.locations, locations]);
+
+  const locationOptions = useMemo(() => {
+    return allLocations.map(l => ({ value: l.id, label: l.name }));
+  }, [allLocations]);
+
+  const suggestedTags = useMemo(() => {
     return collectTags({
       datapackContent,
       userContent: items,
-      commonTags: FALLBACK_NPC_TAGS,
+      commonTags: Object.values(TAG_CATEGORIES).flat(),
       contentType: 'npcs',
     });
   }, [datapackContent, items]);
 
-  // Compute dynamic item tag suggestions (for merchant accepted/rejected tags)
   const suggestedItemTags = useMemo(() => {
     return collectTags({
       datapackContent,
-      userContent: [], // Could pass allContent.items if available
-      commonTags: FALLBACK_ITEM_TAGS,
+      userContent: [],
+      commonTags: Object.values(ITEM_TAG_CATEGORIES).flat(),
       contentType: 'items',
     });
   }, [datapackContent]);
@@ -289,7 +144,6 @@ const NPCCreator = ({
       setFormData({
         ...DEFAULT_NPC,
         ...editingItem,
-        // Handle legacy locationId -> defaultLocationId migration
         defaultLocationId: editingItem.defaultLocationId || editingItem.locationId || '',
         schedule: editingItem.schedule || [],
         dialogue: { ...DEFAULT_NPC.dialogue, ...editingItem.dialogue },
@@ -312,37 +166,21 @@ const NPCCreator = ({
     }));
   };
 
-  const handleAddTag = (tag) => {
-    if (tag && !formData.tags.includes(tag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag],
-      }));
-    }
-    setTagInput('');
+  // Schedule handlers
+  const handleAddScheduleSlot = () => {
+    const newSchedule = [...(formData.schedule || []), { startHour: 6, endHour: 18, locationId: '' }];
+    handleChange('schedule', newSchedule);
   };
 
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(t => t !== tagToRemove),
-    }));
+  const handleUpdateScheduleSlot = (index, field, value) => {
+    const newSchedule = [...formData.schedule];
+    newSchedule[index] = { ...newSchedule[index], [field]: value };
+    handleChange('schedule', newSchedule);
   };
 
-  const handleAddBuyTag = (type, tag) => {
-    if (tag) {
-      const field = type === 'accepted' ? 'acceptedTags' : 'rejectedTags';
-      if (!formData.buyConfig[field].includes(tag)) {
-        handleNestedChange('buyConfig', field, [...formData.buyConfig[field], tag]);
-      }
-    }
-    if (type === 'accepted') setAcceptedTagInput('');
-    else setRejectedTagInput('');
-  };
-
-  const handleRemoveBuyTag = (type, tag) => {
-    const field = type === 'accepted' ? 'acceptedTags' : 'rejectedTags';
-    handleNestedChange('buyConfig', field, formData.buyConfig[field].filter(t => t !== tag));
+  const handleRemoveScheduleSlot = (index) => {
+    const newSchedule = formData.schedule.filter((_, i) => i !== index);
+    handleChange('schedule', newSchedule);
   };
 
   const handleSubmit = () => {
@@ -360,6 +198,7 @@ const NPCCreator = ({
       onUpdate(editingItem._id, formData);
     } else {
       onAdd(formData);
+      clearDraft();
     }
 
     setFormData({ ...DEFAULT_NPC });
@@ -372,508 +211,377 @@ const NPCCreator = ({
 
   const isMerchant = formData.role === 'merchant' || formData.role === 'blacksmith' || formData.role === 'innkeeper';
 
+  // Generate hour options for schedule
+  const hourOptions = useMemo(() => {
+    return Array.from({ length: 24 }, (_, i) => ({
+      value: i,
+      label: `${i.toString().padStart(2, '0')}:00`,
+    }));
+  }, []);
+
   return (
-    <div style={styles.container}>
+    <div className="creator-container">
       {/* Form Section */}
-      <div style={styles.formSection}>
-        <h3 style={styles.sectionTitle}>
-          {editingItem ? '✏️ Edit NPC' : '➕ Create New NPC'}
+      <div className="creator-form">
+        <h3 className="creator-form-section-title">
+          {editingItem ? 'Edit NPC' : 'Create New NPC'}
         </h3>
 
         {/* Basic Info */}
-        <div style={styles.row}>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>ID *</label>
-              <input
-                style={styles.input}
-                value={formData.id}
-                onChange={(e) => handleChange('id', e.target.value.toLowerCase().replace(/\s/g, '_'))}
-                placeholder="unique_npc_id"
-              />
-            </div>
+        <div className="creator-form-section">
+          <div className="creator-form-row">
+            <FormInput
+              label="ID"
+              required
+              value={formData.id}
+              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
+              placeholder="unique_npc_id"
+            />
+            <FormInput
+              label="Name"
+              required
+              value={formData.name}
+              onChange={(v) => handleChange('name', v)}
+              placeholder="NPC Name"
+            />
           </div>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Name *</label>
-              <input
-                style={styles.input}
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="NPC Name"
-              />
-            </div>
-          </div>
-        </div>
 
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Description</label>
-          <textarea
-            style={styles.textarea}
+          <FormInput
+            label="Description"
+            type="textarea"
             value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
+            onChange={(v) => handleChange('description', v)}
             placeholder="Describe this NPC..."
+            rows={3}
           />
-        </div>
 
-        <div style={styles.row}>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Role</label>
-              <input
-                style={styles.input}
-                value={formData.role}
-                onChange={(e) => handleChange('role', e.target.value)}
-                placeholder="e.g., merchant, quest_giver, companion"
-              />
-              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                {SUGGESTED_ROLES.filter(r => r !== formData.role).map(role => (
-                  <button
-                    key={role}
-                    type="button"
-                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                    onClick={() => handleChange('role', role)}
-                  >
-                    + {role}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="creator-form-row">
+            <FormSelect
+              label="Role"
+              value={formData.role}
+              onChange={(v) => handleChange('role', v)}
+              options={ROLE_OPTIONS}
+            />
+            <FormSelect
+              label="Default Location"
+              value={formData.defaultLocationId || formData.locationId || ''}
+              onChange={(v) => handleChange('defaultLocationId', v)}
+              options={locationOptions}
+              placeholder="Select Default Location"
+              helper="Where NPC is when no schedule applies"
+            />
           </div>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Default Location</label>
-              <select
-                style={styles.select}
-                value={formData.defaultLocationId || formData.locationId || ''}
-                onChange={(e) => handleChange('defaultLocationId', e.target.value)}
-              >
-                <option value="">Select Default Location</option>
-                {allLocations.map(l => (
-                  <option key={l.id} value={l.id}>{l.name}</option>
-                ))}
-              </select>
-              <div style={{ color: '#808090', fontSize: '11px', marginTop: '4px' }}>
-                Where NPC is when no schedule applies
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Schedule Editor */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>
-            Travel Schedule
-            <button
-              style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white', marginLeft: '10px' }}
-              onClick={() => {
-                const newSchedule = [...(formData.schedule || []), { startHour: 6, endHour: 18, locationId: '' }];
-                handleChange('schedule', newSchedule);
-              }}
-            >
-              + Add Time Slot
-            </button>
-          </div>
-          <div style={{ color: '#808090', fontSize: '12px', marginBottom: '10px' }}>
-            Define where this NPC will be at different times of day
-          </div>
-          {(formData.schedule || []).length === 0 ? (
-            <div style={{ color: '#606080', fontSize: '12px', fontStyle: 'italic', padding: '10px', backgroundColor: '#1a1a2e', borderRadius: '4px' }}>
-              No schedule defined - NPC will always be at default location
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {(formData.schedule || []).map((slot, index) => (
-                <div key={index} style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '10px', backgroundColor: '#1a1a2e', borderRadius: '4px' }}>
-                  <div style={{ flex: '0 0 80px' }}>
-                    <label style={{ ...styles.label, marginBottom: '2px' }}>From</label>
-                    <select
-                      style={{ ...styles.select, padding: '6px' }}
-                      value={slot.startHour}
-                      onChange={(e) => {
-                        const newSchedule = [...formData.schedule];
-                        newSchedule[index] = { ...slot, startHour: parseInt(e.target.value) };
-                        handleChange('schedule', newSchedule);
-                      }}
-                    >
-                      {Array.from({ length: 24 }, (_, i) => (
-                        <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div style={{ flex: '0 0 80px' }}>
-                    <label style={{ ...styles.label, marginBottom: '2px' }}>To</label>
-                    <select
-                      style={{ ...styles.select, padding: '6px' }}
-                      value={slot.endHour}
-                      onChange={(e) => {
-                        const newSchedule = [...formData.schedule];
-                        newSchedule[index] = { ...slot, endHour: parseInt(e.target.value) };
-                        handleChange('schedule', newSchedule);
-                      }}
-                    >
-                      {Array.from({ length: 24 }, (_, i) => (
-                        <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ ...styles.label, marginBottom: '2px' }}>Location</label>
-                    <select
-                      style={{ ...styles.select, padding: '6px' }}
-                      value={slot.locationId}
-                      onChange={(e) => {
-                        const newSchedule = [...formData.schedule];
-                        newSchedule[index] = { ...slot, locationId: e.target.value };
-                        handleChange('schedule', newSchedule);
-                      }}
-                    >
-                      <option value="">Select Location</option>
-                      {allLocations.map(l => (
-                        <option key={l.id} value={l.id}>{l.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <button
-                    style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white', alignSelf: 'flex-end', marginBottom: '4px' }}
-                    onClick={() => {
-                      const newSchedule = formData.schedule.filter((_, i) => i !== index);
-                      handleChange('schedule', newSchedule);
-                    }}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Portrait Image</label>
-          <input
-            style={styles.input}
+          <FormInput
+            label="Portrait Image"
             value={formData.portrait}
-            onChange={(e) => handleChange('portrait', e.target.value)}
+            onChange={(v) => handleChange('portrait', v)}
             placeholder="/npcs/character.png"
           />
         </div>
 
-        {/* NSFW Settings */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>NSFW Settings</div>
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              <label style={styles.label}>
-                <input
-                  type="checkbox"
-                  checked={formData.nsfwEnabled}
-                  onChange={(e) => handleChange('nsfwEnabled', e.target.checked)}
-                  style={{ marginRight: '8px' }}
-                />
-                NSFW Content Enabled
-              </label>
+        {/* Schedule Editor */}
+        <CollapsibleSection
+          title="Travel Schedule"
+          isCollapsed={collapsedSections.schedule}
+          onToggle={() => toggleSection('schedule')}
+          badge={formData.schedule?.length > 0 ? formData.schedule.length : null}
+        >
+          <div className="creator-form-section">
+            <div style={{ marginBottom: 'var(--space-sm)' }}>
+              <Button variant="success" size="sm" onClick={handleAddScheduleSlot}>
+                + Add Time Slot
+              </Button>
             </div>
-            <div style={styles.halfWidth}>
-              <label style={styles.label}>
-                <input
-                  type="checkbox"
-                  checked={formData.canBeSeduced}
-                  onChange={(e) => handleChange('canBeSeduced', e.target.checked)}
-                  style={{ marginRight: '8px' }}
-                />
-                Can Be Seduced
-              </label>
-            </div>
+
+            {(formData.schedule || []).length === 0 ? (
+              <div className="empty-list" style={{ padding: 'var(--space-md)' }}>
+                No schedule defined - NPC will always be at default location
+              </div>
+            ) : (
+              formData.schedule.map((slot, index) => (
+                <div key={index} className="array-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                  <div className="creator-form-row cols-4">
+                    <FormSelect
+                      label="From"
+                      value={slot.startHour}
+                      onChange={(v) => handleUpdateScheduleSlot(index, 'startHour', parseInt(v))}
+                      options={hourOptions}
+                    />
+                    <FormSelect
+                      label="To"
+                      value={slot.endHour}
+                      onChange={(v) => handleUpdateScheduleSlot(index, 'endHour', parseInt(v))}
+                      options={hourOptions}
+                    />
+                    <FormSelect
+                      label="Location"
+                      value={slot.locationId}
+                      onChange={(v) => handleUpdateScheduleSlot(index, 'locationId', v)}
+                      options={locationOptions}
+                      placeholder="Select Location"
+                    />
+                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                      <Button variant="danger" size="sm" onClick={() => handleRemoveScheduleSlot(index)}>
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-          {formData.canBeSeduced && (
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Seduction Difficulty (0-100)</label>
-              <input
-                style={styles.input}
-                type="number"
-                min="0"
-                max="100"
-                value={formData.seductionDifficulty}
-                onChange={(e) => handleChange('seductionDifficulty', parseInt(e.target.value) || 50)}
-              />
+        </CollapsibleSection>
+
+        {/* NSFW Settings */}
+        <CollapsibleSection
+          title="NSFW Settings"
+          isCollapsed={collapsedSections.nsfw}
+          onToggle={() => toggleSection('nsfw')}
+          badge={formData.nsfwEnabled ? 'Enabled' : null}
+        >
+          <div className="creator-form-section">
+            <div className="creator-form-row">
+              <div className="checkbox-row">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.nsfwEnabled}
+                    onChange={(e) => handleChange('nsfwEnabled', e.target.checked)}
+                  />
+                  <span className="checkbox-text">NSFW Content Enabled</span>
+                </label>
+              </div>
+              <div className="checkbox-row">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.canBeSeduced}
+                    onChange={(e) => handleChange('canBeSeduced', e.target.checked)}
+                  />
+                  <span className="checkbox-text">Can Be Seduced</span>
+                </label>
+              </div>
             </div>
-          )}
-        </div>
+            {formData.canBeSeduced && (
+              <FormInput
+                label="Seduction Difficulty"
+                type="number"
+                value={formData.seductionDifficulty}
+                onChange={(v) => handleChange('seductionDifficulty', v)}
+                min={0}
+                max={100}
+                helper="0-100, higher = harder"
+              />
+            )}
+          </div>
+        </CollapsibleSection>
 
         {/* Dialogue */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Dialogue Lines</div>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Greeting (First Time)</label>
-            <input
-              style={styles.input}
-              value={formData.dialogue.greeting}
-              onChange={(e) => handleNestedChange('dialogue', 'greeting', e.target.value)}
-              placeholder="Hello, traveler!"
-            />
-          </div>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Greeting (Repeat)</label>
-            <input
-              style={styles.input}
-              value={formData.dialogue.greeting_repeat}
-              onChange={(e) => handleNestedChange('dialogue', 'greeting_repeat', e.target.value)}
-              placeholder="Back again?"
-            />
-          </div>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Farewell</label>
-            <input
-              style={styles.input}
+        <CollapsibleSection
+          title="Dialogue Lines"
+          isCollapsed={collapsedSections.dialogue}
+          onToggle={() => toggleSection('dialogue')}
+        >
+          <div className="creator-form-section">
+            <div className="creator-form-row">
+              <FormInput
+                label="Greeting (First Time)"
+                value={formData.dialogue.greeting}
+                onChange={(v) => handleNestedChange('dialogue', 'greeting', v)}
+                placeholder="Hello, traveler!"
+              />
+              <FormInput
+                label="Greeting (Repeat)"
+                value={formData.dialogue.greeting_repeat}
+                onChange={(v) => handleNestedChange('dialogue', 'greeting_repeat', v)}
+                placeholder="Back again?"
+              />
+            </div>
+            <FormInput
+              label="Farewell"
               value={formData.dialogue.farewell}
-              onChange={(e) => handleNestedChange('dialogue', 'farewell', e.target.value)}
+              onChange={(v) => handleNestedChange('dialogue', 'farewell', v)}
               placeholder="Safe travels!"
             />
-          </div>
-          {isMerchant && (
-            <>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Cannot Buy Item</label>
-                <input
-                  style={styles.input}
+            {isMerchant && (
+              <div className="creator-form-row">
+                <FormInput
+                  label="Cannot Buy Item"
                   value={formData.dialogue.cannotBuy}
-                  onChange={(e) => handleNestedChange('dialogue', 'cannotBuy', e.target.value)}
+                  onChange={(v) => handleNestedChange('dialogue', 'cannotBuy', v)}
                   placeholder="I can't accept that."
                 />
-              </div>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Cannot Afford</label>
-                <input
-                  style={styles.input}
+                <FormInput
+                  label="Cannot Afford"
                   value={formData.dialogue.cannotAfford}
-                  onChange={(e) => handleNestedChange('dialogue', 'cannotAfford', e.target.value)}
+                  onChange={(v) => handleNestedChange('dialogue', 'cannotAfford', v)}
                   placeholder="You don't have enough gold."
                 />
               </div>
-            </>
-          )}
-        </div>
+            )}
+          </div>
+        </CollapsibleSection>
 
         {/* Merchant Config */}
         {isMerchant && (
-          <div style={styles.subsection}>
-            <div style={styles.subsectionTitle}>Merchant Settings</div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Accepted Item Tags</label>
-              <div style={styles.tagInput}>
-                {formData.buyConfig.acceptedTags.map(tag => (
-                  <span key={tag} style={styles.tag}>
-                    ✓ {tag}
-                    <span style={styles.tagRemove} onClick={() => handleRemoveBuyTag('accepted', tag)}>×</span>
-                  </span>
-                ))}
-                <input
-                  style={{ ...styles.input, border: 'none', backgroundColor: 'transparent', flex: 1, minWidth: '100px', padding: '2px' }}
-                  value={acceptedTagInput}
-                  onChange={(e) => setAcceptedTagInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddBuyTag('accepted', acceptedTagInput)}
-                  placeholder="Add tag..."
+          <CollapsibleSection
+            title="Merchant Settings"
+            isCollapsed={collapsedSections.merchant}
+            onToggle={() => toggleSection('merchant')}
+          >
+            <div className="creator-form-section">
+              <div className="subsection">
+                <div className="subsection-title">Accepted Item Tags</div>
+                <TagInput
+                  value={formData.buyConfig.acceptedTags}
+                  onChange={(v) => handleNestedChange('buyConfig', 'acceptedTags', v)}
+                  suggestions={suggestedItemTags}
+                  categories={ITEM_TAG_CATEGORIES}
+                  placeholder="Add accepted tag..."
+                  showSuggestions
                 />
               </div>
-              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                {suggestedItemTags.filter(t => !formData.buyConfig.acceptedTags.includes(t)).slice(0, 15).map(tag => (
-                  <button
-                    key={tag}
-                    style={{ ...styles.smallButton, backgroundColor: '#3a5a3a', color: '#a0c0a0' }}
-                    onClick={() => handleAddBuyTag('accepted', tag)}
-                  >
-                    + {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Rejected Item Tags</label>
-              <div style={styles.tagInput}>
-                {formData.buyConfig.rejectedTags.map(tag => (
-                  <span key={tag} style={{ ...styles.tag, backgroundColor: '#5a3a3a' }}>
-                    ✗ {tag}
-                    <span style={styles.tagRemove} onClick={() => handleRemoveBuyTag('rejected', tag)}>×</span>
-                  </span>
-                ))}
-                <input
-                  style={{ ...styles.input, border: 'none', backgroundColor: 'transparent', flex: 1, minWidth: '100px', padding: '2px' }}
-                  value={rejectedTagInput}
-                  onChange={(e) => setRejectedTagInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddBuyTag('rejected', rejectedTagInput)}
-                  placeholder="Add tag..."
+              <div className="subsection mt-md">
+                <div className="subsection-title">Rejected Item Tags</div>
+                <TagInput
+                  value={formData.buyConfig.rejectedTags}
+                  onChange={(v) => handleNestedChange('buyConfig', 'rejectedTags', v)}
+                  suggestions={suggestedItemTags}
+                  categories={ITEM_TAG_CATEGORIES}
+                  placeholder="Add rejected tag..."
+                  showSuggestions
                 />
               </div>
-              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                {suggestedItemTags.filter(t => !formData.buyConfig.rejectedTags.includes(t)).slice(0, 15).map(tag => (
-                  <button
-                    key={tag}
-                    style={{ ...styles.smallButton, backgroundColor: '#5a3a3a', color: '#c0a0a0' }}
-                    onClick={() => handleAddBuyTag('rejected', tag)}
-                  >
-                    + {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            <div style={styles.row}>
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Buy Price Multiplier</label>
-                  <input
-                    style={styles.input}
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="1"
-                    value={formData.buyConfig.buyPriceMultiplier}
-                    onChange={(e) => handleNestedChange('buyConfig', 'buyPriceMultiplier', parseFloat(e.target.value) || 0.4)}
-                  />
-                </div>
+              <div className="creator-form-row mt-md">
+                <FormInput
+                  label="Buy Price Multiplier"
+                  type="number"
+                  value={formData.buyConfig.buyPriceMultiplier}
+                  onChange={(v) => handleNestedChange('buyConfig', 'buyPriceMultiplier', v)}
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  helper="0.4 = 40% of item value"
+                />
+                <FormInput
+                  label="Max Buy Value"
+                  type="number"
+                  value={formData.buyConfig.maxBuyValue}
+                  onChange={(v) => handleNestedChange('buyConfig', 'maxBuyValue', v)}
+                  min={0}
+                />
               </div>
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Max Buy Value</label>
-                  <input
-                    style={styles.input}
-                    type="number"
-                    value={formData.buyConfig.maxBuyValue}
-                    onChange={(e) => handleNestedChange('buyConfig', 'maxBuyValue', parseInt(e.target.value) || 1000)}
-                  />
-                </div>
-              </div>
-            </div>
 
-            <div style={styles.row}>
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Stock ID</label>
-                  <input
-                    style={styles.input}
-                    value={formData.sellConfig.stockId}
-                    onChange={(e) => handleNestedChange('sellConfig', 'stockId', e.target.value)}
-                    placeholder="shop_stock_id"
-                  />
-                </div>
-              </div>
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Sell Price Multiplier</label>
-                  <input
-                    style={styles.input}
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={formData.sellConfig.sellPriceMultiplier}
-                    onChange={(e) => handleNestedChange('sellConfig', 'sellPriceMultiplier', parseFloat(e.target.value) || 1.0)}
-                  />
-                </div>
+              <div className="creator-form-row">
+                <FormInput
+                  label="Stock ID"
+                  value={formData.sellConfig.stockId}
+                  onChange={(v) => handleNestedChange('sellConfig', 'stockId', v)}
+                  placeholder="shop_stock_id"
+                />
+                <FormInput
+                  label="Sell Price Multiplier"
+                  type="number"
+                  value={formData.sellConfig.sellPriceMultiplier}
+                  onChange={(v) => handleNestedChange('sellConfig', 'sellPriceMultiplier', v)}
+                  min={0}
+                  step={0.1}
+                  helper="1.0 = base price"
+                />
               </div>
             </div>
-          </div>
+          </CollapsibleSection>
         )}
 
         {/* Tags */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Tags</div>
-          <div style={styles.tagInput}>
-            {formData.tags.map(tag => (
-              <span key={tag} style={styles.tag}>
-                {tag}
-                <span style={styles.tagRemove} onClick={() => handleRemoveTag(tag)}>×</span>
-              </span>
-            ))}
-            <input
-              style={{ ...styles.input, border: 'none', backgroundColor: 'transparent', flex: 1, minWidth: '100px', padding: '2px' }}
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddTag(tagInput)}
+        <CollapsibleSection
+          title="Tags"
+          isCollapsed={collapsedSections.tags}
+          onToggle={() => toggleSection('tags')}
+          badge={formData.tags?.length > 0 ? formData.tags.length : null}
+        >
+          <div className="creator-form-section">
+            <TagInput
+              value={formData.tags}
+              onChange={(v) => handleChange('tags', v)}
+              suggestions={suggestedTags}
+              categories={TAG_CATEGORIES}
               placeholder="Add tag..."
+              showSuggestions
             />
           </div>
-          <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {suggestedNpcTags.filter(t => !formData.tags.includes(t)).slice(0, 15).map(tag => (
-              <button
-                key={tag}
-                style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                onClick={() => handleAddTag(tag)}
-              >
-                + {tag}
-              </button>
-            ))}
-          </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Action Buttons */}
-        <div style={{ marginTop: '20px' }}>
-          <button
-            style={{ ...styles.button, ...styles.primaryButton }}
-            onClick={handleSubmit}
-          >
-            {editingItem ? '💾 Update NPC' : '➕ Add NPC'}
-          </button>
+        <div className="creator-actions">
+          <Button variant="success" onClick={handleSubmit}>
+            {editingItem ? 'Update NPC' : 'Add NPC'}
+          </Button>
           {editingItem && (
-            <button
-              style={{ ...styles.button, ...styles.secondaryButton }}
-              onClick={handleCancel}
-            >
+            <Button variant="ghost" onClick={handleCancel}>
               Cancel
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {/* List Section */}
-      <div style={styles.listSection}>
-        <h3 style={styles.sectionTitle}>📋 Created NPCs ({items.length})</h3>
+      <div className="creator-list">
+        <h3 className="creator-form-section-title">
+          Created NPCs
+          <span className="count-badge">{items.length}</span>
+        </h3>
 
         {items.length === 0 ? (
-          <div style={styles.emptyList}>
-            No NPCs created yet.<br />
+          <div className="empty-list">
+            No NPCs created yet.
+            <br />
             Use the form to create your first NPC.
           </div>
         ) : (
           items.map(item => (
             <div
               key={item._id}
-              style={{
-                ...styles.listItem,
-                ...(hoveredItem === item._id ? styles.listItemHover : {}),
-                ...(editingItem?._id === item._id ? { borderColor: '#ffd700' } : {}),
-              }}
+              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
               onMouseEnter={() => setHoveredItem(item._id)}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <div style={styles.listItemName}>
-                👤 {item.name}
-                {item.nsfwEnabled && <span style={{ marginLeft: '5px', color: '#ff6b6b' }}>🔞</span>}
+              <div className="creator-item-info">
+                <div className="creator-item-name">
+                  {item.name}
+                  {item.nsfwEnabled && (
+                    <span className="rarity-badge" style={{ backgroundColor: 'var(--color-accent-danger)' }}>
+                      NSFW
+                    </span>
+                  )}
+                </div>
+                <div className="creator-item-id">
+                  ID: {item.id} | Role: {item.role}
+                </div>
+                {item.tags?.length > 0 && (
+                  <div className="creator-item-tags">
+                    {item.tags.slice(0, 4).map(tag => (
+                      <span key={tag} className="tag-chip">{tag}</span>
+                    ))}
+                    {item.tags.length > 4 && (
+                      <span className="tag-chip more">+{item.tags.length - 4}</span>
+                    )}
+                  </div>
+                )}
               </div>
-              <div style={styles.listItemDetails}>
-                ID: {item.id} | Role: {item.role}
-              </div>
-              <div style={styles.listItemActions}>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white' }}
-                  onClick={() => onEdit(item)}
-                >
+              <div className="creator-item-actions">
+                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
                   Edit
-                </button>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#4a4a7c', color: 'white' }}
-                  onClick={() => onDuplicate(item)}
-                >
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
                   Duplicate
-                </button>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                  onClick={() => onDelete(item._id)}
-                >
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
                   Delete
-                </button>
+                </Button>
               </div>
             </div>
           ))

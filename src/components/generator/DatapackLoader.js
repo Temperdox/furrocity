@@ -23,10 +23,35 @@ async function loadJson(path) {
 }
 
 /**
+ * Map content paths to their contentType values
+ */
+const CONTENT_TYPE_MAP = {
+  items: 'item',
+  enemies: 'enemy',
+  locations: 'location',
+  effects: 'effect',
+  scenes: 'scene',
+  merchants: 'npc',
+  characters: 'character',
+  substances: 'substance',
+  nsfw: 'nsfw',
+  loot_tables: 'lootTable',
+  encounter_tables: 'encounterTable',
+  npcs: 'npc',
+  quests: 'quest',
+  skills: 'skill',
+};
+
+/**
  * Load all JSON files from a datapack directory
+ * @param {string} packId - The pack ID (e.g., 'core')
+ * @param {string} contentPath - The content folder name (e.g., 'items', 'enemies')
+ * @param {Array} filePatterns - Optional specific file patterns to load
+ * @returns {Array} - Array of loaded items with contentType field added
  */
 async function loadDirectory(packId, contentPath, filePatterns = []) {
   const results = [];
+  const contentType = CONTENT_TYPE_MAP[contentPath] || contentPath;
 
   // Try to load common file patterns
   const patterns = filePatterns.length > 0 ? filePatterns : [
@@ -37,7 +62,7 @@ async function loadDirectory(packId, contentPath, filePatterns = []) {
   const knownFiles = {
     items: ['weapons_armor.json', 'clothing_paperdoll.json', 'consumables.json', 'materials.json'],
     enemies: ['forest_enemies.json', 'dungeon_enemies.json', 'demon_enemies.json', 'town_enemies.json'],
-    locations: ['world_locations.json', 'regions.json', 'dungeons.json'],
+    locations: ['world_locations.json', 'regions.json', 'kingdoms.json'],
     effects: ['core_effects.json', 'buffs.json', 'debuffs.json', 'curses.json'],
     scenes: ['intro_scenes.json', 'combat_scenes.json', 'quest_scenes.json', 'inn_rental_scenes.json', 'enemy_scene_mapping.json'],
     merchants: ['merchants.json', 'shop_inventories.json'],
@@ -55,12 +80,13 @@ async function loadDirectory(packId, contentPath, filePatterns = []) {
     if (data) {
       // Handle both array and object formats
       if (Array.isArray(data)) {
-        results.push(...data);
+        // Add contentType to each item
+        results.push(...data.map(item => ({ ...item, contentType })));
       } else if (typeof data === 'object') {
         // If it's an object with named entries, convert to array
         const entries = Object.entries(data);
         if (entries.length > 0 && typeof entries[0][1] === 'object') {
-          results.push(...entries.map(([key, value]) => ({ ...value, id: value.id || key })));
+          results.push(...entries.map(([key, value]) => ({ ...value, id: value.id || key, contentType })));
         }
       }
     }

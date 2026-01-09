@@ -1,229 +1,25 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
+import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { useFormDraft } from '../../../hooks/useFormDraft';
+import './CreatorStyles.css';
 
-const styles = {
-  container: {
-    display: 'flex',
-    gap: '20px',
-    height: '100%',
-  },
-  formSection: {
-    flex: '1',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '20px',
-    overflowY: 'auto',
-  },
-  listSection: {
-    width: '320px',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '15px',
-    overflowY: 'auto',
-  },
-  sectionTitle: {
-    color: '#ffd700',
-    fontSize: '18px',
-    marginBottom: '15px',
-    borderBottom: '1px solid #4a4a6a',
-    paddingBottom: '10px',
-  },
-  formGroup: {
-    marginBottom: '15px',
-  },
-  label: {
-    display: 'block',
-    color: '#a0a0c0',
-    marginBottom: '5px',
-    fontSize: '13px',
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  select: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  textarea: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    minHeight: '80px',
-    resize: 'vertical',
-    boxSizing: 'border-box',
-  },
-  row: {
-    display: 'flex',
-    gap: '15px',
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  button: {
-    padding: '10px 20px',
-    borderRadius: '6px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    transition: 'all 0.2s ease',
-    marginRight: '10px',
-  },
-  primaryButton: {
-    backgroundColor: '#4a7c4a',
-    color: 'white',
-  },
-  secondaryButton: {
-    backgroundColor: '#4a4a6a',
-    color: 'white',
-  },
-  nodeCard: {
-    backgroundColor: '#1e1e35',
-    borderRadius: '8px',
-    padding: '15px',
-    marginBottom: '10px',
-    border: '1px solid #3a3a5a',
-  },
-  nodeHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '10px',
-  },
-  nodeType: {
-    padding: '4px 10px',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-  },
-  nodeIndex: {
-    color: '#808090',
-    fontSize: '12px',
-  },
-  choiceItem: {
-    backgroundColor: '#252540',
-    borderRadius: '6px',
-    padding: '10px',
-    marginTop: '8px',
-    border: '1px solid #3a3a5a',
-  },
-  smallButton: {
-    padding: '4px 8px',
-    borderRadius: '4px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '11px',
-  },
-  tagInput: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '5px',
-    padding: '8px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    minHeight: '40px',
-  },
-  tag: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '3px 8px',
-    backgroundColor: '#3a3a5a',
-    borderRadius: '12px',
-    fontSize: '12px',
-    color: '#d0d0e0',
-  },
-  tagRemove: {
-    marginLeft: '5px',
-    cursor: 'pointer',
-    color: '#ff6666',
-  },
-  listItem: {
-    padding: '12px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '6px',
-    marginBottom: '8px',
-    cursor: 'pointer',
-    border: '1px solid transparent',
-    transition: 'all 0.2s ease',
-  },
-  listItemHover: {
-    borderColor: '#4a4a6a',
-  },
-  listItemName: {
-    color: '#ffd700',
-    fontSize: '14px',
-    fontWeight: 'bold',
-  },
-  listItemDetails: {
-    color: '#808090',
-    fontSize: '12px',
-    marginTop: '4px',
-  },
-  listItemActions: {
-    display: 'flex',
-    gap: '5px',
-    marginTop: '8px',
-  },
-  emptyList: {
-    color: '#606080',
-    textAlign: 'center',
-    padding: '30px',
-    fontSize: '14px',
-  },
-  subsection: {
-    marginTop: '20px',
-    padding: '15px',
-    backgroundColor: '#1e1e35',
-    borderRadius: '6px',
-  },
-  subsectionTitle: {
-    color: '#c0c0e0',
-    fontSize: '14px',
-    marginBottom: '12px',
-    fontWeight: 'bold',
-  },
-  addNodeBar: {
-    display: 'flex',
-    gap: '8px',
-    marginBottom: '15px',
-    flexWrap: 'wrap',
-  },
-};
+const DRAFT_KEY = 'contentGenerator_draft_scenes';
 
 const NODE_TYPES = [
-  { value: 'dialogue', label: 'Dialogue', color: '#4a7c4a', icon: '💬' },
+  { value: 'dialogue', label: 'Dialogue', color: 'var(--color-accent-success)', icon: '💬' },
   { value: 'choice', label: 'Choice', color: '#7c7c4a', icon: '❓' },
-  { value: 'action', label: 'Action', color: '#7c4a7c', icon: '⚡' },
+  { value: 'action', label: 'Action', color: 'var(--color-accent-secondary)', icon: '⚡' },
   { value: 'branch', label: 'Branch', color: '#4a7c7c', icon: '🔀' },
-  { value: 'statCheck', label: 'Stat Check', color: '#7c4a4a', icon: '🎲' },
+  { value: 'statCheck', label: 'Stat Check', color: 'var(--color-accent-danger)', icon: '🎲' },
   { value: 'end', label: 'End', color: '#4a4a7c', icon: '🏁' },
 ];
 
-// Fallback tags when no dynamic tags available
-const FALLBACK_TAGS = [
-  'story', 'vanilla', 'nsfw', 'intro', 'combat', 'quest',
-  'romance', 'dialogue', 'exploration', 'ending',
-  'demon', 'wolf', 'tentacle', 'corruption', 'transformation',
-];
+const TAG_CATEGORIES = {
+  type: ['story', 'intro', 'combat', 'quest', 'ending', 'exploration'],
+  tone: ['vanilla', 'romance', 'dialogue', 'nsfw'],
+  special: ['demon', 'wolf', 'tentacle', 'corruption', 'transformation'],
+};
 
 const ACTION_TYPES = [
   { value: 'giveItem', label: 'Give Item' },
@@ -246,25 +42,51 @@ const ACTION_TYPES = [
   { value: 'playSound', label: 'Play Sound' },
   { value: 'playMusic', label: 'Play Music' },
   { value: 'modifyRelationship', label: 'Modify Relationship' },
-  // Time manipulation
   { value: 'setTimeOfDay', label: 'Set Time of Day' },
   { value: 'modifyTime', label: 'Modify Time' },
-  // NPC location control
   { value: 'teleportNPC', label: 'Teleport NPC' },
   { value: 'hideNPC', label: 'Hide NPC' },
   { value: 'showNPC', label: 'Show NPC' },
 ];
 
 const STATS_LIST = [
-  'strength', 'vitality', 'intelligence', 'willpower',
-  'speed', 'evasion', 'charm', 'luck',
+  { value: 'strength', label: 'Strength' },
+  { value: 'vitality', label: 'Vitality' },
+  { value: 'intelligence', label: 'Intelligence' },
+  { value: 'willpower', label: 'Willpower' },
+  { value: 'speed', label: 'Speed' },
+  { value: 'evasion', label: 'Evasion' },
+  { value: 'charm', label: 'Charm' },
+  { value: 'luck', label: 'Luck' },
 ];
 
-// Interpolation tags for madlib text replacement
+const EMOTIONS = [
+  { value: '', label: 'Default' },
+  { value: 'friendly', label: 'Friendly' },
+  { value: 'angry', label: 'Angry' },
+  { value: 'sad', label: 'Sad' },
+  { value: 'surprised', label: 'Surprised' },
+  { value: 'seductive', label: 'Seductive' },
+  { value: 'scared', label: 'Scared' },
+  { value: 'amused', label: 'Amused' },
+];
+
+const TOAST_TYPES = [
+  { value: 'info', label: 'Info' },
+  { value: 'success', label: 'Success' },
+  { value: 'warning', label: 'Warning' },
+  { value: 'error', label: 'Error' },
+  { value: 'buff', label: 'Buff' },
+  { value: 'debuff', label: 'Debuff' },
+  { value: 'item', label: 'Item' },
+  { value: 'heal', label: 'Heal' },
+  { value: 'curse', label: 'Curse' },
+];
+
 const INTERPOLATION_TAGS = {
   player: {
     label: 'Player',
-    color: '#4a7c4a',
+    color: 'var(--color-accent-success)',
     tags: [
       { tag: '{player_name}', label: 'Name', desc: "Player's name" },
       { tag: '{player_possessive}', label: 'Possessive', desc: 'your/his/her/their' },
@@ -276,7 +98,7 @@ const INTERPOLATION_TAGS = {
   },
   enemy: {
     label: 'Enemy',
-    color: '#7c4a4a',
+    color: 'var(--color-accent-danger)',
     tags: [
       { tag: '{enemy_name}', label: 'Name', desc: 'The wolf / Zander (capitalized)' },
       { tag: '{enemy_name_mid}', label: 'Name (mid)', desc: 'the wolf (lowercase for mid-sentence)' },
@@ -287,7 +109,7 @@ const INTERPOLATION_TAGS = {
   },
   body: {
     label: 'Body Parts',
-    color: '#7c4a7c',
+    color: 'var(--color-accent-secondary)',
     tags: [
       { tag: '{chest_descriptor}', label: 'Chest', desc: 'Contextual chest description' },
       { tag: '{dick_descriptor}', label: 'Dick', desc: 'Penis descriptor' },
@@ -335,7 +157,7 @@ const INTERPOLATION_TAGS = {
   },
   conditionals: {
     label: 'Conditionals',
-    color: '#6a6a6a',
+    color: 'var(--color-text-muted)',
     tags: [
       { tag: '{if condition}', label: 'If', desc: 'Start conditional block' },
       { tag: '{else}', label: 'Else', desc: 'Else branch' },
@@ -346,13 +168,26 @@ const INTERPOLATION_TAGS = {
   },
 };
 
+const NSFW_ACTION_CATEGORIES = [
+  { value: 'grope', label: 'Grope' },
+  { value: 'fondle', label: 'Fondle' },
+  { value: 'kiss', label: 'Kiss' },
+  { value: 'lick', label: 'Lick' },
+  { value: 'penetrate', label: 'Penetrate' },
+  { value: 'oral', label: 'Oral' },
+  { value: 'breed', label: 'Breed' },
+  { value: 'corrupt', label: 'Corrupt' },
+  { value: 'restrain', label: 'Restrain' },
+  { value: 'hypnotize', label: 'Hypnotize' },
+];
+
 const DEFAULT_SCENE = {
   id: '',
   name: '',
   description: '',
   tags: [],
   isNSFW: false,
-  nsfwActionTypes: [], // For enemy NSFW actions: grope, fondle, penetrate, etc.
+  nsfwActionTypes: [],
   location: '',
   onEnter: [],
   nodes: [],
@@ -409,21 +244,6 @@ const DEFAULT_END_NODE = {
   outcome: '',
 };
 
-// NSFW Action types for scene categorization
-const NSFW_ACTION_CATEGORIES = [
-  { value: '', label: 'Not an NSFW Action Scene' },
-  { value: 'grope', label: 'Grope' },
-  { value: 'fondle', label: 'Fondle' },
-  { value: 'kiss', label: 'Kiss' },
-  { value: 'lick', label: 'Lick' },
-  { value: 'penetrate', label: 'Penetrate' },
-  { value: 'oral', label: 'Oral' },
-  { value: 'breed', label: 'Breed' },
-  { value: 'corrupt', label: 'Corrupt' },
-  { value: 'restrain', label: 'Restrain' },
-  { value: 'hypnotize', label: 'Hypnotize' },
-];
-
 const SceneCreator = ({
   items = [],
   allContent,
@@ -437,9 +257,8 @@ const SceneCreator = ({
   datapackContent = {},
   datapackLoading = false,
 }) => {
-  // Combine datapack content with user-created content for selection dropdowns
+  // Combine datapack content with user-created content
   const allItems = [...(datapackContent.items || []), ...(allContent?.items || [])];
-  // Filter locations to exclude any enemy objects that may have been incorrectly included
   const allLocations = [...(datapackContent.locations || []), ...(allContent?.locations || [])]
     .filter(loc => {
       const hasLocationFields = loc.locationType || loc.parentRegion || loc.connectedLocations || loc.navigation;
@@ -447,31 +266,39 @@ const SceneCreator = ({
       return hasLocationFields || !hasEnemyFields;
     });
   const allEffects = [...(datapackContent.effects || []), ...(allContent?.effects || [])];
-  const allEnemies = [...(datapackContent.enemies || []), ...(allContent?.enemies || [])];
   const allNPCs = [...(datapackContent.npcs || []), ...(allContent?.npcs || [])];
   const allCharacters = [...(datapackContent.characters || []), ...(allContent?.characters || [])];
+
   const [formData, setFormData] = useState({ ...DEFAULT_SCENE });
-  const [tagInput, setTagInput] = useState('');
-  const [nsfwActionInput, setNsfwActionInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
   const [expandedNodes, setExpandedNodes] = useState({});
   const [activeTagCategory, setActiveTagCategory] = useState(null);
+  const [activeNodeIndex, setActiveNodeIndex] = useState(null);
+  const [collapsedSections, setCollapsedSections] = useState({
+    nsfw: true,
+    tags: true,
+    nodes: false,
+  });
 
-  // Compute dynamic tag suggestions from datapack content and user-created scenes
+  const toggleSection = (section) => {
+    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
+    defaultValues: DEFAULT_SCENE,
+  });
+
   const suggestedTags = useMemo(() => {
     return collectTags({
       datapackContent,
       userContent: items,
-      commonTags: FALLBACK_TAGS,
+      commonTags: Object.values(TAG_CATEGORIES).flat(),
       contentType: 'scenes',
     });
   }, [datapackContent, items]);
-  const [activeNodeIndex, setActiveNodeIndex] = useState(null);
 
-  // Load editing item when it changes
   useEffect(() => {
     if (editingItem) {
-      // Handle migration from old nsfwActionType string to new nsfwActionTypes array
       let nsfwActionTypes = editingItem.nsfwActionTypes || [];
       if (!nsfwActionTypes.length && editingItem.nsfwActionType) {
         nsfwActionTypes = [editingItem.nsfwActionType];
@@ -488,52 +315,14 @@ const SceneCreator = ({
     }
   }, [editingItem]);
 
-  // Add NSFW action type tag
-  const handleAddNsfwAction = (actionType) => {
-    const normalizedAction = actionType.toLowerCase().replace(/\s+/g, '_');
-    if (normalizedAction && !formData.nsfwActionTypes.includes(normalizedAction)) {
-      setFormData(prev => ({
-        ...prev,
-        nsfwActionTypes: [...prev.nsfwActionTypes, normalizedAction],
-      }));
-    }
-    setNsfwActionInput('');
-  };
-
-  // Remove NSFW action type tag
-  const handleRemoveNsfwAction = (actionToRemove) => {
-    setFormData(prev => ({
-      ...prev,
-      nsfwActionTypes: prev.nsfwActionTypes.filter(a => a !== actionToRemove),
-    }));
-  };
-
-  // Insert tag into a specific node's text field
-  const insertTagIntoNode = (nodeIndex, field, tag) => {
-    const node = formData.nodes[nodeIndex];
-    const currentValue = node[field] || '';
-    updateNode(nodeIndex, { [field]: currentValue + tag });
-  };
-
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleAddTag = (tag) => {
-    if (tag && !formData.tags.includes(tag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag],
-      }));
-    }
-    setTagInput('');
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(t => t !== tagToRemove),
-    }));
+  const insertTagIntoNode = (nodeIndex, field, tag) => {
+    const node = formData.nodes[nodeIndex];
+    const currentValue = node[field] || '';
+    updateNode(nodeIndex, { [field]: currentValue + tag });
   };
 
   // Node management
@@ -565,7 +354,6 @@ const SceneCreator = ({
       ...prev,
       nodes: [...prev.nodes, newNode],
     }));
-    // Auto-expand new node
     setExpandedNodes(prev => ({ ...prev, [formData.nodes.length]: true }));
   };
 
@@ -600,16 +388,11 @@ const SceneCreator = ({
     setExpandedNodes(prev => ({ ...prev, [index]: !prev[index] }));
   };
 
-  // Choice management within choice nodes
+  // Choice management
   const addChoice = (nodeIndex) => {
     const node = formData.nodes[nodeIndex];
-    const newChoice = {
-      ...DEFAULT_CHOICE,
-      id: `choice_${Date.now()}`,
-    };
-    updateNode(nodeIndex, {
-      choices: [...(node.choices || []), newChoice],
-    });
+    const newChoice = { ...DEFAULT_CHOICE, id: `choice_${Date.now()}` };
+    updateNode(nodeIndex, { choices: [...(node.choices || []), newChoice] });
   };
 
   const updateChoice = (nodeIndex, choiceIndex, updates) => {
@@ -623,18 +406,14 @@ const SceneCreator = ({
 
   const removeChoice = (nodeIndex, choiceIndex) => {
     const node = formData.nodes[nodeIndex];
-    updateNode(nodeIndex, {
-      choices: node.choices.filter((_, i) => i !== choiceIndex),
-    });
+    updateNode(nodeIndex, { choices: node.choices.filter((_, i) => i !== choiceIndex) });
   };
 
-  // Action management within action nodes
+  // Action management
   const addAction = (nodeIndex) => {
     const node = formData.nodes[nodeIndex];
     const newAction = { type: 'showToast', toastType: 'info', title: '', message: '' };
-    updateNode(nodeIndex, {
-      actions: [...(node.actions || []), newAction],
-    });
+    updateNode(nodeIndex, { actions: [...(node.actions || []), newAction] });
   };
 
   const updateAction = (nodeIndex, actionIndex, updates) => {
@@ -648,9 +427,7 @@ const SceneCreator = ({
 
   const removeAction = (nodeIndex, actionIndex) => {
     const node = formData.nodes[nodeIndex];
-    updateNode(nodeIndex, {
-      actions: node.actions.filter((_, i) => i !== actionIndex),
-    });
+    updateNode(nodeIndex, { actions: node.actions.filter((_, i) => i !== actionIndex) });
   };
 
   const handleSubmit = () => {
@@ -659,7 +436,6 @@ const SceneCreator = ({
       return;
     }
 
-    // Check for duplicate ID if not editing
     if (!editingItem && items.some(item => item.id === formData.id)) {
       alert('A scene with this ID already exists');
       return;
@@ -669,6 +445,7 @@ const SceneCreator = ({
       onUpdate(editingItem._id, formData);
     } else {
       onAdd(formData);
+      clearDraft();
     }
 
     setFormData({ ...DEFAULT_SCENE });
@@ -681,189 +458,468 @@ const SceneCreator = ({
     onCancelEdit();
   };
 
-  // Render a single node
-  const renderNode = (node, index) => {
-    const nodeType = NODE_TYPES.find(t => t.value === node.type);
-    const isExpanded = expandedNodes[index];
+  // Render action fields based on action type
+  const renderActionFields = (action, nodeIndex, actionIndex) => {
+    const itemOptions = allItems.map(item => ({
+      value: item.id,
+      label: `${item.name || item.id} (${item.type || 'item'})`,
+    }));
 
-    return (
-      <div key={index} style={styles.nodeCard}>
-        <div style={styles.nodeHeader}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={styles.nodeIndex}>#{index}</span>
-            <span style={{ ...styles.nodeType, backgroundColor: nodeType?.color || '#4a4a6a' }}>
-              {nodeType?.icon} {nodeType?.label || node.type}
-            </span>
-            {node.label && (
-              <span style={{ color: '#ffd700', fontSize: '12px' }}>
-                📍 {node.label}
-              </span>
+    const locationOptions = allLocations.map(loc => ({
+      value: loc.id,
+      label: `${loc.name || loc.id} (${loc.parentRegion || 'unknown'})`,
+    }));
+
+    const effectOptions = allEffects.map(effect => ({
+      value: effect.id,
+      label: `${effect.name || effect.id} (${effect.type || 'effect'})`,
+    }));
+
+    const npcOptions = allNPCs.map(npc => ({
+      value: npc.id,
+      label: npc.name || npc.id,
+    }));
+
+    switch (action.type) {
+      case 'giveItem':
+      case 'removeItem':
+        return (
+          <>
+            <FormSelect
+              label="Item"
+              value={action.itemId || ''}
+              onChange={(val) => updateAction(nodeIndex, actionIndex, { itemId: val })}
+              options={[{ value: '', label: 'Select item...' }, ...itemOptions]}
+            />
+            <FormInput
+              label="Count"
+              type="number"
+              value={action.count || 1}
+              onChange={(val) => updateAction(nodeIndex, actionIndex, { count: parseInt(val) || 1 })}
+              min={1}
+            />
+          </>
+        );
+
+      case 'giveGold':
+      case 'removeGold':
+        return (
+          <FormInput
+            label="Gold Amount"
+            type="number"
+            value={action.amount || 0}
+            onChange={(val) => updateAction(nodeIndex, actionIndex, { amount: parseInt(val) || 0 })}
+          />
+        );
+
+      case 'heal':
+      case 'damage':
+        return (
+          <FormInput
+            label={action.type === 'heal' ? 'Heal Amount' : 'Damage Amount'}
+            type="number"
+            value={action.amount || 0}
+            onChange={(val) => updateAction(nodeIndex, actionIndex, { amount: parseInt(val) || 0 })}
+          />
+        );
+
+      case 'modifyCorruption':
+      case 'modifyArousal':
+        return (
+          <FormInput
+            label={`${action.type === 'modifyCorruption' ? 'Corruption' : 'Arousal'} Change`}
+            type="number"
+            value={action.amount || 0}
+            onChange={(val) => updateAction(nodeIndex, actionIndex, { amount: parseInt(val) || 0 })}
+            helperText="Can be negative"
+          />
+        );
+
+      case 'modifyStat':
+        return (
+          <>
+            <FormSelect
+              label="Stat"
+              value={action.stat || ''}
+              onChange={(val) => updateAction(nodeIndex, actionIndex, { stat: val })}
+              options={[{ value: '', label: 'Select stat...' }, ...STATS_LIST]}
+            />
+            <FormInput
+              label="Amount"
+              type="number"
+              value={action.amount || 0}
+              onChange={(val) => updateAction(nodeIndex, actionIndex, { amount: parseInt(val) || 0 })}
+              helperText="Can be negative"
+            />
+          </>
+        );
+
+      case 'setFlag':
+        return (
+          <div className="creator-form-row">
+            <FormInput
+              label="Flag Name"
+              value={action.flag || ''}
+              onChange={(val) => updateAction(nodeIndex, actionIndex, { flag: val })}
+              placeholder="flag_name"
+            />
+            <FormSelect
+              label="Value"
+              value={action.value === false ? 'false' : 'true'}
+              onChange={(val) => updateAction(nodeIndex, actionIndex, { value: val === 'true' })}
+              options={[
+                { value: 'true', label: 'True' },
+                { value: 'false', label: 'False' },
+              ]}
+            />
+          </div>
+        );
+
+      case 'startQuest':
+      case 'completeQuest':
+        return (
+          <FormInput
+            label="Quest ID"
+            value={action.questId || ''}
+            onChange={(val) => updateAction(nodeIndex, actionIndex, { questId: val })}
+            placeholder="quest_id"
+          />
+        );
+
+      case 'applyEffect':
+      case 'removeEffect':
+        return (
+          <>
+            {effectOptions.length > 0 ? (
+              <FormSelect
+                label="Effect"
+                value={action.effectId || ''}
+                onChange={(val) => updateAction(nodeIndex, actionIndex, { effectId: val })}
+                options={[{ value: '', label: 'Select effect...' }, ...effectOptions]}
+              />
+            ) : (
+              <FormInput
+                label="Effect ID"
+                value={action.effectId || ''}
+                onChange={(val) => updateAction(nodeIndex, actionIndex, { effectId: val })}
+                placeholder="effect_id"
+              />
             )}
-          </div>
-          <div style={{ display: 'flex', gap: '5px' }}>
-            <button
-              style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: 'white' }}
-              onClick={() => moveNode(index, -1)}
-              disabled={index === 0}
-            >
-              ↑
-            </button>
-            <button
-              style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: 'white' }}
-              onClick={() => moveNode(index, 1)}
-              disabled={index === formData.nodes.length - 1}
-            >
-              ↓
-            </button>
-            <button
-              style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: 'white' }}
-              onClick={() => toggleNodeExpanded(index)}
-            >
-              {isExpanded ? '▼' : '▶'}
-            </button>
-            <button
-              style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-              onClick={() => removeNode(index)}
-            >
-              ×
-            </button>
-          </div>
-        </div>
+            {action.type === 'applyEffect' && (
+              <div className="creator-form-row">
+                <FormInput
+                  label="Duration (turns)"
+                  type="number"
+                  value={action.duration || 0}
+                  onChange={(val) => updateAction(nodeIndex, actionIndex, { duration: parseInt(val) || 0 })}
+                  min={0}
+                  helperText="0 = permanent"
+                />
+                <FormInput
+                  label="Stacks"
+                  type="number"
+                  value={action.stacks || 1}
+                  onChange={(val) => updateAction(nodeIndex, actionIndex, { stacks: parseInt(val) || 1 })}
+                  min={1}
+                />
+              </div>
+            )}
+          </>
+        );
 
-        {isExpanded && renderNodeContent(node, index)}
-      </div>
-    );
+      case 'unlockLocation':
+      case 'teleport':
+        return locationOptions.length > 0 ? (
+          <FormSelect
+            label={action.type === 'unlockLocation' ? 'Location to Unlock' : 'Destination'}
+            value={action.locationId || ''}
+            onChange={(val) => updateAction(nodeIndex, actionIndex, { locationId: val })}
+            options={[{ value: '', label: 'Select location...' }, ...locationOptions]}
+          />
+        ) : (
+          <FormInput
+            label="Location ID"
+            value={action.locationId || ''}
+            onChange={(val) => updateAction(nodeIndex, actionIndex, { locationId: val })}
+            placeholder="location_id"
+          />
+        );
+
+      case 'showToast':
+        return (
+          <>
+            <div className="creator-form-row">
+              <FormSelect
+                label="Toast Type"
+                value={action.toastType || 'info'}
+                onChange={(val) => updateAction(nodeIndex, actionIndex, { toastType: val })}
+                options={TOAST_TYPES}
+              />
+              <FormInput
+                label="Title"
+                value={action.title || ''}
+                onChange={(val) => updateAction(nodeIndex, actionIndex, { title: val })}
+                placeholder="Toast Title"
+              />
+            </div>
+            <FormInput
+              label="Message"
+              value={action.message || ''}
+              onChange={(val) => updateAction(nodeIndex, actionIndex, { message: val })}
+              placeholder="Toast message..."
+            />
+          </>
+        );
+
+      case 'playSound':
+        return (
+          <FormInput
+            label="Sound ID or Path"
+            value={action.soundId || ''}
+            onChange={(val) => updateAction(nodeIndex, actionIndex, { soundId: val })}
+            placeholder="sound_id or /sounds/effect.mp3"
+          />
+        );
+
+      case 'playMusic':
+        return (
+          <FormInput
+            label="Music ID or Path"
+            value={action.musicId || ''}
+            onChange={(val) => updateAction(nodeIndex, actionIndex, { musicId: val })}
+            placeholder="music_id or /music/track.mp3"
+          />
+        );
+
+      case 'modifyRelationship':
+        return (
+          <>
+            {npcOptions.length > 0 ? (
+              <FormSelect
+                label="NPC"
+                value={action.npcId || ''}
+                onChange={(val) => updateAction(nodeIndex, actionIndex, { npcId: val })}
+                options={[{ value: '', label: 'Select NPC...' }, ...npcOptions]}
+              />
+            ) : (
+              <FormInput
+                label="NPC ID"
+                value={action.npcId || ''}
+                onChange={(val) => updateAction(nodeIndex, actionIndex, { npcId: val })}
+                placeholder="npc_id"
+              />
+            )}
+            <FormInput
+              label="Relationship Change"
+              type="number"
+              value={action.amount || 0}
+              onChange={(val) => updateAction(nodeIndex, actionIndex, { amount: parseInt(val) || 0 })}
+              helperText="Can be negative"
+            />
+          </>
+        );
+
+      case 'setTimeOfDay':
+        return (
+          <FormSelect
+            label="Set Time To"
+            value={action.target || 'day'}
+            onChange={(val) => updateAction(nodeIndex, actionIndex, { target: val })}
+            options={[
+              { value: 'day', label: 'Day (7:00 AM)' },
+              { value: 'night', label: 'Night (9:00 PM)' },
+            ]}
+            helperText="Day increments only when going backwards"
+          />
+        );
+
+      case 'modifyTime':
+        return (
+          <FormInput
+            label="Minutes to Add/Subtract"
+            type="number"
+            value={action.minutes || 0}
+            onChange={(val) => updateAction(nodeIndex, actionIndex, { minutes: parseInt(val) || 0 })}
+            placeholder="60 = 1 hour"
+            helperText="Positive = forward, Negative = backward"
+          />
+        );
+
+      case 'teleportNPC':
+        return (
+          <>
+            {npcOptions.length > 0 ? (
+              <FormSelect
+                label="NPC to Teleport"
+                value={action.npcId || ''}
+                onChange={(val) => updateAction(nodeIndex, actionIndex, { npcId: val })}
+                options={[{ value: '', label: 'Select NPC...' }, ...npcOptions]}
+              />
+            ) : (
+              <FormInput
+                label="NPC ID"
+                value={action.npcId || ''}
+                onChange={(val) => updateAction(nodeIndex, actionIndex, { npcId: val })}
+                placeholder="npc_id"
+              />
+            )}
+            {locationOptions.length > 0 ? (
+              <FormSelect
+                label="Destination"
+                value={action.locationId || ''}
+                onChange={(val) => updateAction(nodeIndex, actionIndex, { locationId: val })}
+                options={[{ value: '', label: 'Select location...' }, ...locationOptions]}
+              />
+            ) : (
+              <FormInput
+                label="Location ID"
+                value={action.locationId || ''}
+                onChange={(val) => updateAction(nodeIndex, actionIndex, { locationId: val })}
+                placeholder="location_id"
+              />
+            )}
+            <div className="form-helper">Temporary - NPC returns to schedule on next time period change</div>
+          </>
+        );
+
+      case 'hideNPC':
+      case 'showNPC':
+        return (
+          <>
+            {npcOptions.length > 0 ? (
+              <FormSelect
+                label={`NPC to ${action.type === 'hideNPC' ? 'Hide' : 'Show'}`}
+                value={action.npcId || ''}
+                onChange={(val) => updateAction(nodeIndex, actionIndex, { npcId: val })}
+                options={[{ value: '', label: 'Select NPC...' }, ...npcOptions]}
+              />
+            ) : (
+              <FormInput
+                label="NPC ID"
+                value={action.npcId || ''}
+                onChange={(val) => updateAction(nodeIndex, actionIndex, { npcId: val })}
+                placeholder="npc_id"
+              />
+            )}
+            <div className="form-helper">
+              {action.type === 'hideNPC'
+                ? 'NPC will be removed from all locations until shown again'
+                : 'Restores a hidden NPC to their scheduled location'}
+            </div>
+          </>
+        );
+
+      default:
+        return (
+          <FormInput
+            label="Value"
+            value={action.value || action.itemId || action.effectId || action.questId || action.locationId || ''}
+            onChange={(val) => {
+              const key = action.type.includes('Item') ? 'itemId' :
+                action.type.includes('Effect') ? 'effectId' :
+                  action.type.includes('Quest') ? 'questId' :
+                    action.type.includes('Location') ? 'locationId' : 'value';
+              updateAction(nodeIndex, actionIndex, { [key]: val });
+            }}
+            placeholder="Value"
+          />
+        );
+    }
   };
 
-  // Render node-specific content
+  // Render node content
   const renderNodeContent = (node, index) => {
+    const sceneOptions = items.filter(s => s.id !== formData.id).map(scene => ({
+      value: scene.id,
+      label: scene.name || scene.id,
+    }));
+
     switch (node.type) {
       case 'dialogue':
         return (
           <div>
-            <div style={styles.row}>
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Label (for jumps)</label>
-                  <input
-                    style={styles.input}
-                    value={node.label || ''}
-                    onChange={(e) => updateNode(index, { label: e.target.value })}
-                    placeholder="optional_label"
-                  />
-                </div>
-              </div>
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Speaker</label>
-                  <input
-                    style={styles.input}
-                    value={node.speaker || ''}
-                    onChange={(e) => updateNode(index, { speaker: e.target.value })}
-                    placeholder="Character Name"
-                  />
-                </div>
-              </div>
-            </div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Dialogue Text *</label>
-              <textarea
-                style={{ ...styles.textarea, minHeight: '120px' }}
-                value={node.text || ''}
-                onChange={(e) => updateNode(index, { text: e.target.value })}
-                onFocus={() => setActiveNodeIndex(index)}
-                placeholder="What the character says... Use tags like {player_name} for dynamic text."
+            <div className="creator-form-row">
+              <FormInput
+                label="Label (for jumps)"
+                value={node.label || ''}
+                onChange={(val) => updateNode(index, { label: val })}
+                placeholder="optional_label"
               />
+              <FormInput
+                label="Speaker"
+                value={node.speaker || ''}
+                onChange={(val) => updateNode(index, { speaker: val })}
+                placeholder="Character Name"
+              />
+            </div>
+            <FormInput
+              label="Dialogue Text"
+              type="textarea"
+              required
+              value={node.text || ''}
+              onChange={(val) => updateNode(index, { text: val })}
+              onFocus={() => setActiveNodeIndex(index)}
+              placeholder="What the character says... Use tags like {player_name} for dynamic text."
+              rows={4}
+            />
 
-              {/* Text Tag Insertion Toolbar */}
-              <div style={{ marginTop: '8px', padding: '10px', backgroundColor: '#1a1a2e', borderRadius: '6px', border: '1px solid #3a3a5a' }}>
-                <div style={{ fontSize: '11px', color: '#808090', marginBottom: '8px' }}>
-                  Insert Tags: Click a category, then click a tag to append it to the text above
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
-                  {Object.entries(INTERPOLATION_TAGS).map(([key, category]) => (
+            {/* Text Tag Insertion Toolbar */}
+            <div className="scene-tag-toolbar">
+              <div className="form-helper mb-sm">
+                Insert Tags: Click a category, then click a tag to append
+              </div>
+              <div className="scene-tag-categories">
+                {Object.entries(INTERPOLATION_TAGS).map(([key, category]) => (
+                  <button
+                    key={key}
+                    className={`scene-tag-category-btn ${activeTagCategory === key && activeNodeIndex === index ? 'active' : ''}`}
+                    style={{
+                      '--category-color': category.color,
+                      backgroundColor: activeTagCategory === key && activeNodeIndex === index ? category.color : undefined,
+                    }}
+                    onClick={() => {
+                      setActiveNodeIndex(index);
+                      setActiveTagCategory(activeTagCategory === key && activeNodeIndex === index ? null : key);
+                    }}
+                  >
+                    {category.label}
+                  </button>
+                ))}
+              </div>
+
+              {activeTagCategory && activeNodeIndex === index && INTERPOLATION_TAGS[activeTagCategory] && (
+                <div
+                  className="scene-tag-list"
+                  style={{ borderColor: INTERPOLATION_TAGS[activeTagCategory].color }}
+                >
+                  {INTERPOLATION_TAGS[activeTagCategory].tags.map((tagInfo, idx) => (
                     <button
-                      key={key}
-                      style={{
-                        ...styles.smallButton,
-                        backgroundColor: activeTagCategory === key && activeNodeIndex === index ? category.color : '#3a3a5a',
-                        color: 'white',
-                        padding: '4px 8px',
-                        fontSize: '11px',
-                      }}
-                      onClick={() => {
-                        setActiveNodeIndex(index);
-                        setActiveTagCategory(activeTagCategory === key && activeNodeIndex === index ? null : key);
-                      }}
+                      key={idx}
+                      className="scene-tag-btn"
+                      style={{ color: INTERPOLATION_TAGS[activeTagCategory].color }}
+                      onClick={() => insertTagIntoNode(index, 'text', tagInfo.tag)}
+                      title={tagInfo.desc}
                     >
-                      {category.label}
+                      {tagInfo.tag}
                     </button>
                   ))}
                 </div>
-
-                {activeTagCategory && activeNodeIndex === index && INTERPOLATION_TAGS[activeTagCategory] && (
-                  <div style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '4px',
-                    padding: '8px',
-                    backgroundColor: '#252540',
-                    borderRadius: '4px',
-                    border: `1px solid ${INTERPOLATION_TAGS[activeTagCategory].color}`,
-                  }}>
-                    {INTERPOLATION_TAGS[activeTagCategory].tags.map((tagInfo, idx) => (
-                      <button
-                        key={idx}
-                        style={{
-                          ...styles.smallButton,
-                          backgroundColor: '#1e1e35',
-                          color: INTERPOLATION_TAGS[activeTagCategory].color,
-                          padding: '3px 6px',
-                          fontSize: '10px',
-                          fontFamily: 'monospace',
-                          border: '1px solid #4a4a6a',
-                        }}
-                        onClick={() => insertTagIntoNode(index, 'text', tagInfo.tag)}
-                        title={tagInfo.desc}
-                      >
-                        {tagInfo.tag}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              )}
             </div>
-            <div style={styles.row}>
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Speaker Image</label>
-                  <input
-                    style={styles.input}
-                    value={node.speakerImage || ''}
-                    onChange={(e) => updateNode(index, { speakerImage: e.target.value })}
-                    placeholder="/npcs/character.png"
-                  />
-                </div>
-              </div>
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Emotion</label>
-                  <select
-                    style={styles.select}
-                    value={node.emotion || ''}
-                    onChange={(e) => updateNode(index, { emotion: e.target.value })}
-                  >
-                    <option value="">Default</option>
-                    <option value="friendly">Friendly</option>
-                    <option value="angry">Angry</option>
-                    <option value="sad">Sad</option>
-                    <option value="surprised">Surprised</option>
-                    <option value="seductive">Seductive</option>
-                    <option value="scared">Scared</option>
-                    <option value="amused">Amused</option>
-                  </select>
-                </div>
-              </div>
+
+            <div className="creator-form-row">
+              <FormInput
+                label="Speaker Image"
+                value={node.speakerImage || ''}
+                onChange={(val) => updateNode(index, { speakerImage: val })}
+                placeholder="/npcs/character.png"
+              />
+              <FormSelect
+                label="Emotion"
+                value={node.emotion || ''}
+                onChange={(val) => updateNode(index, { emotion: val })}
+                options={EMOTIONS}
+              />
             </div>
           </div>
         );
@@ -871,129 +927,102 @@ const SceneCreator = ({
       case 'choice':
         return (
           <div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Prompt (optional)</label>
-              <input
-                style={styles.input}
-                value={node.prompt || ''}
-                onChange={(e) => updateNode(index, { prompt: e.target.value })}
-                placeholder="What do you do?"
-              />
+            <FormInput
+              label="Prompt (optional)"
+              value={node.prompt || ''}
+              onChange={(val) => updateNode(index, { prompt: val })}
+              placeholder="What do you do?"
+            />
+
+            <div className="creator-form-section-title mt-md">
+              Choices
+              {node.choices?.length > 0 && <span className="count-badge">{node.choices.length}</span>}
             </div>
 
-            <div style={styles.subsectionTitle}>Choices</div>
             {(node.choices || []).map((choice, choiceIndex) => (
-              <div key={choiceIndex} style={styles.choiceItem}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ color: '#a0a0c0', fontSize: '12px' }}>Choice #{choiceIndex + 1}</span>
-                  <button
-                    style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                    onClick={() => removeChoice(index, choiceIndex)}
-                  >
+              <div key={choiceIndex} className="array-item">
+                <div className="array-item-header">
+                  <span className="text-secondary text-sm">Choice #{choiceIndex + 1}</span>
+                  <Button variant="danger" size="sm" onClick={() => removeChoice(index, choiceIndex)}>
                     Remove
-                  </button>
+                  </Button>
                 </div>
-                <div style={styles.row}>
-                  <div style={styles.halfWidth}>
-                    <input
-                      style={styles.input}
-                      value={choice.id || ''}
-                      onChange={(e) => updateChoice(index, choiceIndex, { id: e.target.value })}
-                      placeholder="choice_id"
-                    />
-                  </div>
-                  <div style={styles.halfWidth}>
-                    <input
-                      style={styles.input}
-                      value={choice.text || ''}
-                      onChange={(e) => updateChoice(index, choiceIndex, { text: e.target.value })}
-                      placeholder="Choice text"
-                    />
-                  </div>
+                <div className="creator-form-row">
+                  <FormInput
+                    value={choice.id || ''}
+                    onChange={(val) => updateChoice(index, choiceIndex, { id: val })}
+                    placeholder="choice_id"
+                  />
+                  <FormInput
+                    value={choice.text || ''}
+                    onChange={(val) => updateChoice(index, choiceIndex, { text: val })}
+                    placeholder="Choice text"
+                  />
                 </div>
-                <div style={{ ...styles.row, marginTop: '8px' }}>
-                  <div style={styles.halfWidth}>
-                    <label style={styles.label}>Go to Label</label>
-                    <input
-                      style={styles.input}
-                      value={choice.gotoLabel || ''}
-                      onChange={(e) => updateChoice(index, choiceIndex, { gotoLabel: e.target.value })}
-                      placeholder="label_name"
-                    />
-                  </div>
-                  <div style={styles.halfWidth}>
-                    <label style={styles.label}>Or Next Scene</label>
-                    <select
-                      style={styles.select}
-                      value={choice.nextScene || ''}
-                      onChange={(e) => updateChoice(index, choiceIndex, { nextScene: e.target.value })}
-                    >
-                      <option value="">Same scene</option>
-                      {items.filter(s => s.id !== formData.id).map(scene => (
-                        <option key={scene.id} value={scene.id}>{scene.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="creator-form-row mt-sm">
+                  <FormInput
+                    label="Go to Label"
+                    value={choice.gotoLabel || ''}
+                    onChange={(val) => updateChoice(index, choiceIndex, { gotoLabel: val })}
+                    placeholder="label_name"
+                  />
+                  <FormSelect
+                    label="Or Next Scene"
+                    value={choice.nextScene || ''}
+                    onChange={(val) => updateChoice(index, choiceIndex, { nextScene: val })}
+                    options={[{ value: '', label: 'Same scene' }, ...sceneOptions]}
+                  />
                 </div>
               </div>
             ))}
-            <button
-              style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white', marginTop: '10px' }}
-              onClick={() => addChoice(index)}
-            >
+
+            <Button variant="success" size="sm" onClick={() => addChoice(index)} className="mt-sm">
               + Add Choice
-            </button>
+            </Button>
           </div>
         );
 
       case 'action':
         return (
           <div>
-            <div style={styles.subsectionTitle}>Actions</div>
+            <div className="creator-form-section-title">
+              Actions
+              {node.actions?.length > 0 && <span className="count-badge">{node.actions.length}</span>}
+            </div>
+
             {(node.actions || []).map((action, actionIndex) => (
-              <div key={actionIndex} style={styles.choiceItem}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <select
-                    style={{ ...styles.select, width: 'auto' }}
+              <div key={actionIndex} className="array-item">
+                <div className="array-item-header">
+                  <FormSelect
                     value={action.type}
-                    onChange={(e) => updateAction(index, actionIndex, { type: e.target.value })}
-                  >
-                    {ACTION_TYPES.map(at => (
-                      <option key={at.value} value={at.value}>{at.label}</option>
-                    ))}
-                  </select>
-                  <button
-                    style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                    onClick={() => removeAction(index, actionIndex)}
-                  >
+                    onChange={(val) => updateAction(index, actionIndex, { type: val })}
+                    options={ACTION_TYPES}
+                    style={{ width: 'auto', minWidth: '180px' }}
+                  />
+                  <Button variant="danger" size="sm" onClick={() => removeAction(index, actionIndex)}>
                     Remove
-                  </button>
+                  </Button>
                 </div>
                 {renderActionFields(action, index, actionIndex)}
               </div>
             ))}
-            <button
-              style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white', marginTop: '10px' }}
-              onClick={() => addAction(index)}
-            >
+
+            <Button variant="success" size="sm" onClick={() => addAction(index)} className="mt-sm">
               + Add Action
-            </button>
+            </Button>
           </div>
         );
 
       case 'branch':
         return (
           <div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Default Go to Label</label>
-              <input
-                style={styles.input}
-                value={node.default?.gotoLabel || ''}
-                onChange={(e) => updateNode(index, { default: { gotoLabel: e.target.value } })}
-                placeholder="default_label"
-              />
-            </div>
-            <div style={{ color: '#808090', fontSize: '12px', marginTop: '10px' }}>
+            <FormInput
+              label="Default Go to Label"
+              value={node.default?.gotoLabel || ''}
+              onChange={(val) => updateNode(index, { default: { gotoLabel: val } })}
+              placeholder="default_label"
+            />
+            <div className="form-helper mt-sm">
               Branch conditions can be edited in JSON export
             </div>
           </div>
@@ -1002,771 +1031,227 @@ const SceneCreator = ({
       case 'statCheck':
         return (
           <div>
-            <div style={styles.row}>
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Stat to Check</label>
-                  <select
-                    style={styles.select}
-                    value={node.stat || 'willpower'}
-                    onChange={(e) => updateNode(index, { stat: e.target.value })}
-                  >
-                    {STATS_LIST.map(s => (
-                      <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Difficulty</label>
-                  <input
-                    style={styles.input}
-                    type="number"
-                    value={node.difficulty || 5}
-                    onChange={(e) => updateNode(index, { difficulty: parseInt(e.target.value) || 5 })}
-                  />
-                </div>
-              </div>
+            <div className="creator-form-row">
+              <FormSelect
+                label="Stat to Check"
+                value={node.stat || 'willpower'}
+                onChange={(val) => updateNode(index, { stat: val })}
+                options={STATS_LIST}
+              />
+              <FormInput
+                label="Difficulty"
+                type="number"
+                value={node.difficulty || 5}
+                onChange={(val) => updateNode(index, { difficulty: parseInt(val) || 5 })}
+              />
             </div>
-            <div style={styles.row}>
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>On Success → Label</label>
-                  <input
-                    style={styles.input}
-                    value={node.onSuccess?.gotoLabel || ''}
-                    onChange={(e) => updateNode(index, { onSuccess: { gotoLabel: e.target.value } })}
-                    placeholder="success_label"
-                  />
-                </div>
-              </div>
-              <div style={styles.halfWidth}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>On Failure → Label</label>
-                  <input
-                    style={styles.input}
-                    value={node.onFailure?.gotoLabel || ''}
-                    onChange={(e) => updateNode(index, { onFailure: { gotoLabel: e.target.value } })}
-                    placeholder="failure_label"
-                  />
-                </div>
-              </div>
+            <div className="creator-form-row">
+              <FormInput
+                label="On Success → Label"
+                value={node.onSuccess?.gotoLabel || ''}
+                onChange={(val) => updateNode(index, { onSuccess: { gotoLabel: val } })}
+                placeholder="success_label"
+              />
+              <FormInput
+                label="On Failure → Label"
+                value={node.onFailure?.gotoLabel || ''}
+                onChange={(val) => updateNode(index, { onFailure: { gotoLabel: val } })}
+                placeholder="failure_label"
+              />
             </div>
           </div>
         );
 
       case 'end':
         return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Outcome ID</label>
-            <input
-              style={styles.input}
-              value={node.outcome || ''}
-              onChange={(e) => updateNode(index, { outcome: e.target.value })}
-              placeholder="scene_outcome"
-            />
-          </div>
+          <FormInput
+            label="Outcome ID"
+            value={node.outcome || ''}
+            onChange={(val) => updateNode(index, { outcome: val })}
+            placeholder="scene_outcome"
+          />
         );
 
       default:
-        return <div style={{ color: '#808090' }}>Unknown node type</div>;
+        return <div className="text-muted">Unknown node type</div>;
     }
   };
 
-  // Render action-specific fields with smart selectors
-  const renderActionFields = (action, nodeIndex, actionIndex) => {
-    // Helper to render a searchable select with datapack items
-    const renderItemSelect = (value, onChange, placeholder = 'Select item...') => (
-      <select
-        style={styles.select}
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">{placeholder}</option>
-        {allItems.map(item => (
-          <option key={item.id} value={item.id}>
-            {item.name || item.id} ({item.type || 'item'})
-          </option>
-        ))}
-      </select>
-    );
+  // Render node card
+  const renderNode = (node, index) => {
+    const nodeType = NODE_TYPES.find(t => t.value === node.type);
+    const isExpanded = expandedNodes[index];
 
-    const renderLocationSelect = (value, onChange, placeholder = 'Select location...') => (
-      <select
-        style={styles.select}
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">{placeholder}</option>
-        {allLocations.map(loc => (
-          <option key={loc.id} value={loc.id}>
-            {loc.name || loc.id} ({loc.parentRegion || 'unknown'})
-          </option>
-        ))}
-      </select>
-    );
-
-    const renderEffectSelect = (value, onChange, placeholder = 'Select effect...') => (
-      <select
-        style={styles.select}
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">{placeholder}</option>
-        {allEffects.map(effect => (
-          <option key={effect.id} value={effect.id}>
-            {effect.name || effect.id} ({effect.type || 'effect'})
-          </option>
-        ))}
-      </select>
-    );
-
-    const renderNPCSelect = (value, onChange, placeholder = 'Select NPC...') => (
-      <select
-        style={styles.select}
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">{placeholder}</option>
-        {allNPCs.map(npc => (
-          <option key={npc.id} value={npc.id}>
-            {npc.name || npc.id}
-          </option>
-        ))}
-      </select>
-    );
-
-    const renderCharacterSelect = (value, onChange, placeholder = 'Select character...') => (
-      <select
-        style={styles.select}
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">{placeholder}</option>
-        {allCharacters.map(char => (
-          <option key={char.id} value={char.id}>
-            {char.name || char.id}
-          </option>
-        ))}
-      </select>
-    );
-
-    const renderSceneSelect = (value, onChange, placeholder = 'Select scene...') => (
-      <select
-        style={styles.select}
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">{placeholder}</option>
-        {items.filter(s => s.id !== formData.id).map(scene => (
-          <option key={scene.id} value={scene.id}>
-            {scene.name || scene.id}
-          </option>
-        ))}
-      </select>
-    );
-
-    switch (action.type) {
-      case 'giveItem':
-      case 'removeItem':
-        return (
-          <div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Item</label>
-              {renderItemSelect(action.itemId, (val) => updateAction(nodeIndex, actionIndex, { itemId: val }))}
-            </div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Count</label>
-              <input
-                style={styles.input}
-                type="number"
-                value={action.count || 1}
-                onChange={(e) => updateAction(nodeIndex, actionIndex, { count: parseInt(e.target.value) || 1 })}
-                min="1"
-              />
-            </div>
-          </div>
-        );
-
-      case 'giveGold':
-      case 'removeGold':
-        return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Gold Amount</label>
-            <input
-              style={styles.input}
-              type="number"
-              value={action.amount || 0}
-              onChange={(e) => updateAction(nodeIndex, actionIndex, { amount: parseInt(e.target.value) || 0 })}
-            />
-          </div>
-        );
-
-      case 'heal':
-      case 'damage':
-        return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>{action.type === 'heal' ? 'Heal Amount' : 'Damage Amount'}</label>
-            <input
-              style={styles.input}
-              type="number"
-              value={action.amount || 0}
-              onChange={(e) => updateAction(nodeIndex, actionIndex, { amount: parseInt(e.target.value) || 0 })}
-            />
-          </div>
-        );
-
-      case 'modifyCorruption':
-      case 'modifyArousal':
-        return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>{action.type === 'modifyCorruption' ? 'Corruption Change' : 'Arousal Change'} (can be negative)</label>
-            <input
-              style={styles.input}
-              type="number"
-              value={action.amount || 0}
-              onChange={(e) => updateAction(nodeIndex, actionIndex, { amount: parseInt(e.target.value) || 0 })}
-            />
-          </div>
-        );
-
-      case 'modifyStat':
-        return (
-          <div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Stat to Modify</label>
-              <select
-                style={styles.select}
-                value={action.stat || ''}
-                onChange={(e) => updateAction(nodeIndex, actionIndex, { stat: e.target.value })}
-              >
-                <option value="">Select stat...</option>
-                {STATS_LIST.map(stat => (
-                  <option key={stat} value={stat}>{stat.charAt(0).toUpperCase() + stat.slice(1)}</option>
-                ))}
-              </select>
-            </div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Amount (can be negative)</label>
-              <input
-                style={styles.input}
-                type="number"
-                value={action.amount || 0}
-                onChange={(e) => updateAction(nodeIndex, actionIndex, { amount: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-          </div>
-        );
-
-      case 'setFlag':
-        return (
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              <label style={styles.label}>Flag Name</label>
-              <input
-                style={styles.input}
-                value={action.flag || ''}
-                onChange={(e) => updateAction(nodeIndex, actionIndex, { flag: e.target.value })}
-                placeholder="flag_name"
-              />
-            </div>
-            <div style={styles.halfWidth}>
-              <label style={styles.label}>Value</label>
-              <select
-                style={styles.select}
-                value={action.value === false ? 'false' : 'true'}
-                onChange={(e) => updateAction(nodeIndex, actionIndex, { value: e.target.value === 'true' })}
-              >
-                <option value="true">True</option>
-                <option value="false">False</option>
-              </select>
-            </div>
-          </div>
-        );
-
-      case 'startQuest':
-      case 'completeQuest':
-        return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Quest ID</label>
-            <input
-              style={styles.input}
-              value={action.questId || ''}
-              onChange={(e) => updateAction(nodeIndex, actionIndex, { questId: e.target.value })}
-              placeholder="quest_id"
-            />
-          </div>
-        );
-
-      case 'applyEffect':
-      case 'removeEffect':
-        return (
-          <div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Effect</label>
-              {allEffects.length > 0 ? (
-                renderEffectSelect(action.effectId, (val) => updateAction(nodeIndex, actionIndex, { effectId: val }))
-              ) : (
-                <input
-                  style={styles.input}
-                  value={action.effectId || ''}
-                  onChange={(e) => updateAction(nodeIndex, actionIndex, { effectId: e.target.value })}
-                  placeholder="effect_id"
-                />
-              )}
-            </div>
-            {action.type === 'applyEffect' && (
-              <div style={styles.row}>
-                <div style={styles.halfWidth}>
-                  <label style={styles.label}>Duration (turns, 0 = permanent)</label>
-                  <input
-                    style={styles.input}
-                    type="number"
-                    value={action.duration || 0}
-                    onChange={(e) => updateAction(nodeIndex, actionIndex, { duration: parseInt(e.target.value) || 0 })}
-                    min="0"
-                  />
-                </div>
-                <div style={styles.halfWidth}>
-                  <label style={styles.label}>Stacks</label>
-                  <input
-                    style={styles.input}
-                    type="number"
-                    value={action.stacks || 1}
-                    onChange={(e) => updateAction(nodeIndex, actionIndex, { stacks: parseInt(e.target.value) || 1 })}
-                    min="1"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        );
-
-      case 'unlockLocation':
-        return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Location to Unlock</label>
-            {allLocations.length > 0 ? (
-              renderLocationSelect(action.locationId, (val) => updateAction(nodeIndex, actionIndex, { locationId: val }))
-            ) : (
-              <input
-                style={styles.input}
-                value={action.locationId || ''}
-                onChange={(e) => updateAction(nodeIndex, actionIndex, { locationId: e.target.value })}
-                placeholder="location_id"
-              />
-            )}
-          </div>
-        );
-
-      case 'teleport':
-        return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Destination Location</label>
-            {allLocations.length > 0 ? (
-              renderLocationSelect(action.locationId, (val) => updateAction(nodeIndex, actionIndex, { locationId: val }))
-            ) : (
-              <input
-                style={styles.input}
-                value={action.locationId || ''}
-                onChange={(e) => updateAction(nodeIndex, actionIndex, { locationId: e.target.value })}
-                placeholder="location_id"
-              />
-            )}
-          </div>
-        );
-
-      case 'showToast':
-        return (
-          <div>
-            <div style={styles.row}>
-              <div style={styles.halfWidth}>
-                <label style={styles.label}>Toast Type</label>
-                <select
-                  style={styles.select}
-                  value={action.toastType || 'info'}
-                  onChange={(e) => updateAction(nodeIndex, actionIndex, { toastType: e.target.value })}
-                >
-                  <option value="info">Info</option>
-                  <option value="success">Success</option>
-                  <option value="warning">Warning</option>
-                  <option value="error">Error</option>
-                  <option value="buff">Buff</option>
-                  <option value="debuff">Debuff</option>
-                  <option value="item">Item</option>
-                  <option value="heal">Heal</option>
-                  <option value="curse">Curse</option>
-                </select>
-              </div>
-              <div style={styles.halfWidth}>
-                <label style={styles.label}>Title</label>
-                <input
-                  style={styles.input}
-                  value={action.title || ''}
-                  onChange={(e) => updateAction(nodeIndex, actionIndex, { title: e.target.value })}
-                  placeholder="Toast Title"
-                />
-              </div>
-            </div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Message</label>
-              <input
-                style={styles.input}
-                value={action.message || ''}
-                onChange={(e) => updateAction(nodeIndex, actionIndex, { message: e.target.value })}
-                placeholder="Toast message..."
-              />
-            </div>
-          </div>
-        );
-
-      case 'playSound':
-        return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Sound ID or Path</label>
-            <input
-              style={styles.input}
-              value={action.soundId || ''}
-              onChange={(e) => updateAction(nodeIndex, actionIndex, { soundId: e.target.value })}
-              placeholder="sound_id or /sounds/effect.mp3"
-            />
-          </div>
-        );
-
-      case 'playMusic':
-        return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Music ID or Path</label>
-            <input
-              style={styles.input}
-              value={action.musicId || ''}
-              onChange={(e) => updateAction(nodeIndex, actionIndex, { musicId: e.target.value })}
-              placeholder="music_id or /music/track.mp3"
-            />
-          </div>
-        );
-
-      case 'modifyRelationship':
-        return (
-          <div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>NPC</label>
-              {allNPCs.length > 0 ? (
-                renderNPCSelect(action.npcId, (val) => updateAction(nodeIndex, actionIndex, { npcId: val }))
-              ) : (
-                <input
-                  style={styles.input}
-                  value={action.npcId || ''}
-                  onChange={(e) => updateAction(nodeIndex, actionIndex, { npcId: e.target.value })}
-                  placeholder="npc_id"
-                />
-              )}
-            </div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Relationship Change (can be negative)</label>
-              <input
-                style={styles.input}
-                type="number"
-                value={action.amount || 0}
-                onChange={(e) => updateAction(nodeIndex, actionIndex, { amount: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-          </div>
-        );
-
-      // Time manipulation actions
-      case 'setTimeOfDay':
-        return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Set Time To</label>
-            <select
-              style={styles.select}
-              value={action.target || 'day'}
-              onChange={(e) => updateAction(nodeIndex, actionIndex, { target: e.target.value })}
+    return (
+      <div key={index} className="scene-node-card">
+        <div className="scene-node-header">
+          <div className="scene-node-info">
+            <span className="scene-node-index">#{index}</span>
+            <span
+              className="scene-node-type-badge"
+              style={{ backgroundColor: nodeType?.color || 'var(--color-border)' }}
             >
-              <option value="day">Day (7:00 AM)</option>
-              <option value="night">Night (9:00 PM)</option>
-            </select>
-            <div style={{ color: '#808090', fontSize: '11px', marginTop: '4px' }}>
-              Day increments only when going backwards in time
-            </div>
-          </div>
-        );
-
-      case 'modifyTime':
-        return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Minutes to Add/Subtract</label>
-            <input
-              style={styles.input}
-              type="number"
-              value={action.minutes || 0}
-              onChange={(e) => updateAction(nodeIndex, actionIndex, { minutes: parseInt(e.target.value) || 0 })}
-              placeholder="60 = 1 hour, -30 = back 30 min"
-            />
-            <div style={{ color: '#808090', fontSize: '11px', marginTop: '4px' }}>
-              Positive = forward, Negative = backward in time
-            </div>
-          </div>
-        );
-
-      // NPC location actions
-      case 'teleportNPC':
-        return (
-          <div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>NPC to Teleport</label>
-              {allNPCs.length > 0 ? (
-                renderNPCSelect(action.npcId, (val) => updateAction(nodeIndex, actionIndex, { npcId: val }))
-              ) : (
-                <input
-                  style={styles.input}
-                  value={action.npcId || ''}
-                  onChange={(e) => updateAction(nodeIndex, actionIndex, { npcId: e.target.value })}
-                  placeholder="npc_id"
-                />
-              )}
-            </div>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Destination Location</label>
-              {allLocations.length > 0 ? (
-                renderLocationSelect(action.locationId, (val) => updateAction(nodeIndex, actionIndex, { locationId: val }))
-              ) : (
-                <input
-                  style={styles.input}
-                  value={action.locationId || ''}
-                  onChange={(e) => updateAction(nodeIndex, actionIndex, { locationId: e.target.value })}
-                  placeholder="location_id"
-                />
-              )}
-            </div>
-            <div style={{ color: '#808090', fontSize: '11px', marginTop: '4px' }}>
-              Temporary - NPC returns to schedule on next time period change
-            </div>
-          </div>
-        );
-
-      case 'hideNPC':
-        return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>NPC to Hide</label>
-            {allNPCs.length > 0 ? (
-              renderNPCSelect(action.npcId, (val) => updateAction(nodeIndex, actionIndex, { npcId: val }))
-            ) : (
-              <input
-                style={styles.input}
-                value={action.npcId || ''}
-                onChange={(e) => updateAction(nodeIndex, actionIndex, { npcId: e.target.value })}
-                placeholder="npc_id"
-              />
+              {nodeType?.icon} {nodeType?.label || node.type}
+            </span>
+            {node.label && (
+              <span className="scene-node-label">📍 {node.label}</span>
             )}
-            <div style={{ color: '#808090', fontSize: '11px', marginTop: '4px' }}>
-              NPC will be removed from all locations until shown again
-            </div>
           </div>
-        );
+          <div className="scene-node-controls">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => moveNode(index, -1)}
+              disabled={index === 0}
+            >
+              ↑
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => moveNode(index, 1)}
+              disabled={index === formData.nodes.length - 1}
+            >
+              ↓
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => toggleNodeExpanded(index)}
+            >
+              {isExpanded ? '▼' : '▶'}
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => removeNode(index)}
+            >
+              ×
+            </Button>
+          </div>
+        </div>
 
-      case 'showNPC':
-        return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>NPC to Show</label>
-            {allNPCs.length > 0 ? (
-              renderNPCSelect(action.npcId, (val) => updateAction(nodeIndex, actionIndex, { npcId: val }))
-            ) : (
-              <input
-                style={styles.input}
-                value={action.npcId || ''}
-                onChange={(e) => updateAction(nodeIndex, actionIndex, { npcId: e.target.value })}
-                placeholder="npc_id"
-              />
-            )}
-            <div style={{ color: '#808090', fontSize: '11px', marginTop: '4px' }}>
-              Restores a hidden NPC to their scheduled location
-            </div>
+        {isExpanded && (
+          <div className="scene-node-content">
+            {renderNodeContent(node, index)}
           </div>
-        );
-
-      default:
-        return (
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Value</label>
-            <input
-              style={styles.input}
-              value={action.value || action.itemId || action.effectId || action.questId || action.locationId || ''}
-              onChange={(e) => {
-                const key = action.type.includes('Item') ? 'itemId' :
-                  action.type.includes('Effect') ? 'effectId' :
-                    action.type.includes('Quest') ? 'questId' :
-                      action.type.includes('Location') ? 'locationId' : 'value';
-                updateAction(nodeIndex, actionIndex, { [key]: e.target.value });
-              }}
-              placeholder="Value"
-            />
-          </div>
-        );
-    }
+        )}
+      </div>
+    );
   };
 
   return (
-    <div style={styles.container}>
+    <div className="creator-container">
       {/* Form Section */}
-      <div style={styles.formSection}>
-        <h3 style={styles.sectionTitle}>
-          {editingItem ? '✏️ Edit Scene' : '➕ Create New Scene'}
+      <div className="creator-form">
+        <h3 className="creator-form-section-title">
+          {editingItem ? 'Edit Scene' : 'Create New Scene'}
         </h3>
 
         {/* Basic Info */}
-        <div style={styles.row}>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>ID *</label>
-              <input
-                style={styles.input}
-                value={formData.id}
-                onChange={(e) => handleChange('id', e.target.value.toLowerCase().replace(/\s/g, '_'))}
-                placeholder="unique_scene_id"
-              />
-            </div>
+        <div className="creator-form-section">
+          <div className="creator-form-row">
+            <FormInput
+              label="ID"
+              required
+              value={formData.id}
+              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
+              placeholder="unique_scene_id"
+            />
+            <FormInput
+              label="Name"
+              required
+              value={formData.name}
+              onChange={(v) => handleChange('name', v)}
+              placeholder="Scene Name"
+            />
           </div>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Name *</label>
-              <input
-                style={styles.input}
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="Scene Name"
-              />
-            </div>
-          </div>
-        </div>
 
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Description</label>
-          <textarea
-            style={styles.textarea}
+          <FormInput
+            label="Description"
+            type="textarea"
             value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
+            onChange={(v) => handleChange('description', v)}
             placeholder="Scene description for reference..."
+            rows={3}
           />
-        </div>
 
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Required Location (optional)</label>
-          <input
-            style={styles.input}
+          <FormInput
+            label="Required Location (optional)"
             value={formData.location}
-            onChange={(e) => handleChange('location', e.target.value)}
+            onChange={(v) => handleChange('location', v)}
             placeholder="location_id"
           />
         </div>
 
         {/* NSFW Settings */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>NSFW Settings</div>
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={formData.isNSFW}
-                onChange={(e) => handleChange('isNSFW', e.target.checked)}
-                style={{ width: '18px', height: '18px' }}
-              />
-              <span style={{ color: formData.isNSFW ? '#ff6b9d' : '#a0a0c0' }}>
-                Mark as NSFW Scene
-              </span>
-            </label>
-            <div style={{ fontSize: '11px', color: '#808090', marginTop: '4px', marginLeft: '26px' }}>
-              NSFW scenes can be linked to enemy NSFW actions
-            </div>
+        <CollapsibleSection
+          title="NSFW Settings"
+          isCollapsed={collapsedSections.nsfw}
+          onToggle={() => toggleSection('nsfw')}
+          badge={formData.isNSFW ? 'NSFW' : null}
+        >
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={formData.isNSFW}
+              onChange={(e) => handleChange('isNSFW', e.target.checked)}
+            />
+            <span style={{ color: formData.isNSFW ? '#ff6b9d' : undefined }}>
+              Mark as NSFW Scene
+            </span>
+          </label>
+          <div className="form-helper ml-lg">
+            NSFW scenes can be linked to enemy NSFW actions
           </div>
 
           {formData.isNSFW && (
-            <div style={styles.formGroup}>
-              <label style={styles.label}>NSFW Action Categories</label>
-              <div style={styles.tagInput}>
-                {formData.nsfwActionTypes.map(action => (
-                  <span key={action} style={{ ...styles.tag, backgroundColor: '#7c4a6a', color: '#ff9dbd' }}>
-                    {action}
-                    <span style={styles.tagRemove} onClick={() => handleRemoveNsfwAction(action)}>×</span>
-                  </span>
-                ))}
-                <input
-                  style={{ ...styles.input, border: 'none', backgroundColor: 'transparent', flex: 1, minWidth: '120px', padding: '2px' }}
-                  value={nsfwActionInput}
-                  onChange={(e) => setNsfwActionInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddNsfwAction(nsfwActionInput)}
-                  placeholder="Type & press Enter..."
-                />
-              </div>
-              <div style={{ fontSize: '11px', color: '#808090', marginTop: '4px', marginBottom: '8px' }}>
-                Press Enter to add action types. A scene can have multiple (e.g., penetrate + infest, hypnotize + breed)
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                {NSFW_ACTION_CATEGORIES.filter(cat => cat.value && !formData.nsfwActionTypes.includes(cat.value)).map(cat => (
-                  <button
-                    key={cat.value}
-                    style={{
-                      ...styles.smallButton,
-                      backgroundColor: '#3a3a5a',
-                      color: '#a0a0c0',
-                      padding: '4px 10px',
-                    }}
-                    onClick={() => handleAddNsfwAction(cat.value)}
-                  >
-                    + {cat.label}
-                  </button>
-                ))}
+            <div className="mt-md">
+              <TagInput
+                label="NSFW Action Categories"
+                value={formData.nsfwActionTypes}
+                onChange={(v) => handleChange('nsfwActionTypes', v)}
+                suggestions={NSFW_ACTION_CATEGORIES.map(c => c.value)}
+                placeholder="Add action type..."
+                showSuggestions
+              />
+              <div className="form-helper mt-sm">
+                A scene can have multiple action types (e.g., penetrate + infest)
               </div>
             </div>
           )}
-        </div>
+        </CollapsibleSection>
 
         {/* Tags */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Tags</div>
-          <div style={styles.tagInput}>
-            {formData.tags.map(tag => (
-              <span key={tag} style={styles.tag}>
-                {tag}
-                <span style={styles.tagRemove} onClick={() => handleRemoveTag(tag)}>×</span>
-              </span>
-            ))}
-            <input
-              style={{ ...styles.input, border: 'none', backgroundColor: 'transparent', flex: 1, minWidth: '100px', padding: '2px' }}
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddTag(tagInput)}
-              placeholder="Add tag..."
-            />
-          </div>
-          <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {suggestedTags.filter(t => !formData.tags.includes(t)).slice(0, 20).map(tag => (
-              <button
-                key={tag}
-                style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                onClick={() => handleAddTag(tag)}
-              >
-                + {tag}
-              </button>
-            ))}
-          </div>
-        </div>
+        <CollapsibleSection
+          title="Tags"
+          isCollapsed={collapsedSections.tags}
+          onToggle={() => toggleSection('tags')}
+          badge={formData.tags.length > 0 ? `${formData.tags.length} tags` : null}
+        >
+          <TagInput
+            value={formData.tags}
+            onChange={(v) => handleChange('tags', v)}
+            suggestions={suggestedTags}
+            categories={TAG_CATEGORIES}
+            placeholder="Add tag..."
+            showSuggestions
+          />
+        </CollapsibleSection>
 
-        {/* Nodes */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Scene Nodes ({formData.nodes.length})</div>
-
-          <div style={styles.addNodeBar}>
+        {/* Scene Nodes */}
+        <CollapsibleSection
+          title="Scene Nodes"
+          isCollapsed={collapsedSections.nodes}
+          onToggle={() => toggleSection('nodes')}
+          badge={formData.nodes.length > 0 ? `${formData.nodes.length} nodes` : null}
+        >
+          <div className="scene-add-node-bar">
             {NODE_TYPES.map(type => (
               <button
                 key={type.value}
-                style={{
-                  ...styles.smallButton,
-                  backgroundColor: type.color,
-                  color: 'white',
-                }}
+                className="scene-add-node-btn"
+                style={{ backgroundColor: type.color }}
                 onClick={() => addNode(type.value)}
               >
                 {type.icon} {type.label}
@@ -1775,101 +1260,84 @@ const SceneCreator = ({
           </div>
 
           {formData.nodes.length === 0 ? (
-            <div style={styles.emptyList}>
+            <div className="empty-list">
               No nodes yet. Add dialogue, choices, actions, etc.
             </div>
           ) : (
             formData.nodes.map((node, index) => renderNode(node, index))
           )}
-        </div>
+        </CollapsibleSection>
 
         {/* Action Buttons */}
-        <div style={{ marginTop: '20px' }}>
-          <button
-            style={{ ...styles.button, ...styles.primaryButton }}
-            onClick={handleSubmit}
-          >
-            {editingItem ? '💾 Update Scene' : '➕ Add Scene'}
-          </button>
+        <div className="creator-actions">
+          <Button variant="success" onClick={handleSubmit}>
+            {editingItem ? 'Update Scene' : 'Add Scene'}
+          </Button>
           {editingItem && (
-            <button
-              style={{ ...styles.button, ...styles.secondaryButton }}
-              onClick={handleCancel}
-            >
+            <Button variant="ghost" onClick={handleCancel}>
               Cancel
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {/* List Section */}
-      <div style={styles.listSection}>
-        <h3 style={styles.sectionTitle}>📋 Created Scenes ({items.length})</h3>
+      <div className="creator-list">
+        <h3 className="creator-form-section-title">
+          Created Scenes
+          <span className="count-badge">{items.length}</span>
+        </h3>
 
         {items.length === 0 ? (
-          <div style={styles.emptyList}>
-            No scenes created yet.<br />
+          <div className="empty-list">
+            No scenes created yet.
+            <br />
             Use the form to create your first scene.
           </div>
         ) : (
           items.map(item => (
             <div
               key={item._id}
-              style={{
-                ...styles.listItem,
-                ...(hoveredItem === item._id ? styles.listItemHover : {}),
-                ...(editingItem?._id === item._id ? { borderColor: '#ffd700' } : {}),
-              }}
+              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
               onMouseEnter={() => setHoveredItem(item._id)}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <div style={styles.listItemName}>
-                📜 {item.name}
-                {item.isNSFW && (
-                  <span style={{
-                    marginLeft: '8px',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    fontSize: '10px',
-                    backgroundColor: '#7c4a6a',
-                    color: '#ff9dbd',
-                  }}>
-                    NSFW
-                  </span>
+              <div className="creator-item-info">
+                <div className="creator-item-name">
+                  {item.name}
+                  {item.isNSFW && (
+                    <span className="rarity-badge" style={{ backgroundColor: '#7c4a6a', color: '#ff9dbd' }}>
+                      NSFW
+                    </span>
+                  )}
+                </div>
+                <div className="creator-item-id">
+                  ID: {item.id} | Nodes: {item.nodes?.length || 0}
+                  {(item.nsfwActionTypes?.length > 0 || item.nsfwActionType) && (
+                    <> | Actions: {(item.nsfwActionTypes || [item.nsfwActionType].filter(Boolean)).join(', ')}</>
+                  )}
+                </div>
+                {item.tags?.length > 0 && (
+                  <div className="creator-item-tags">
+                    {item.tags.slice(0, 4).map(tag => (
+                      <span key={tag} className="tag-chip">{tag}</span>
+                    ))}
+                    {item.tags.length > 4 && (
+                      <span className="tag-chip more">+{item.tags.length - 4}</span>
+                    )}
+                  </div>
                 )}
               </div>
-              <div style={styles.listItemDetails}>
-                ID: {item.id} | Nodes: {item.nodes?.length || 0}
-                {(item.nsfwActionTypes?.length > 0 || item.nsfwActionType) && (
-                  ` | Actions: ${(item.nsfwActionTypes || [item.nsfwActionType].filter(Boolean)).join(', ')}`
-                )}
-              </div>
-              <div style={{ marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
-                {(item.tags || []).slice(0, 4).map(tag => (
-                  <span key={tag} style={{ ...styles.tag, fontSize: '10px', padding: '1px 5px' }}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <div style={styles.listItemActions}>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white' }}
-                  onClick={() => onEdit(item)}
-                >
+              <div className="creator-item-actions">
+                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
                   Edit
-                </button>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#4a4a7c', color: 'white' }}
-                  onClick={() => onDuplicate(item)}
-                >
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
                   Duplicate
-                </button>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                  onClick={() => onDelete(item._id)}
-                >
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
                   Delete
-                </button>
+                </Button>
               </div>
             </div>
           ))

@@ -1,0 +1,228 @@
+{
+  "achievements": {
+    "first_steps": {
+      "id": "first_steps",
+      "name": "First Steps",
+      "description": "Leave the starting inn for the first time",
+      "icon": "foot",
+      "category": "exploration",
+      "rarity": "common",
+      "hidden": false
+    },
+    "cartographer": {
+      "id": "cartographer",
+      "name": "Cartographer",
+      "description": "Discover all locations",
+      "icon": "map",
+      "category": "exploration",
+      "rarity": "legendary",
+      "hidden": false
+    },
+    "deep_delver": {
+      "id": "deep_delver",
+      "name": "Deep Delver",
+      "description": "Explore the Darkwood Depths",
+      "icon": "tree",
+      "category": "exploration",
+      "rarity": "uncommon",
+      "hidden": false
+    },
+    "first_blood": {
+      "id": "first_blood",
+      "name": "First Blood",
+      "description": "Win your first combat",
+      "icon": "sword",
+      "category": "combat",
+      "rarity": "common",
+      "hidden": false
+    },
+    "slayer": {
+      "id": "slayer",
+      "name": "Slayer",
+      "description": "Defeat 50 enemies",
+      "icon": "skull",
+      "category": "combat",
+      "rarity": "rare",
+      "hidden": false,
+      "progress": { "current": 0, "target": 50 }
+    },
+    "untouchable": {
+      "id": "untouchable",
+      "name": "Untouchable",
+      "description": "Win a combat without taking damage",
+      "icon": "shield",
+      "category": "combat",
+      "rarity": "epic",
+      "hidden": false
+    },
+    "escape_artist": {
+      "id": "escape_artist",
+      "name": "Escape Artist",
+      "description": "Successfully flee from 10 combats",
+      "icon": "run",
+      "category": "combat",
+      "rarity": "uncommon",
+      "hidden": false,
+      "progress": { "current": 0, "target": 10 }
+    },
+    "treasure_hunter": {
+      "id": "treasure_hunter",
+      "name": "Treasure Hunter",
+      "description": "Find your first item",
+      "icon": "chest",
+      "category": "loot",
+      "rarity": "common",
+      "hidden": false
+    },
+    "golden_touch": {
+      "id": "golden_touch",
+      "name": "Golden Touch",
+      "description": "Accumulate 10,000 gold",
+      "icon": "coin",
+      "category": "loot",
+      "rarity": "rare",
+      "hidden": false,
+      "progress": { "current": 0, "target": 10000 }
+    },
+    "mythic_finder": {
+      "id": "mythic_finder",
+      "name": "Mythic Finder",
+      "description": "Find a mythic rarity item",
+      "icon": "star",
+      "category": "loot",
+      "rarity": "mythic",
+      "hidden": false
+    },
+    "divine_blessing": {
+      "id": "divine_blessing",
+      "name": "Divine Blessing",
+      "description": "Find a divine rarity item",
+      "icon": "sparkle",
+      "category": "loot",
+      "rarity": "divine",
+      "hidden": true
+    },
+    "level_5": {
+      "id": "level_5",
+      "name": "Apprentice",
+      "description": "Reach level 5",
+      "icon": "chart",
+      "category": "progress",
+      "rarity": "common",
+      "hidden": false
+    },
+    "level_10": {
+      "id": "level_10",
+      "name": "Journeyman",
+      "description": "Reach level 10",
+      "icon": "bar-chart",
+      "category": "progress",
+      "rarity": "uncommon",
+      "hidden": false
+    },
+    "level_25": {
+      "id": "level_25",
+      "name": "Expert",
+      "description": "Reach level 25",
+      "icon": "medal",
+      "category": "progress",
+      "rarity": "rare",
+      "hidden": false
+    },
+    "level_50": {
+      "id": "level_50",
+      "name": "Master",
+      "description": "Reach level 50",
+      "icon": "crown",
+      "category": "progress",
+      "rarity": "epic",
+      "hidden": false
+    },
+    "first_encounter": {
+      "id": "first_encounter",
+      "name": "First Encounter",
+      "description": "Experience your first NSFW scene",
+      "icon": "kiss",
+      "category": "nsfw",
+      "rarity": "common",
+      "hidden": false
+    },
+    "corruption_10": {
+      "id": "corruption_10",
+      "name": "Tainted",
+      "description": "Reach 10% corruption",
+      "icon": "moon",
+      "category": "nsfw",
+      "rarity": "common",
+      "hidden": false
+    },
+    "corruption_50": {
+      "id": "corruption_50",
+      "name": "Fallen",
+      "description": "Reach 50% corruption",
+      "icon": "devil",
+      "category": "nsfw",
+      "rarity": "uncommon",
+      "hidden": false
+    },
+    "corruption_100": {
+      "id": "corruption_100",
+      "name": "Completely Corrupted",
+      "description": "Reach 100% corruption",
+      "icon": "demon",
+      "category": "nsfw",
+      "rarity": "rare",
+      "hidden": true
+    },
+    "curse_breaker": {
+      "id": "curse_breaker",
+      "name": "Curse Breaker",
+      "description": "Remove a curse",
+      "icon": "sparkles",
+      "category": "nsfw",
+      "rarity": "uncommon",
+      "hidden": false
+    },
+    "restraint_master": {
+      "id": "restraint_master",
+      "name": "Restraint Master",
+      "description": "Break free from 25 restraints",
+      "icon": "chain",
+      "category": "nsfw",
+      "rarity": "rare",
+      "hidden": false,
+      "progress": { "current": 0, "target": 25 }
+    },
+    "secret_ending": {
+      "id": "secret_ending",
+      "name": "???",
+      "description": "Hidden achievement",
+      "icon": "question",
+      "category": "secret",
+      "rarity": "legendary",
+      "hidden": true,
+      "revealedName": "True Ending",
+      "revealedDescription": "Discover the true ending"
+    },
+    "speedrunner": {
+      "id": "speedrunner",
+      "name": "???",
+      "description": "Hidden achievement",
+      "icon": "question",
+      "category": "secret",
+      "rarity": "epic",
+      "hidden": true,
+      "revealedName": "Speedrunner",
+      "revealedDescription": "Complete the game in under 2 hours"
+    }
+  },
+  "achievementRarities": {
+    "common": { "color": "#9ca3af", "glow": null },
+    "uncommon": { "color": "#22c55e", "glow": null },
+    "rare": { "color": "#3b82f6", "glow": null },
+    "epic": { "color": "#a855f7", "glow": null },
+    "legendary": { "color": "#f97316", "glow": "0 0 10px rgba(249, 115, 22, 0.5)" },
+    "mythic": { "color": "#ffd700", "glow": "0 0 15px rgba(255, 215, 0, 0.5)" },
+    "divine": { "color": "#ffd700", "glow": "0 0 20px rgba(255, 215, 0, 0.7), 0 0 40px rgba(255, 215, 0, 0.4)" }
+  }
+}

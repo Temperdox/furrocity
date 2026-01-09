@@ -1,0 +1,70 @@
+IMAGE NAMING CONVENTIONS
+========================
+
+All images should be PNG format. Use lowercase with underscores.
+
+MAPS
+----
+maps/global/     - World maps showing kingdoms
+                   Format: world_map_[variant].png
+                   Example: world_map_political.png, world_map_terrain.png
+
+maps/kingdom/    - Kingdom maps showing regions/locations
+                   Format: kingdom_[kingdom_id].png
+                   Example: kingdom_eldoria.png, kingdom_shadowlands.png
+
+maps/local/      - Local area maps (buildings, dungeons, etc)
+                   Format: [location_type]_[location_id].png
+                   Example: village_inn.png, dungeon_floor1.png
+
+
+SPRITES
+-------
+sprites/characters/  - Character sprite sheets
+                       Format: [type]_[name]_[variant].png
+                       Example: player_male_base.png, npc_merchant_idle.png
+
+sprites/enemies/     - Enemy sprite sheets
+                       Format: enemy_[enemy_id]_sheet.png
+                       Example: enemy_goblin_sheet.png, boss_dragon_sheet.png
+
+sprites/items/       - Individual item images or sheets
+                       Format: [category]_[item_id].png
+                       Example: weapon_sword_iron.png, potion_health_red.png
+                       Categories: weapon, armor, potion, consumable, material, key, misc
+
+sprites/icons/       - Icon sheets and location markers
+                       Format: icon_sheet_[category].png OR location_marker_[type].png
+                       Example: icon_sheet_skills.png, location_marker_town.png
+
+
+BACKGROUNDS
+-----------
+backgrounds/         - Scene backgrounds
+                       Format: bg_[location_type]_[variant].png
+                       Example: bg_forest_day.png, bg_interior_tavern.png
+
+
+PORTRAITS
+---------
+portraits/           - Character portraits for dialogue
+                       Format: portrait_[character_type]_[name]_[emotion].png
+                       Example: portrait_npc_merchant_happy.png
+                       Emotions: neutral, happy, sad, angry, surprised, scared
+
+
+UI
+--
+ui/                  - UI elements
+                       Format: ui_[element_type]_[name].png
+                       Example: ui_frame_dialog.png, ui_button_primary.png
+
+
+RECOMMENDED SIZES
+-----------------
+Maps:           1920x1080 or 2560x1440 (16:9 ratio)
+Sprite sheets:  Variable, document cell size in filename or JSON
+Item icons:     32x32 or 64x64
+Portraits:      256x256 or 512x512
+Backgrounds:    1920x1080
+UI elements:    Variable, use 9-slice for frames

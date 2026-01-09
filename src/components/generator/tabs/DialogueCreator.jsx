@@ -1,210 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { collectTags } from '../DatapackLoader';
+import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { useFormDraft } from '../../../hooks/useFormDraft';
+import './CreatorStyles.css';
 
-const styles = {
-  container: {
-    display: 'flex',
-    gap: '20px',
-    height: '100%',
-  },
-  formSection: {
-    flex: '1',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '20px',
-    overflowY: 'auto',
-  },
-  listSection: {
-    width: '320px',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '15px',
-    overflowY: 'auto',
-  },
-  sectionTitle: {
-    color: '#ffd700',
-    fontSize: '18px',
-    marginBottom: '15px',
-    borderBottom: '1px solid #4a4a6a',
-    paddingBottom: '10px',
-  },
-  formGroup: {
-    marginBottom: '15px',
-  },
-  label: {
-    display: 'block',
-    color: '#a0a0c0',
-    marginBottom: '5px',
-    fontSize: '13px',
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  select: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  textarea: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    minHeight: '80px',
-    resize: 'vertical',
-    boxSizing: 'border-box',
-  },
-  row: {
-    display: 'flex',
-    gap: '15px',
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  button: {
-    padding: '10px 20px',
-    borderRadius: '6px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    transition: 'all 0.2s ease',
-    marginRight: '10px',
-  },
-  primaryButton: {
-    backgroundColor: '#4a7c4a',
-    color: 'white',
-  },
-  secondaryButton: {
-    backgroundColor: '#4a4a6a',
-    color: 'white',
-  },
-  smallButton: {
-    padding: '4px 8px',
-    borderRadius: '4px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '11px',
-  },
-  tagInput: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '5px',
-    padding: '8px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    minHeight: '40px',
-  },
-  tag: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '3px 8px',
-    backgroundColor: '#3a3a5a',
-    borderRadius: '12px',
-    fontSize: '12px',
-    color: '#d0d0e0',
-  },
-  tagRemove: {
-    marginLeft: '5px',
-    cursor: 'pointer',
-    color: '#ff6666',
-  },
-  listItem: {
-    padding: '12px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '6px',
-    marginBottom: '8px',
-    cursor: 'pointer',
-    border: '1px solid transparent',
-    transition: 'all 0.2s ease',
-  },
-  listItemHover: {
-    borderColor: '#4a4a6a',
-  },
-  listItemName: {
-    color: '#ffd700',
-    fontSize: '14px',
-    fontWeight: 'bold',
-  },
-  listItemDetails: {
-    color: '#808090',
-    fontSize: '12px',
-    marginTop: '4px',
-  },
-  listItemActions: {
-    display: 'flex',
-    gap: '5px',
-    marginTop: '8px',
-  },
-  emptyList: {
-    color: '#606080',
-    textAlign: 'center',
-    padding: '30px',
-    fontSize: '14px',
-  },
-  subsection: {
-    marginTop: '20px',
-    padding: '15px',
-    backgroundColor: '#1e1e35',
-    borderRadius: '6px',
-  },
-  subsectionTitle: {
-    color: '#c0c0e0',
-    fontSize: '14px',
-    marginBottom: '12px',
-    fontWeight: 'bold',
-  },
-  nodeCard: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: '8px',
-    marginBottom: '12px',
-    border: '1px solid #3a3a5a',
-    overflow: 'hidden',
-  },
-  nodeHeader: {
-    padding: '10px 15px',
-    backgroundColor: '#252540',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    cursor: 'pointer',
-  },
-  nodeBody: {
-    padding: '15px',
-  },
-  responseCard: {
-    backgroundColor: '#252540',
-    borderRadius: '6px',
-    padding: '10px',
-    marginBottom: '8px',
-    marginLeft: '20px',
-    borderLeft: '3px solid #4a7c4a',
-  },
-  conditionBadge: {
-    display: 'inline-block',
-    padding: '2px 6px',
-    backgroundColor: '#3a5a7a',
-    borderRadius: '4px',
-    fontSize: '10px',
-    color: '#a0c0e0',
-    marginRight: '5px',
-  },
-};
+const DRAFT_KEY = 'contentGenerator_draft_dialogues';
 
 const CONDITION_TYPES = [
   { value: 'none', label: 'No Condition' },
@@ -229,6 +29,18 @@ const ACTION_TYPES = [
   { value: 'startCombat', label: 'Start Combat' },
   { value: 'openShop', label: 'Open Shop' },
 ];
+
+const SPEAKER_OPTIONS = [
+  { value: 'npc', label: 'NPC' },
+  { value: 'player', label: 'Player' },
+  { value: 'narrator', label: 'Narrator' },
+];
+
+const TAG_CATEGORIES = {
+  type: ['greeting', 'quest', 'shop', 'combat', 'romance', 'nsfw'],
+  tone: ['friendly', 'hostile', 'neutral', 'mysterious', 'urgent'],
+  topic: ['lore', 'merchant', 'trainer', 'guard', 'villager'],
+};
 
 const DEFAULT_DIALOGUE = {
   id: '',
@@ -275,14 +87,24 @@ const DialogueCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_DIALOGUE });
-  const [tagInput, setTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
   const [expandedNodes, setExpandedNodes] = useState({});
+  const [collapsedSections, setCollapsedSections] = useState({
+    dialogueNodes: false,
+    tags: true,
+  });
+
+  const toggleSection = (section) => {
+    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
+    defaultValues: DEFAULT_DIALOGUE,
+  });
 
   // Combine datapack content with user-created content
   const allNPCs = [...(datapackContent.npcs || []), ...(allContent?.npcs || [])];
   const allItems = [...(datapackContent.items || []), ...(allContent?.items || [])];
-  // Filter locations to exclude any enemy objects that may have been incorrectly included
   const allLocations = [...(datapackContent.locations || []), ...(allContent?.locations || [])]
     .filter(loc => {
       const hasLocationFields = loc.locationType || loc.parentRegion || loc.connectedLocations || loc.navigation;
@@ -290,6 +112,23 @@ const DialogueCreator = ({
       return hasLocationFields || !hasEnemyFields;
     });
   const allQuests = allContent?.quests || [];
+
+  const suggestedTags = useMemo(() => {
+    return collectTags({
+      datapackContent,
+      userContent: items,
+      commonTags: Object.values(TAG_CATEGORIES).flat(),
+      contentType: 'dialogues',
+    });
+  }, [datapackContent, items]);
+
+  // Build NPC options for dropdown
+  const npcOptions = useMemo(() => {
+    return allNPCs.map(npc => ({
+      value: npc.id,
+      label: npc.name || npc.id,
+    }));
+  }, [allNPCs]);
 
   useEffect(() => {
     if (editingItem) {
@@ -314,23 +153,6 @@ const DialogueCreator = ({
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleAddTag = (tag) => {
-    if (tag && !formData.tags.includes(tag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag],
-      }));
-    }
-    setTagInput('');
-  };
-
-  const handleRemoveTag = (tag) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(t => t !== tag),
-    }));
   };
 
   // Node handlers
@@ -406,367 +228,330 @@ const DialogueCreator = ({
     setExpandedNodes(prev => ({ ...prev, [index]: !prev[index] }));
   };
 
+  // Get node options for "next node" dropdowns
+  const getNodeOptions = (excludeIndex = -1) => {
+    return formData.nodes
+      .filter((_, i) => i !== excludeIndex)
+      .map(node => ({ value: node.id, label: node.id }));
+  };
+
   const handleSubmit = () => {
     if (!formData.id || !formData.name) {
       alert('Dialogue ID and Name are required');
       return;
     }
 
-    const dialogueData = { ...formData };
+    if (!editingItem && items.some(item => item.id === formData.id)) {
+      alert('A dialogue with this ID already exists');
+      return;
+    }
 
     if (editingItem) {
-      onUpdate(editingItem._id, dialogueData);
+      onUpdate(editingItem._id, formData);
     } else {
-      onAdd(dialogueData);
+      onAdd(formData);
+      clearDraft();
     }
 
     setFormData({ ...DEFAULT_DIALOGUE });
+    setExpandedNodes({});
   };
 
   const handleCancel = () => {
     setFormData({ ...DEFAULT_DIALOGUE });
+    setExpandedNodes({});
     if (onCancelEdit) onCancelEdit();
   };
 
   return (
-    <div style={styles.container}>
+    <div className="creator-container">
       {/* Form Section */}
-      <div style={styles.formSection}>
-        <h3 style={styles.sectionTitle}>
+      <div className="creator-form">
+        <h3 className="creator-form-section-title">
           {editingItem ? 'Edit Dialogue' : 'Create New Dialogue'}
         </h3>
 
         {/* Basic Info */}
-        <div style={styles.row}>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Dialogue ID *</label>
-              <input
-                style={styles.input}
-                value={formData.id}
-                onChange={(e) => handleChange('id', e.target.value.toLowerCase().replace(/\s+/g, '_'))}
-                placeholder="innkeeper_greeting"
-              />
-            </div>
-          </div>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Name *</label>
-              <input
-                style={styles.input}
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="Innkeeper Greeting"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div style={styles.row}>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Associated NPC</label>
-              <select
-                style={styles.select}
-                value={formData.npcId}
-                onChange={(e) => handleChange('npcId', e.target.value)}
-              >
-                <option value="">Select NPC...</option>
-                {allNPCs.map(npc => (
-                  <option key={npc.id} value={npc.id}>{npc.name || npc.id}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Priority (higher = shown first)</label>
-              <input
-                style={styles.input}
-                type="number"
-                value={formData.priority}
-                onChange={(e) => handleChange('priority', parseInt(e.target.value) || 0)}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Description</label>
-          <textarea
-            style={{ ...styles.textarea, minHeight: '60px' }}
-            value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
-            placeholder="Brief description of this dialogue tree..."
-          />
-        </div>
-
-        <div style={styles.formGroup}>
-          <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <input
-              type="checkbox"
-              checked={formData.isRepeatable}
-              onChange={(e) => handleChange('isRepeatable', e.target.checked)}
+        <div className="creator-form-section">
+          <div className="creator-form-row">
+            <FormInput
+              label="ID"
+              required
+              value={formData.id}
+              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
+              placeholder="innkeeper_greeting"
             />
-            Can be repeated (player can trigger this dialogue again)
-          </label>
+            <FormInput
+              label="Name"
+              required
+              value={formData.name}
+              onChange={(v) => handleChange('name', v)}
+              placeholder="Innkeeper Greeting"
+            />
+          </div>
+
+          <div className="creator-form-row">
+            <FormSelect
+              label="Associated NPC"
+              value={formData.npcId}
+              onChange={(v) => handleChange('npcId', v)}
+              options={npcOptions}
+              placeholder="Select NPC..."
+            />
+            <FormInput
+              label="Priority"
+              type="number"
+              value={formData.priority}
+              onChange={(v) => handleChange('priority', v)}
+              helper="Higher = shown first"
+            />
+          </div>
+
+          <FormInput
+            label="Description"
+            type="textarea"
+            value={formData.description}
+            onChange={(v) => handleChange('description', v)}
+            placeholder="Brief description of this dialogue tree..."
+            rows={2}
+          />
+
+          <div className="checkbox-row">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={formData.isRepeatable}
+                onChange={(e) => handleChange('isRepeatable', e.target.checked)}
+              />
+              <span className="checkbox-text">Can be repeated (player can trigger this dialogue again)</span>
+            </label>
+          </div>
         </div>
 
         {/* Dialogue Nodes */}
-        <div style={styles.subsection}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <div style={styles.subsectionTitle}>Dialogue Nodes</div>
-            <button
-              style={{ ...styles.button, ...styles.primaryButton, padding: '6px 12px' }}
-              onClick={handleAddNode}
-            >
-              + Add Node
-            </button>
-          </div>
-
-          {formData.nodes.length === 0 ? (
-            <div style={{ color: '#606080', textAlign: 'center', padding: '20px', fontSize: '13px' }}>
-              No dialogue nodes yet. Click "Add Node" to create your first dialogue node.
+        <CollapsibleSection
+          title="Dialogue Nodes"
+          isCollapsed={collapsedSections.dialogueNodes}
+          onToggle={() => toggleSection('dialogueNodes')}
+          badge={formData.nodes.length > 0 ? formData.nodes.length : null}
+        >
+          <div className="creator-form-section">
+            <div style={{ marginBottom: 'var(--space-md)' }}>
+              <Button variant="success" size="sm" onClick={handleAddNode}>
+                + Add Node
+              </Button>
             </div>
-          ) : (
-            formData.nodes.map((node, nodeIndex) => (
-              <div key={node.id || nodeIndex} style={styles.nodeCard}>
-                <div
-                  style={styles.nodeHeader}
-                  onClick={() => toggleNodeExpanded(nodeIndex)}
-                >
-                  <div>
-                    <span style={{ color: '#ffd700', fontWeight: 'bold' }}>
-                      {expandedNodes[nodeIndex] ? '▼' : '▶'} Node {nodeIndex + 1}: {node.id}
-                    </span>
-                    <span style={{ color: '#808090', marginLeft: '10px', fontSize: '12px' }}>
-                      ({node.speaker === 'npc' ? 'NPC' : 'Player'})
-                      {node.isEndNode && ' [END]'}
-                    </span>
-                  </div>
-                  <button
-                    style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                    onClick={(e) => { e.stopPropagation(); handleRemoveNode(nodeIndex); }}
-                  >
-                    Delete
-                  </button>
-                </div>
 
-                {expandedNodes[nodeIndex] && (
-                  <div style={styles.nodeBody}>
-                    <div style={styles.row}>
-                      <div style={{ width: '150px' }}>
-                        <label style={styles.label}>Node ID</label>
-                        <input
-                          style={styles.input}
+            {formData.nodes.length === 0 ? (
+              <div className="empty-list">
+                No dialogue nodes yet.
+                <br />
+                Click "Add Node" to create your first dialogue node.
+              </div>
+            ) : (
+              formData.nodes.map((node, nodeIndex) => (
+                <div key={node.id || nodeIndex} className="collapsible">
+                  <div
+                    className="collapsible-header"
+                    onClick={() => toggleNodeExpanded(nodeIndex)}
+                  >
+                    <div className="collapsible-title">
+                      <span style={{ marginRight: 'var(--space-sm)' }}>
+                        {expandedNodes[nodeIndex] ? '▼' : '▶'}
+                      </span>
+                      Node {nodeIndex + 1}: {node.id || '(no id)'}
+                      <span className="text-muted text-sm" style={{ marginLeft: 'var(--space-sm)' }}>
+                        ({node.speaker === 'npc' ? 'NPC' : node.speaker === 'player' ? 'Player' : 'Narrator'})
+                        {node.isEndNode && ' [END]'}
+                      </span>
+                    </div>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={(e) => { e.stopPropagation(); handleRemoveNode(nodeIndex); }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+
+                  {expandedNodes[nodeIndex] && (
+                    <div className="collapsible-content">
+                      <div className="creator-form-row cols-4">
+                        <FormInput
+                          label="Node ID"
                           value={node.id}
-                          onChange={(e) => handleUpdateNode(nodeIndex, 'id', e.target.value)}
+                          onChange={(v) => handleUpdateNode(nodeIndex, 'id', v)}
                           placeholder="node_1"
                         />
-                      </div>
-                      <div style={{ width: '120px' }}>
-                        <label style={styles.label}>Speaker</label>
-                        <select
-                          style={styles.select}
+                        <FormSelect
+                          label="Speaker"
                           value={node.speaker}
-                          onChange={(e) => handleUpdateNode(nodeIndex, 'speaker', e.target.value)}
-                        >
-                          <option value="npc">NPC</option>
-                          <option value="player">Player</option>
-                          <option value="narrator">Narrator</option>
-                        </select>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={styles.label}>Next Node (if no responses)</label>
-                        <select
-                          style={styles.select}
+                          onChange={(v) => handleUpdateNode(nodeIndex, 'speaker', v)}
+                          options={SPEAKER_OPTIONS}
+                        />
+                        <FormSelect
+                          label="Next Node"
                           value={node.nextNode}
-                          onChange={(e) => handleUpdateNode(nodeIndex, 'nextNode', e.target.value)}
-                        >
-                          <option value="">None (End or use responses)</option>
-                          {formData.nodes.filter((_, i) => i !== nodeIndex).map(n => (
-                            <option key={n.id} value={n.id}>{n.id}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div style={{ width: '80px' }}>
-                        <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: '5px', marginTop: '25px' }}>
-                          <input
-                            type="checkbox"
-                            checked={node.isEndNode}
-                            onChange={(e) => handleUpdateNode(nodeIndex, 'isEndNode', e.target.checked)}
-                          />
-                          End
-                        </label>
-                      </div>
-                    </div>
-
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>Dialogue Text</label>
-                      <textarea
-                        style={styles.textarea}
-                        value={node.text}
-                        onChange={(e) => handleUpdateNode(nodeIndex, 'text', e.target.value)}
-                        placeholder="What the speaker says..."
-                      />
-                    </div>
-
-                    {/* Player Responses */}
-                    <div style={{ marginTop: '15px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                        <label style={{ ...styles.label, margin: 0, fontWeight: 'bold' }}>Player Responses</label>
-                        <button
-                          style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white' }}
-                          onClick={() => handleAddResponse(nodeIndex)}
-                        >
-                          + Response
-                        </button>
-                      </div>
-
-                      {node.responses.map((response, respIndex) => (
-                        <div key={respIndex} style={styles.responseCard}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ color: '#4aca4a', fontSize: '12px' }}>Response {respIndex + 1}</span>
-                            <button
-                              style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                              onClick={() => handleRemoveResponse(nodeIndex, respIndex)}
-                            >
-                              ×
-                            </button>
-                          </div>
-                          <div style={styles.formGroup}>
+                          onChange={(v) => handleUpdateNode(nodeIndex, 'nextNode', v)}
+                          options={getNodeOptions(nodeIndex)}
+                          placeholder="None (End or use responses)"
+                          helper="If no responses"
+                        />
+                        <div className="checkbox-row" style={{ marginTop: 'var(--space-lg)' }}>
+                          <label className="checkbox-label">
                             <input
-                              style={styles.input}
+                              type="checkbox"
+                              checked={node.isEndNode}
+                              onChange={(e) => handleUpdateNode(nodeIndex, 'isEndNode', e.target.checked)}
+                            />
+                            <span className="checkbox-text">End Node</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <FormInput
+                        label="Dialogue Text"
+                        type="textarea"
+                        value={node.text}
+                        onChange={(v) => handleUpdateNode(nodeIndex, 'text', v)}
+                        placeholder="What the speaker says..."
+                        rows={3}
+                      />
+
+                      {/* Player Responses */}
+                      <div className="subsection">
+                        <div className="subsection-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span>Player Responses ({node.responses.length})</span>
+                          <Button variant="success" size="sm" onClick={() => handleAddResponse(nodeIndex)}>
+                            + Response
+                          </Button>
+                        </div>
+
+                        {node.responses.map((response, respIndex) => (
+                          <div key={respIndex} className="array-item" style={{ flexDirection: 'column', alignItems: 'stretch', borderLeft: '3px solid var(--color-accent-success)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
+                              <span className="text-secondary text-sm">Response {respIndex + 1}</span>
+                              <Button variant="danger" size="sm" onClick={() => handleRemoveResponse(nodeIndex, respIndex)}>
+                                ×
+                              </Button>
+                            </div>
+                            <FormInput
                               value={response.text}
-                              onChange={(e) => handleUpdateResponse(nodeIndex, respIndex, 'text', e.target.value)}
+                              onChange={(v) => handleUpdateResponse(nodeIndex, respIndex, 'text', v)}
                               placeholder="Player's response text..."
                             />
-                          </div>
-                          <div style={styles.row}>
-                            <div style={styles.halfWidth}>
-                              <label style={styles.label}>Goes to Node</label>
-                              <select
-                                style={styles.select}
+                            <div className="creator-form-row">
+                              <FormSelect
+                                label="Goes to Node"
                                 value={response.nextNode}
-                                onChange={(e) => handleUpdateResponse(nodeIndex, respIndex, 'nextNode', e.target.value)}
-                              >
-                                <option value="">End Dialogue</option>
-                                {formData.nodes.map(n => (
-                                  <option key={n.id} value={n.id}>{n.id}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div style={styles.halfWidth}>
-                              <label style={styles.label}>Condition</label>
-                              <select
-                                style={styles.select}
+                                onChange={(v) => handleUpdateResponse(nodeIndex, respIndex, 'nextNode', v)}
+                                options={[{ value: '', label: 'End Dialogue' }, ...formData.nodes.map(n => ({ value: n.id, label: n.id }))]}
+                              />
+                              <FormSelect
+                                label="Condition"
                                 value={response.condition?.type || 'none'}
-                                onChange={(e) => handleUpdateResponse(nodeIndex, respIndex, 'condition', { type: e.target.value })}
-                              >
-                                {CONDITION_TYPES.map(cond => (
-                                  <option key={cond.value} value={cond.value}>{cond.label}</option>
-                                ))}
-                              </select>
+                                onChange={(v) => handleUpdateResponse(nodeIndex, respIndex, 'condition', { type: v })}
+                                options={CONDITION_TYPES}
+                              />
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
 
-                      {node.responses.length === 0 && (
-                        <div style={{ color: '#606080', fontSize: '12px', fontStyle: 'italic', marginLeft: '20px' }}>
-                          No responses. Dialogue will automatically continue to next node or end.
-                        </div>
-                      )}
+                        {node.responses.length === 0 && (
+                          <div className="text-muted text-sm" style={{ fontStyle: 'italic' }}>
+                            No responses. Dialogue will automatically continue to next node or end.
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </CollapsibleSection>
 
         {/* Tags */}
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Tags</label>
-          <div style={styles.tagInput}>
-            {formData.tags.map(tag => (
-              <span key={tag} style={styles.tag}>
-                {tag}
-                <span style={styles.tagRemove} onClick={() => handleRemoveTag(tag)}>×</span>
-              </span>
-            ))}
-            <input
-              style={{ border: 'none', background: 'transparent', color: 'white', outline: 'none', minWidth: '100px', flex: 1 }}
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && tagInput.trim()) {
-                  e.preventDefault();
-                  handleAddTag(tagInput.trim());
-                }
-              }}
+        <CollapsibleSection
+          title="Tags"
+          isCollapsed={collapsedSections.tags}
+          onToggle={() => toggleSection('tags')}
+          badge={formData.tags.length > 0 ? formData.tags.length : null}
+        >
+          <div className="creator-form-section">
+            <TagInput
+              value={formData.tags}
+              onChange={(v) => handleChange('tags', v)}
+              suggestions={suggestedTags}
+              categories={TAG_CATEGORIES}
               placeholder="Add tag..."
+              showSuggestions
             />
           </div>
-        </div>
+        </CollapsibleSection>
 
-        {/* Actions */}
-        <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
-          <button
-            style={{ ...styles.button, ...styles.primaryButton }}
-            onClick={handleSubmit}
-          >
-            {editingItem ? 'Update Dialogue' : 'Create Dialogue'}
-          </button>
+        {/* Action Buttons */}
+        <div className="creator-actions">
+          <Button variant="success" onClick={handleSubmit}>
+            {editingItem ? 'Update Dialogue' : 'Add Dialogue'}
+          </Button>
           {editingItem && (
-            <button
-              style={{ ...styles.button, ...styles.secondaryButton }}
-              onClick={handleCancel}
-            >
-              Cancel Edit
-            </button>
+            <Button variant="ghost" onClick={handleCancel}>
+              Cancel
+            </Button>
           )}
         </div>
       </div>
 
       {/* List Section */}
-      <div style={styles.listSection}>
-        <h3 style={styles.sectionTitle}>Created Dialogues ({items.length})</h3>
+      <div className="creator-list">
+        <h3 className="creator-form-section-title">
+          Created Dialogues
+          <span className="count-badge">{items.length}</span>
+        </h3>
 
         {items.length === 0 ? (
-          <div style={styles.emptyList}>
-            No dialogues created yet.<br />
+          <div className="empty-list">
+            No dialogues created yet.
+            <br />
             Use the form to create your first dialogue tree.
           </div>
         ) : (
           items.map(item => (
             <div
               key={item._id || item.id}
-              style={{
-                ...styles.listItem,
-                ...(hoveredItem === item._id ? styles.listItemHover : {}),
-              }}
+              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
               onMouseEnter={() => setHoveredItem(item._id)}
               onMouseLeave={() => setHoveredItem(null)}
-              onClick={() => onEdit(item)}
             >
-              <div style={styles.listItemName}>{item.name}</div>
-              <div style={styles.listItemDetails}>
-                {item.nodes?.length || 0} nodes | NPC: {allNPCs.find(n => n.id === item.npcId)?.name || item.npcId || 'None'}
+              <div className="creator-item-info">
+                <div className="creator-item-name">
+                  {item.name}
+                </div>
+                <div className="creator-item-id">
+                  ID: {item.id} | {item.nodes?.length || 0} nodes | NPC: {allNPCs.find(n => n.id === item.npcId)?.name || item.npcId || 'None'}
+                </div>
+                {item.tags?.length > 0 && (
+                  <div className="creator-item-tags">
+                    {item.tags.slice(0, 4).map(tag => (
+                      <span key={tag} className="tag-chip">{tag}</span>
+                    ))}
+                    {item.tags.length > 4 && (
+                      <span className="tag-chip more">+{item.tags.length - 4}</span>
+                    )}
+                  </div>
+                )}
               </div>
-              <div style={styles.listItemActions}>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#4a4a6a', color: 'white' }}
-                  onClick={(e) => { e.stopPropagation(); onDuplicate(item); }}
-                >
+              <div className="creator-item-actions">
+                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
+                  Edit
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
                   Duplicate
-                </button>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                  onClick={(e) => { e.stopPropagation(); onDelete(item._id); }}
-                >
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
                   Delete
-                </button>
+                </Button>
               </div>
             </div>
           ))

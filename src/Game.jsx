@@ -35,55 +35,22 @@ import { gameDataLoader } from './engine/GameDataLoader.js';
 // ============================================================================
 
 const GameData = {
-  // Characters are loaded from datapacks - see playable_characters.json
+  // Characters are loaded from datapacks - see characters/playable_characters.json
   characters: [],
 
-  difficulties: [
-    { id: "easy", name: "Story Mode", description: "Relaxed gameplay, focus on narrative.", statMultiplier: 1.2, encounterRateMultiplier: 0.5, canSaveAnywhere: true },
-    { id: "normal", name: "Adventure", description: "Balanced challenge.", statMultiplier: 1.0, encounterRateMultiplier: 1.0, canSaveAnywhere: true },
-    { id: "hard", name: "Nightmare", description: "Brutal difficulty. Save only in safe zones.", statMultiplier: 0.8, encounterRateMultiplier: 1.5, canSaveAnywhere: false },
-    { id: "nightmare", name: "Corruption", description: "One life. Maximum corruption. No mercy.", statMultiplier: 0.6, encounterRateMultiplier: 2.0, canSaveAnywhere: false, permadeath: true }
-  ],
+  // Difficulties are loaded from datapacks - see settings/difficulties.json
+  difficulties: [],
 
-  sensitiveBodyParts: [
-    { id: "chest", name: "Chest", description: "Increased sensitivity to chest stimulation" },
-    { id: "mouth", name: "Mouth", description: "Increased sensitivity to oral stimulation" },
-    { id: "rear", name: "Rear", description: "Increased sensitivity to rear stimulation" },
-    { id: "genitals", name: "Genitals", description: "Increased sensitivity to genital stimulation" },
-    { id: "neck", name: "Neck", description: "Increased sensitivity to neck stimulation" },
-    { id: "ears", name: "Ears", description: "Increased sensitivity to ear stimulation" }
-  ],
+  // Sensitive body parts are loaded from datapacks - see settings/content_tags.json
+  sensitiveBodyParts: [],
 
-  challengeModifiers: [
-    { id: "easy_corrupt", name: "Easily Corrupted", description: "Corruption builds faster", statPoints: 2, effect: { corruptionRate: 1.5 } },
-    { id: "weak_restraints", name: "Weak Against Restraints", description: "Harder to break free", statPoints: 2, effect: { restraintResist: 0.7 } },
-    { id: "low_nsfw_resist", name: "Susceptible", description: "Harder to resist advances", statPoints: 2, effect: { nsfwResist: 0.7 } },
-    { id: "curse_vulnerable", name: "Curse Magnet", description: "Harder to resist and break curses", statPoints: 3, effect: { curseResist: 0.6, curseBreak: 0.6 } },
-    { id: "hypno_weak", name: "Weak-Willed", description: "Easily hypnotized", statPoints: 2, effect: { hypnoResist: 0.7 } },
-    { id: "addiction_prone", name: "Addictive Personality", description: "Addictions form faster", statPoints: 2, effect: { addictionRate: 1.5 } },
-    { id: "disease_prone", name: "Fragile Constitution", description: "More susceptible to diseases", statPoints: 2, effect: { diseaseResist: 0.5 } },
-    { id: "slow_recovery", name: "Slow Recovery", description: "Stamina recovers slower", statPoints: 1, effect: { staminaRegen: 0.7 } },
-    { id: "glass_cannon", name: "Glass Cannon", description: "Deal more damage, take more damage", statPoints: 2, effect: { damageDealt: 1.3, damageTaken: 1.3 } }
-  ],
+  // Challenge modifiers are loaded from datapacks - see settings/challenge_modifiers.json
+  challengeModifiers: [],
 
-  fetishTags: [
-    { id: "vanilla", name: "Vanilla", category: "general", defaultEnabled: true },
-    { id: "bondage", name: "Bondage", category: "restraints", defaultEnabled: false },
-    { id: "hypnosis", name: "Hypnosis", category: "mind", defaultEnabled: false },
-    { id: "corruption", name: "Corruption", category: "transformation", defaultEnabled: false },
-    { id: "monster", name: "Monster", category: "partners", defaultEnabled: false },
-    { id: "tentacles", name: "Tentacles", category: "partners", defaultEnabled: false },
-    { id: "machines", name: "Machines", category: "partners", defaultEnabled: false },
-    { id: "group", name: "Group", category: "general", defaultEnabled: false },
-    { id: "exhibition", name: "Exhibition", category: "general", defaultEnabled: false },
-    { id: "voyeur", name: "Voyeurism", category: "general", defaultEnabled: false },
-    { id: "size_diff", name: "Size Difference", category: "general", defaultEnabled: false },
-    { id: "transformation", name: "Transformation", category: "transformation", defaultEnabled: false },
-    { id: "clothing_damage", name: "Clothing Damage", category: "general", defaultEnabled: true },
-    { id: "restraint_escape", name: "Restraint Escape", category: "restraints", defaultEnabled: true }
-  ],
+  // Fetish tags are loaded from datapacks - see settings/content_tags.json
+  fetishTags: [],
 
-  // Locations are loaded from datapacks - see world_locations.json
+  // Locations are loaded from datapacks - see locations/world_locations.json
   locations: [],
 
   // Regions are loaded from datapacks - see regions.json
@@ -101,595 +68,44 @@ const GameData = {
   // Loot tables are loaded from datapacks - see loot_tables/
   lootTables: {},
 
-  itemRarities: [
-    { id: "common", name: "Common", color: "#9CA3AF", dropWeight: 50, statMultiplier: 1.0 },
-    { id: "uncommon", name: "Uncommon", color: "#22C55E", dropWeight: 25, statMultiplier: 1.2 },
-    { id: "rare", name: "Rare", color: "#3B82F6", dropWeight: 15, statMultiplier: 1.5 },
-    { id: "epic", name: "Epic", color: "#A855F7", dropWeight: 7, statMultiplier: 1.8 },
-    { id: "legendary", name: "Legendary", color: "#F59E0B", dropWeight: 2.5, statMultiplier: 2.2 },
-    { id: "mythical", name: "Mythical", color: "#EC4899", dropWeight: 0.4, statMultiplier: 2.8 },
-    { id: "divine", name: "Divine", color: "#FBBF24", dropWeight: 0.1, statMultiplier: 3.5, glowEffect: true }
-  ],
+  // Item rarities are loaded from datapacks - see items/rarities.json
+  itemRarities: [],
 
-  curseRarities: [
-    { id: "minor", name: "Minor", color: "#6B7280", severity: 1 },
-    { id: "dreadful", name: "Dreadful", color: "#7C3AED", severity: 2 },
-    { id: "malicious", name: "Malicious", color: "#DC2626", severity: 3 },
-    { id: "malignant", name: "Malignant", color: "#991B1B", severity: 4 },
-    { id: "evil", name: "Evil", color: "#450A0A", severity: 5 },
-    { id: "diabolical", name: "Diabolical", color: "#000000", severity: 6, glowEffect: true }
-  ],
+  // Curse rarities are loaded from datapacks - see items/rarities.json
+  curseRarities: [],
 
-  itemNameParts: {
-    prefixes: {
-      common: ["Worn", "Old", "Simple", "Basic", "Plain"],
-      uncommon: ["Sturdy", "Fine", "Polished", "Quality", "Reinforced"],
-      rare: ["Masterwork", "Enchanted", "Gleaming", "Runic", "Blessed"],
-      epic: ["Arcane", "Legendary", "Heroic", "Majestic", "Radiant"],
-      legendary: ["Mythic", "Ancient", "Celestial", "Primordial", "Eternal"],
-      mythical: ["Godforged", "Transcendent", "Omnipotent", "Infinite", "Cosmic"],
-      divine: ["Divine", "Holy", "Sacred", "Hallowed", "Sanctified"]
-    },
-    curseAdjectives: ["Cursed", "Tainted", "Corrupted", "Defiled", "Wicked", "Twisted", "Profane"],
-    suffixes: {
-      strength: ["of Might", "of the Titan", "of Power", "of Brawn", "of the Giant"],
-      evasion: ["of Shadows", "of the Wind", "of Swiftness", "of Agility", "of the Phantom"],
-      vitality: ["of Endurance", "of the Oak", "of Fortitude", "of Resilience", "of Life"],
-      intelligence: ["of Wisdom", "of the Sage", "of Knowledge", "of the Scholar", "of Insight"],
-      willpower: ["of Resolve", "of the Paladin", "of Spirit", "of the Monk", "of Determination"],
-      corruption: ["of Purity", "of Cleansing", "of the Light", "of Sanctity", "of Grace"]
-    }
-  },
+  // Item name parts are loaded from datapacks - see items/name_parts.json
+  itemNameParts: null,
 
   // Base items are loaded from datapacks - see items/
   baseItems: {},
 
-  restraints: {
-    pin: { id: "pin", name: "Pinned", hp: 20, breakDifficulty: 1, description: "Held down by weight" },
-    hold: { id: "hold", name: "Grabbed", hp: 30, breakDifficulty: 1.2, description: "Arms restrained" },
-    bear_hug: { id: "bear_hug", name: "Bear Hug", hp: 50, breakDifficulty: 1.5, description: "Crushing grip" },
-    rope_bind: { id: "rope_bind", name: "Rope Bound", hp: 40, breakDifficulty: 1.3, description: "Tied with rope" },
-    chain_bind: { id: "chain_bind", name: "Chained", hp: 60, breakDifficulty: 1.8, description: "Locked in chains" },
-    magic_bind: { id: "magic_bind", name: "Magical Bonds", hp: 45, breakDifficulty: 2.0, description: "Arcane restraints" }
-  },
+  // Restraints are loaded from datapacks - see combat/restraints.json
+  restraints: {},
 
   // Scenes are loaded from datapacks - see scenes/
   scenes: {},
 
-  // Achievement Definitions
-  achievements: {
-    // Exploration achievements
-    first_steps: { 
-      id: "first_steps", 
-      name: "First Steps", 
-      description: "Leave the starting inn for the first time",
-      icon: "🚶",
-      category: "exploration",
-      rarity: "common",
-      hidden: false
-    },
-    cartographer: { 
-      id: "cartographer", 
-      name: "Cartographer", 
-      description: "Discover all locations",
-      icon: "🗺️",
-      category: "exploration",
-      rarity: "legendary",
-      hidden: false
-    },
-    deep_delver: { 
-      id: "deep_delver", 
-      name: "Deep Delver", 
-      description: "Explore the Darkwood Depths",
-      icon: "🌲",
-      category: "exploration",
-      rarity: "uncommon",
-      hidden: false
-    },
-    
-    // Combat achievements
-    first_blood: { 
-      id: "first_blood", 
-      name: "First Blood", 
-      description: "Win your first combat",
-      icon: "⚔️",
-      category: "combat",
-      rarity: "common",
-      hidden: false
-    },
-    slayer: { 
-      id: "slayer", 
-      name: "Slayer", 
-      description: "Defeat 50 enemies",
-      icon: "💀",
-      category: "combat",
-      rarity: "rare",
-      hidden: false,
-      progress: { current: 0, target: 50 }
-    },
-    untouchable: { 
-      id: "untouchable", 
-      name: "Untouchable", 
-      description: "Win a combat without taking damage",
-      icon: "🛡️",
-      category: "combat",
-      rarity: "epic",
-      hidden: false
-    },
-    escape_artist: { 
-      id: "escape_artist", 
-      name: "Escape Artist", 
-      description: "Successfully flee from 10 combats",
-      icon: "🏃",
-      category: "combat",
-      rarity: "uncommon",
-      hidden: false,
-      progress: { current: 0, target: 10 }
-    },
-    
-    // Loot achievements
-    treasure_hunter: { 
-      id: "treasure_hunter", 
-      name: "Treasure Hunter", 
-      description: "Find your first item",
-      icon: "📦",
-      category: "loot",
-      rarity: "common",
-      hidden: false
-    },
-    golden_touch: { 
-      id: "golden_touch", 
-      name: "Golden Touch", 
-      description: "Accumulate 10,000 gold",
-      icon: "🪙",
-      category: "loot",
-      rarity: "rare",
-      hidden: false,
-      progress: { current: 0, target: 10000 }
-    },
-    mythic_finder: { 
-      id: "mythic_finder", 
-      name: "Mythic Finder", 
-      description: "Find a mythic rarity item",
-      icon: "⭐",
-      category: "loot",
-      rarity: "mythic",
-      hidden: false
-    },
-    divine_blessing: { 
-      id: "divine_blessing", 
-      name: "Divine Blessing", 
-      description: "Find a divine rarity item",
-      icon: "✦",
-      category: "loot",
-      rarity: "divine",
-      hidden: true
-    },
-    
-    // Progress achievements
-    level_5: { 
-      id: "level_5", 
-      name: "Apprentice", 
-      description: "Reach level 5",
-      icon: "📈",
-      category: "progress",
-      rarity: "common",
-      hidden: false
-    },
-    level_10: { 
-      id: "level_10", 
-      name: "Journeyman", 
-      description: "Reach level 10",
-      icon: "📊",
-      category: "progress",
-      rarity: "uncommon",
-      hidden: false
-    },
-    level_25: { 
-      id: "level_25", 
-      name: "Expert", 
-      description: "Reach level 25",
-      icon: "🏅",
-      category: "progress",
-      rarity: "rare",
-      hidden: false
-    },
-    level_50: { 
-      id: "level_50", 
-      name: "Master", 
-      description: "Reach level 50",
-      icon: "👑",
-      category: "progress",
-      rarity: "epic",
-      hidden: false
-    },
-    
-    // NSFW achievements
-    first_encounter: { 
-      id: "first_encounter", 
-      name: "First Encounter", 
-      description: "Experience your first NSFW scene",
-      icon: "💋",
-      category: "nsfw",
-      rarity: "common",
-      hidden: false
-    },
-    corruption_10: { 
-      id: "corruption_10", 
-      name: "Tainted", 
-      description: "Reach 10% corruption",
-      icon: "🌑",
-      category: "nsfw",
-      rarity: "common",
-      hidden: false
-    },
-    corruption_50: { 
-      id: "corruption_50", 
-      name: "Fallen", 
-      description: "Reach 50% corruption",
-      icon: "😈",
-      category: "nsfw",
-      rarity: "uncommon",
-      hidden: false
-    },
-    corruption_100: { 
-      id: "corruption_100", 
-      name: "Completely Corrupted", 
-      description: "Reach 100% corruption",
-      icon: "👿",
-      category: "nsfw",
-      rarity: "rare",
-      hidden: true
-    },
-    curse_breaker: { 
-      id: "curse_breaker", 
-      name: "Curse Breaker", 
-      description: "Remove a curse",
-      icon: "✨",
-      category: "nsfw",
-      rarity: "uncommon",
-      hidden: false
-    },
-    restraint_master: { 
-      id: "restraint_master", 
-      name: "Restraint Master", 
-      description: "Break free from 25 restraints",
-      icon: "⛓️",
-      category: "nsfw",
-      rarity: "rare",
-      hidden: false,
-      progress: { current: 0, target: 25 }
-    },
-    
-    // Secret/Hidden achievements
-    secret_ending: { 
-      id: "secret_ending", 
-      name: "???", 
-      description: "Hidden achievement",
-      icon: "❓",
-      category: "secret",
-      rarity: "legendary",
-      hidden: true,
-      revealedName: "True Ending",
-      revealedDescription: "Discover the true ending"
-    },
-    speedrunner: { 
-      id: "speedrunner", 
-      name: "???", 
-      description: "Hidden achievement",
-      icon: "❓",
-      category: "secret",
-      rarity: "epic",
-      hidden: true,
-      revealedName: "Speedrunner",
-      revealedDescription: "Complete the game in under 2 hours"
-    }
-  },
+  // Achievements are loaded from datapacks - see progression/achievements.json
+  achievements: {},
 
-  // Achievement rarity colors
-  achievementRarities: {
-    common: { color: '#9ca3af', glow: null },
-    uncommon: { color: '#22c55e', glow: null },
-    rare: { color: '#3b82f6', glow: null },
-    epic: { color: '#a855f7', glow: null },
-    legendary: { color: '#f97316', glow: '0 0 10px rgba(249, 115, 22, 0.5)' },
-    mythic: { color: '#ffd700', glow: '0 0 15px rgba(255, 215, 0, 0.5)' },
-    divine: { color: '#ffd700', glow: '0 0 20px rgba(255, 215, 0, 0.7), 0 0 40px rgba(255, 215, 0, 0.4)' }
-  },
+  // Achievement rarity colors are loaded from datapacks - see progression/achievements.json
+  achievementRarities: {},
 
-  skills: {
-    // Combat skills
-    power_strike: { id: "power_strike", name: "Power Strike", type: "active", category: "combat", cost: { stamina: 15 }, effect: { damage: 1.5 }, cooldown: 2, description: "A powerful blow dealing 150% damage" },
-    dodge_roll: { id: "dodge_roll", name: "Dodge Roll", type: "active", category: "combat", cost: { stamina: 10 }, effect: { evasionBoost: 50, duration: 1 }, cooldown: 3, description: "Quick dodge, +50% evasion for 1 turn" },
-    guard: { id: "guard", name: "Guard", type: "active", category: "combat", cost: { stamina: 5 }, effect: { defenseBoost: 100, duration: 1 }, cooldown: 2, description: "Defensive stance, double defense for 1 turn" },
-    
-    // Resistance skills
-    iron_will: { id: "iron_will", name: "Iron Will", type: "passive", category: "resistance", effect: { willpowerBoost: 20 }, description: "+20% willpower" },
-    mental_fortress: { id: "mental_fortress", name: "Mental Fortress", type: "active", category: "resistance", cost: { stamina: 20 }, effect: { hypnoResist: 100, duration: 3 }, cooldown: 5, description: "Immunity to hypnosis for 3 turns" },
-    
-    // Recovery skills
-    second_wind: { id: "second_wind", name: "Second Wind", type: "active", category: "recovery", cost: { stamina: 0 }, effect: { staminaRestore: 30, hpRestore: 10 }, cooldown: 10, description: "Recover 30% stamina and 10% HP" },
-    meditation: { id: "meditation", name: "Meditation", type: "active", category: "recovery", cost: { stamina: 5 }, effect: { corruptionReduce: 5 }, cooldown: 5, description: "Reduce corruption by 5" }
-  },
+  // Skills are loaded from datapacks - see skills/skills.json
+  skills: {},
 
-  skillTrees: {
-    warrior: {
-      name: "Warrior",
-      skills: ["power_strike", "guard", "iron_will"],
-      requirements: { strength: 5 }
-    },
-    rogue: {
-      name: "Rogue", 
-      skills: ["dodge_roll", "stealth_strike"],
-      requirements: { evasion: 5 }
-    },
-    mystic: {
-      name: "Mystic",
-      skills: ["mental_fortress", "meditation"],
-      requirements: { willpower: 5 }
-    }
-  },
+  // Skill trees are loaded from datapacks - see skills/skills.json
+  skillTrees: {},
 
-  // ============================================================================
-  // PAPERDOLL SYSTEM - Layer definitions for character visualization
-  // ============================================================================
-  
-  paperdollLayers: {
-    // Full body portrait layers (z-index order)
-    fullBody: [
-      { id: 'base', name: 'Base Body', zIndex: 0 },
-      { id: 'skin_details', name: 'Skin Details', zIndex: 5 },
-      { id: 'tattoos', name: 'Tattoos', zIndex: 10 },
-      { id: 'scars', name: 'Scars', zIndex: 15 },
-      { id: 'body_hair', name: 'Body Hair', zIndex: 20 },
-      { id: 'genitalia', name: 'Genitalia', zIndex: 25 },
-      { id: 'piercings_body', name: 'Body Piercings', zIndex: 30 },
-      { id: 'genital_piercings', name: 'Genital Piercings', zIndex: 32 },
-      { id: 'lewd_accessories', name: 'Lewd Accessories', zIndex: 35 },
-      { id: 'underwear_bottom', name: 'Lower Underwear', zIndex: 40 },
-      { id: 'underwear_top', name: 'Upper Underwear', zIndex: 45 },
-      { id: 'socks', name: 'Socks/Stockings', zIndex: 50 },
-      { id: 'pants', name: 'Pants/Skirt', zIndex: 55 },
-      { id: 'shirt', name: 'Shirt/Top', zIndex: 60 },
-      { id: 'shoes', name: 'Footwear', zIndex: 65 },
-      { id: 'gloves', name: 'Gloves', zIndex: 70 },
-      { id: 'armor_legs', name: 'Leg Armor', zIndex: 75 },
-      { id: 'armor_chest', name: 'Chest Armor', zIndex: 80 },
-      { id: 'armor_arms', name: 'Arm Armor', zIndex: 85 },
-      { id: 'belt', name: 'Belt', zIndex: 90 },
-      { id: 'jacket', name: 'Jacket/Coat', zIndex: 95 },
-      { id: 'cape', name: 'Cape/Cloak', zIndex: 100 },
-      { id: 'helmet', name: 'Helmet', zIndex: 105 },
-      { id: 'mask', name: 'Mask', zIndex: 110 },
-      { id: 'accessories', name: 'Accessories', zIndex: 115 },
-      { id: 'effects', name: 'Visual Effects', zIndex: 200 },
-      { id: 'fluids', name: 'Fluids', zIndex: 210 },
-      { id: 'restraints', name: 'Restraints', zIndex: 250 }
-    ],
-    // Head region
-    head: [
-      { id: 'base', name: 'Base', zIndex: 0 },
-      { id: 'facial_features', name: 'Facial Features', zIndex: 10 },
-      { id: 'tattoos', name: 'Face Tattoos', zIndex: 20 },
-      { id: 'piercings', name: 'Face Piercings', zIndex: 25 },
-      { id: 'eyes', name: 'Eyes', zIndex: 35 },
-      { id: 'makeup', name: 'Makeup', zIndex: 45 },
-      { id: 'facial_hair', name: 'Facial Hair', zIndex: 55 },
-      { id: 'hair_back', name: 'Hair (Back)', zIndex: 60 },
-      { id: 'ears', name: 'Ears', zIndex: 65 },
-      { id: 'earrings', name: 'Earrings', zIndex: 70 },
-      { id: 'hair_front', name: 'Hair (Front)', zIndex: 75 },
-      { id: 'glasses', name: 'Glasses', zIndex: 80 },
-      { id: 'headwear', name: 'Headwear', zIndex: 85 },
-      { id: 'helmet', name: 'Helmet', zIndex: 90 },
-      { id: 'mask', name: 'Mask', zIndex: 95 },
-      { id: 'gag', name: 'Gag', zIndex: 100 },
-      { id: 'blindfold', name: 'Blindfold', zIndex: 105 },
-      { id: 'collar', name: 'Collar', zIndex: 110 },
-      { id: 'effects', name: 'Effects', zIndex: 200 }
-    ],
-    // Torso/Chest region
-    torso: [
-      { id: 'base', name: 'Base', zIndex: 0 },
-      { id: 'tattoos', name: 'Tattoos', zIndex: 10 },
-      { id: 'body_hair', name: 'Body Hair', zIndex: 20 },
-      { id: 'nipples', name: 'Nipples', zIndex: 25 },
-      { id: 'piercings', name: 'Piercings', zIndex: 30 },
-      { id: 'pasties', name: 'Pasties', zIndex: 35 },
-      { id: 'bra', name: 'Bra/Bralette', zIndex: 40 },
-      { id: 'undershirt', name: 'Undershirt', zIndex: 45 },
-      { id: 'shirt', name: 'Shirt', zIndex: 50 },
-      { id: 'corset', name: 'Corset', zIndex: 55 },
-      { id: 'armor', name: 'Chest Armor', zIndex: 65 },
-      { id: 'harness', name: 'Harness', zIndex: 70 },
-      { id: 'jacket', name: 'Jacket', zIndex: 75 },
-      { id: 'necklace', name: 'Necklace', zIndex: 85 },
-      { id: 'effects', name: 'Effects', zIndex: 200 },
-      { id: 'fluids', name: 'Fluids', zIndex: 210 },
-      { id: 'restraints', name: 'Restraints', zIndex: 250 }
-    ],
-    // Groin/genital region
-    groin: [
-      { id: 'base', name: 'Base', zIndex: 0 },
-      { id: 'tattoos', name: 'Tattoos', zIndex: 10 },
-      { id: 'pubic_hair', name: 'Pubic Hair', zIndex: 15 },
-      { id: 'genitalia', name: 'Genitalia', zIndex: 20 },
-      { id: 'genital_piercings', name: 'Genital Piercings', zIndex: 25 },
-      { id: 'cock_ring', name: 'Cock Ring', zIndex: 30 },
-      { id: 'chastity', name: 'Chastity Device', zIndex: 35 },
-      { id: 'plug', name: 'Plug', zIndex: 40 },
-      { id: 'panties', name: 'Panties/Briefs', zIndex: 45 },
-      { id: 'thong', name: 'Thong', zIndex: 50 },
-      { id: 'jockstrap', name: 'Jockstrap', zIndex: 55 },
-      { id: 'garter', name: 'Garter', zIndex: 60 },
-      { id: 'shorts', name: 'Shorts', zIndex: 65 },
-      { id: 'pants', name: 'Pants', zIndex: 70 },
-      { id: 'armor', name: 'Groin Armor', zIndex: 80 },
-      { id: 'effects', name: 'Effects', zIndex: 200 },
-      { id: 'fluids', name: 'Fluids', zIndex: 210 }
-    ],
-    // Legs region
-    legs: [
-      { id: 'base', name: 'Base', zIndex: 0 },
-      { id: 'tattoos', name: 'Tattoos', zIndex: 10 },
-      { id: 'leg_hair', name: 'Leg Hair', zIndex: 15 },
-      { id: 'stockings', name: 'Stockings/Thigh-highs', zIndex: 20 },
-      { id: 'socks', name: 'Socks', zIndex: 25 },
-      { id: 'leggings', name: 'Leggings', zIndex: 30 },
-      { id: 'pants', name: 'Pants', zIndex: 35 },
-      { id: 'shorts', name: 'Shorts', zIndex: 40 },
-      { id: 'skirt', name: 'Skirt', zIndex: 45 },
-      { id: 'leg_armor', name: 'Leg Armor', zIndex: 50 },
-      { id: 'thigh_straps', name: 'Thigh Straps', zIndex: 60 },
-      { id: 'effects', name: 'Effects', zIndex: 200 },
-      { id: 'restraints', name: 'Leg Restraints', zIndex: 250 }
-    ],
-    // Ass region
-    ass: [
-      { id: 'base', name: 'Base', zIndex: 0 },
-      { id: 'tattoos', name: 'Tattoos', zIndex: 10 },
-      { id: 'plug', name: 'Plug', zIndex: 15 },
-      { id: 'tail', name: 'Tail Plug', zIndex: 20 },
-      { id: 'panties', name: 'Panties', zIndex: 25 },
-      { id: 'thong', name: 'Thong', zIndex: 30 },
-      { id: 'shorts', name: 'Shorts', zIndex: 35 },
-      { id: 'pants', name: 'Pants', zIndex: 40 },
-      { id: 'effects', name: 'Effects', zIndex: 200 },
-      { id: 'fluids', name: 'Fluids', zIndex: 210 }
-    ],
-    // Arms region
-    arms: [
-      { id: 'base', name: 'Base', zIndex: 0 },
-      { id: 'tattoos', name: 'Tattoos', zIndex: 10 },
-      { id: 'arm_hair', name: 'Arm Hair', zIndex: 15 },
-      { id: 'sleeves', name: 'Sleeves', zIndex: 20 },
-      { id: 'arm_warmers', name: 'Arm Warmers', zIndex: 25 },
-      { id: 'bracers', name: 'Bracers', zIndex: 30 },
-      { id: 'arm_armor', name: 'Arm Armor', zIndex: 35 },
-      { id: 'gloves', name: 'Gloves', zIndex: 40 },
-      { id: 'bracelets', name: 'Bracelets', zIndex: 45 },
-      { id: 'cuffs', name: 'Cuffs', zIndex: 55 },
-      { id: 'effects', name: 'Effects', zIndex: 200 },
-      { id: 'restraints', name: 'Arm Restraints', zIndex: 250 }
-    ],
-    // Feet region
-    feet: [
-      { id: 'base', name: 'Base', zIndex: 0 },
-      { id: 'nail_polish', name: 'Nail Polish', zIndex: 5 },
-      { id: 'toe_rings', name: 'Toe Rings', zIndex: 10 },
-      { id: 'anklet', name: 'Anklet', zIndex: 15 },
-      { id: 'socks', name: 'Socks', zIndex: 20 },
-      { id: 'stockings', name: 'Stocking Feet', zIndex: 25 },
-      { id: 'shoes', name: 'Shoes', zIndex: 30 },
-      { id: 'boots', name: 'Boots', zIndex: 35 },
-      { id: 'armor', name: 'Foot Armor', zIndex: 40 },
-      { id: 'effects', name: 'Effects', zIndex: 200 },
-      { id: 'restraints', name: 'Ankle Restraints', zIndex: 250 }
-    ]
-  },
+  // Paperdoll layers are loaded from datapacks - see display/paperdoll_config.json
+  paperdollLayers: {},
 
-  // Maps item paperdollType to which layer(s) it affects in each region
-  paperdollItemMapping: {
-    // Underwear
-    briefs: { fullBody: 'underwear_bottom', groin: 'panties' },
-    boxers: { fullBody: 'underwear_bottom', groin: 'panties' },
-    panties: { fullBody: 'underwear_bottom', groin: 'panties' },
-    thong: { fullBody: 'underwear_bottom', groin: 'thong', ass: 'thong' },
-    jockstrap: { fullBody: 'underwear_bottom', groin: 'jockstrap' },
-    bra: { fullBody: 'underwear_top', torso: 'bra' },
-    bralette: { fullBody: 'underwear_top', torso: 'bra' },
-    corset: { fullBody: 'underwear_top', torso: 'corset' },
-    
-    // Legwear
-    stockings: { fullBody: 'socks', legs: 'stockings', feet: 'stockings' },
-    thigh_highs: { fullBody: 'socks', legs: 'stockings' },
-    socks: { fullBody: 'socks', legs: 'socks', feet: 'socks' },
-    leggings: { fullBody: 'pants', legs: 'leggings' },
-    
-    // Pants/Bottoms
-    pants: { fullBody: 'pants', groin: 'pants', legs: 'pants', ass: 'pants' },
-    shorts: { fullBody: 'pants', groin: 'shorts', legs: 'shorts', ass: 'shorts' },
-    skirt: { fullBody: 'pants', groin: 'shorts', legs: 'skirt' },
-    
-    // Tops
-    shirt: { fullBody: 'shirt', torso: 'shirt' },
-    crop_top: { fullBody: 'shirt', torso: 'shirt' },
-    tank_top: { fullBody: 'shirt', torso: 'shirt' },
-    
-    // Outerwear
-    jacket: { fullBody: 'jacket', torso: 'jacket' },
-    coat: { fullBody: 'jacket', torso: 'jacket' },
-    vest: { fullBody: 'jacket', torso: 'vest' },
-    cape: { fullBody: 'cape' },
-    cloak: { fullBody: 'cape' },
-    
-    // Armor
-    chest_armor: { fullBody: 'armor_chest', torso: 'armor' },
-    leg_armor: { fullBody: 'armor_legs', legs: 'leg_armor' },
-    arm_armor: { fullBody: 'armor_arms', arms: 'arm_armor' },
-    helmet: { fullBody: 'helmet', head: 'helmet' },
-    
-    // Footwear
-    shoes: { fullBody: 'shoes', feet: 'shoes' },
-    boots: { fullBody: 'shoes', feet: 'boots' },
-    heels: { fullBody: 'shoes', feet: 'shoes' },
-    
-    // Accessories
-    gloves: { fullBody: 'gloves', arms: 'gloves' },
-    belt: { fullBody: 'belt', groin: 'garter' },
-    necklace: { torso: 'necklace' },
-    collar: { head: 'collar' },
-    earrings: { head: 'earrings' },
-    glasses: { head: 'glasses' },
-    mask: { fullBody: 'mask', head: 'mask' },
-    
-    // Lewd items
-    cock_ring: { groin: 'cock_ring' },
-    chastity_cage: { groin: 'chastity' },
-    chastity_belt: { groin: 'chastity', ass: 'panties' },
-    butt_plug: { groin: 'plug', ass: 'plug' },
-    tail_plug: { ass: 'tail', fullBody: 'lewd_accessories' },
-    nipple_clamps: { torso: 'piercings' },
-    pasties: { torso: 'pasties' },
-    harness: { torso: 'harness', fullBody: 'lewd_accessories' },
-    
-    // Piercings
-    nipple_piercing: { torso: 'piercings' },
-    prince_albert: { groin: 'genital_piercings', fullBody: 'genital_piercings' },
-    jacobs_ladder: { groin: 'genital_piercings', fullBody: 'genital_piercings' },
-    clit_piercing: { groin: 'genital_piercings' },
-    tongue_piercing: { head: 'piercings' },
-    lip_piercing: { head: 'piercings' },
-    nose_piercing: { head: 'piercings' },
-    
-    // Restraints
-    handcuffs: { arms: 'restraints', fullBody: 'restraints' },
-    rope_arms: { arms: 'restraints', fullBody: 'restraints' },
-    rope_legs: { legs: 'restraints', fullBody: 'restraints' },
-    armbinder: { arms: 'restraints', fullBody: 'restraints' },
-    spreader_bar: { legs: 'restraints', fullBody: 'restraints' },
-    blindfold: { head: 'blindfold' },
-    gag_ball: { head: 'gag' },
-    gag_ring: { head: 'gag' },
-    
-    // Tattoos
-    body_tattoo: { fullBody: 'tattoos', torso: 'tattoos' },
-    arm_tattoo: { arms: 'tattoos' },
-    leg_tattoo: { legs: 'tattoos' },
-    face_tattoo: { head: 'tattoos' },
-    back_tattoo: { fullBody: 'tattoos', torso: 'tattoos' },
-    groin_tattoo: { groin: 'tattoos' }
-  },
+  // Paperdoll item mapping is loaded from datapacks - see display/paperdoll_config.json
+  paperdollItemMapping: {},
 
-  // Body region display configuration (for stats screen)
-  bodyRegionDisplay: [
-    { id: 'head', name: 'Head', icon: '👤', statKey: null },
-    { id: 'torso', name: 'Chest', icon: '👕', statKey: 'chest' },
-    { id: 'groin', name: 'Groin', icon: '🩲', statKey: 'genitals' },
-    { id: 'ass', name: 'Rear', icon: '🍑', statKey: 'rear' },
-    { id: 'legs', name: 'Legs', icon: '🦵', statKey: null },
-    { id: 'arms', name: 'Arms', icon: '💪', statKey: null }
-  ]
+  // Body region display is loaded from datapacks - see display/paperdoll_config.json
+  bodyRegionDisplay: []
 };
 
 // ============================================================================
@@ -5497,6 +4913,67 @@ const Game = () => {
           Object.assign(GameData.scenes, loadedContent.scenes);
         }
 
+        // Merge new content types from datapacks
+        if (loadedContent.difficulties && loadedContent.difficulties.length > 0) {
+          GameData.difficulties = loadedContent.difficulties;
+        }
+
+        if (loadedContent.challengeModifiers && loadedContent.challengeModifiers.length > 0) {
+          GameData.challengeModifiers = loadedContent.challengeModifiers;
+        }
+
+        if (loadedContent.fetishTags && loadedContent.fetishTags.length > 0) {
+          GameData.fetishTags = loadedContent.fetishTags;
+        }
+
+        if (loadedContent.sensitiveBodyParts && loadedContent.sensitiveBodyParts.length > 0) {
+          GameData.sensitiveBodyParts = loadedContent.sensitiveBodyParts;
+        }
+
+        if (loadedContent.itemRarities && loadedContent.itemRarities.length > 0) {
+          GameData.itemRarities = loadedContent.itemRarities;
+        }
+
+        if (loadedContent.curseRarities && loadedContent.curseRarities.length > 0) {
+          GameData.curseRarities = loadedContent.curseRarities;
+        }
+
+        if (loadedContent.itemNameParts) {
+          GameData.itemNameParts = loadedContent.itemNameParts;
+        }
+
+        if (loadedContent.restraints && Object.keys(loadedContent.restraints).length > 0) {
+          Object.assign(GameData.restraints, loadedContent.restraints);
+        }
+
+        if (loadedContent.achievements && Object.keys(loadedContent.achievements).length > 0) {
+          Object.assign(GameData.achievements, loadedContent.achievements);
+        }
+
+        if (loadedContent.achievementRarities && Object.keys(loadedContent.achievementRarities).length > 0) {
+          GameData.achievementRarities = loadedContent.achievementRarities;
+        }
+
+        if (loadedContent.skills && Object.keys(loadedContent.skills).length > 0) {
+          Object.assign(GameData.skills, loadedContent.skills);
+        }
+
+        if (loadedContent.skillTrees && Object.keys(loadedContent.skillTrees).length > 0) {
+          Object.assign(GameData.skillTrees, loadedContent.skillTrees);
+        }
+
+        if (loadedContent.paperdollLayers && Object.keys(loadedContent.paperdollLayers).length > 0) {
+          GameData.paperdollLayers = loadedContent.paperdollLayers;
+        }
+
+        if (loadedContent.paperdollItemMapping && Object.keys(loadedContent.paperdollItemMapping).length > 0) {
+          GameData.paperdollItemMapping = loadedContent.paperdollItemMapping;
+        }
+
+        if (loadedContent.bodyRegionDisplay && loadedContent.bodyRegionDisplay.length > 0) {
+          GameData.bodyRegionDisplay = loadedContent.bodyRegionDisplay;
+        }
+
         console.log('[Game] Datapack content merged into GameData:', {
           characters: GameData.characters.length,
           kingdoms: GameData.kingdoms.length,
@@ -5506,7 +4983,10 @@ const Game = () => {
           lootTables: Object.keys(GameData.lootTables).length,
           baseItems: Object.keys(GameData.baseItems).length,
           enemyTables: Object.keys(GameData.enemyTables).length,
-          scenes: Object.keys(GameData.scenes).length
+          scenes: Object.keys(GameData.scenes).length,
+          difficulties: GameData.difficulties.length,
+          skills: Object.keys(GameData.skills).length,
+          achievements: Object.keys(GameData.achievements).length
         });
       }
 

@@ -1,181 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { useFormDraft } from '../../../hooks/useFormDraft';
+import './CreatorStyles.css';
 
-const styles = {
-  container: {
-    display: 'flex',
-    gap: '20px',
-    height: '100%',
-  },
-  formSection: {
-    flex: '1',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '20px',
-    overflowY: 'auto',
-  },
-  listSection: {
-    width: '320px',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '15px',
-    overflowY: 'auto',
-  },
-  sectionTitle: {
-    color: '#ffd700',
-    fontSize: '18px',
-    marginBottom: '15px',
-    borderBottom: '1px solid #4a4a6a',
-    paddingBottom: '10px',
-  },
-  formGroup: {
-    marginBottom: '15px',
-  },
-  label: {
-    display: 'block',
-    color: '#a0a0c0',
-    marginBottom: '5px',
-    fontSize: '13px',
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  select: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  textarea: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    minHeight: '80px',
-    resize: 'vertical',
-    boxSizing: 'border-box',
-  },
-  row: {
-    display: 'flex',
-    gap: '15px',
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  button: {
-    padding: '10px 20px',
-    borderRadius: '6px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    transition: 'all 0.2s ease',
-    marginRight: '10px',
-  },
-  primaryButton: {
-    backgroundColor: '#4a7c4a',
-    color: 'white',
-  },
-  secondaryButton: {
-    backgroundColor: '#4a4a6a',
-    color: 'white',
-  },
-  smallButton: {
-    padding: '4px 8px',
-    borderRadius: '4px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '11px',
-  },
-  tagInput: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '5px',
-    padding: '8px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    minHeight: '40px',
-  },
-  tag: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '3px 8px',
-    backgroundColor: '#3a3a5a',
-    borderRadius: '12px',
-    fontSize: '12px',
-    color: '#d0d0e0',
-  },
-  tagRemove: {
-    marginLeft: '5px',
-    cursor: 'pointer',
-    color: '#ff6666',
-  },
-  listItem: {
-    padding: '12px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '6px',
-    marginBottom: '8px',
-    cursor: 'pointer',
-    border: '1px solid transparent',
-    transition: 'all 0.2s ease',
-  },
-  listItemHover: {
-    borderColor: '#4a4a6a',
-  },
-  listItemName: {
-    color: '#ffd700',
-    fontSize: '14px',
-    fontWeight: 'bold',
-  },
-  listItemDetails: {
-    color: '#808090',
-    fontSize: '12px',
-    marginTop: '4px',
-  },
-  listItemActions: {
-    display: 'flex',
-    gap: '5px',
-    marginTop: '8px',
-  },
-  emptyList: {
-    color: '#606080',
-    textAlign: 'center',
-    padding: '30px',
-    fontSize: '14px',
-  },
-  subsection: {
-    marginTop: '20px',
-    padding: '15px',
-    backgroundColor: '#1e1e35',
-    borderRadius: '6px',
-  },
-  subsectionTitle: {
-    color: '#c0c0e0',
-    fontSize: '14px',
-    marginBottom: '12px',
-    fontWeight: 'bold',
-  },
+const DRAFT_KEY = 'contentGenerator_draft_regions';
+
+const TAG_CATEGORIES = {
+  difficulty: ['starter', 'safe', 'dangerous', 'corruption', 'nsfw'],
+  terrain: ['forest', 'mountain', 'plains', 'swamp', 'desert', 'coastal', 'underground'],
+  atmosphere: ['demonic', 'holy', 'magical', 'cursed', 'peaceful'],
 };
-
-const COMMON_TAGS = [
-  'starter', 'safe', 'dangerous', 'corruption', 'nsfw',
-  'forest', 'mountain', 'plains', 'swamp', 'desert',
-  'coastal', 'underground', 'demonic', 'holy', 'magical',
-];
 
 const DEFAULT_REGION = {
   id: '',
@@ -207,9 +41,32 @@ const RegionCreator = ({
   onCancelEdit,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_REGION });
-  const [tagInput, setTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
-  const [neighborInput, setNeighborInput] = useState('');
+  const [collapsedSections, setCollapsedSections] = useState({
+    difficulty: true,
+    mapTravel: true,
+    connectedRegions: true,
+    tags: true,
+    audio: true,
+  });
+
+  const toggleSection = (section) => {
+    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
+    defaultValues: DEFAULT_REGION,
+  });
+
+  const suggestedTags = useMemo(() => {
+    const allTags = new Set(Object.values(TAG_CATEGORIES).flat());
+    items.forEach(item => {
+      if (Array.isArray(item.tags)) {
+        item.tags.forEach(tag => allTags.add(tag));
+      }
+    });
+    return Array.from(allTags).sort();
+  }, [items]);
 
   useEffect(() => {
     if (editingItem) {
@@ -238,40 +95,6 @@ const RegionCreator = ({
     }));
   };
 
-  const handleAddTag = (tag) => {
-    if (tag && !formData.tags.includes(tag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag],
-      }));
-    }
-    setTagInput('');
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(t => t !== tagToRemove),
-    }));
-  };
-
-  const handleAddNeighbor = () => {
-    if (neighborInput && !formData.neighborRegions.includes(neighborInput)) {
-      setFormData(prev => ({
-        ...prev,
-        neighborRegions: [...prev.neighborRegions, neighborInput],
-      }));
-    }
-    setNeighborInput('');
-  };
-
-  const handleRemoveNeighbor = (neighbor) => {
-    setFormData(prev => ({
-      ...prev,
-      neighborRegions: prev.neighborRegions.filter(n => n !== neighbor),
-    }));
-  };
-
   const handleSubmit = () => {
     if (!formData.id || !formData.name) {
       alert('ID and Name are required');
@@ -287,6 +110,7 @@ const RegionCreator = ({
       onUpdate(editingItem._id, formData);
     } else {
       onAdd(formData);
+      clearDraft();
     }
 
     setFormData({ ...DEFAULT_REGION });
@@ -297,326 +121,256 @@ const RegionCreator = ({
     onCancelEdit();
   };
 
+  // Available regions to connect to
+  const availableNeighbors = items.filter(r => r.id !== formData.id && !formData.neighborRegions.includes(r.id));
+
   return (
-    <div style={styles.container}>
+    <div className="creator-container">
       {/* Form Section */}
-      <div style={styles.formSection}>
-        <h3 style={styles.sectionTitle}>
-          {editingItem ? '✏️ Edit Region' : '➕ Create New Region'}
+      <div className="creator-form">
+        <h3 className="creator-form-section-title">
+          {editingItem ? 'Edit Region' : 'Create New Region'}
         </h3>
 
         {/* Basic Info */}
-        <div style={styles.row}>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>ID *</label>
-              <input
-                style={styles.input}
-                value={formData.id}
-                onChange={(e) => handleChange('id', e.target.value.toLowerCase().replace(/\s/g, '_'))}
-                placeholder="unique_region_id"
-              />
-            </div>
+        <div className="creator-form-section">
+          <div className="creator-form-row">
+            <FormInput
+              label="ID"
+              required
+              value={formData.id}
+              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
+              placeholder="unique_region_id"
+            />
+            <FormInput
+              label="Name"
+              required
+              value={formData.name}
+              onChange={(v) => handleChange('name', v)}
+              placeholder="Region Name"
+            />
           </div>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Name *</label>
-              <input
-                style={styles.input}
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="Region Name"
-              />
-            </div>
-          </div>
-        </div>
 
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Description</label>
-          <textarea
-            style={styles.textarea}
+          <FormInput
+            label="Description"
+            type="textarea"
             value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
+            onChange={(v) => handleChange('description', v)}
             placeholder="Describe this region..."
+            rows={3}
           />
-        </div>
 
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Theme</label>
-          <input
-            style={styles.input}
+          <FormInput
+            label="Theme"
             value={formData.theme}
-            onChange={(e) => handleChange('theme', e.target.value)}
+            onChange={(v) => handleChange('theme', v)}
             placeholder="A brief thematic description"
           />
         </div>
 
-        {/* Level & Danger Ranges */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Difficulty Settings</div>
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Min Level</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  min="1"
-                  value={formData.levelRange.min}
-                  onChange={(e) => handleNestedChange('levelRange', 'min', parseInt(e.target.value) || 1)}
-                />
-              </div>
-            </div>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Max Level</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  min="1"
-                  value={formData.levelRange.max}
-                  onChange={(e) => handleNestedChange('levelRange', 'max', parseInt(e.target.value) || 10)}
-                />
-              </div>
-            </div>
+        {/* Difficulty Settings */}
+        <CollapsibleSection
+          title="Difficulty Settings"
+          isCollapsed={collapsedSections.difficulty}
+          onToggle={() => toggleSection('difficulty')}
+          badge={`Lvl ${formData.levelRange.min}-${formData.levelRange.max}`}
+        >
+          <div className="creator-form-row">
+            <FormInput
+              label="Min Level"
+              type="number"
+              value={formData.levelRange.min}
+              onChange={(v) => handleNestedChange('levelRange', 'min', v)}
+              min={1}
+            />
+            <FormInput
+              label="Max Level"
+              type="number"
+              value={formData.levelRange.max}
+              onChange={(v) => handleNestedChange('levelRange', 'max', v)}
+              min={1}
+            />
           </div>
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Min Danger (1-5)</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  min="1"
-                  max="5"
-                  value={formData.dangerRange.min}
-                  onChange={(e) => handleNestedChange('dangerRange', 'min', parseInt(e.target.value) || 1)}
-                />
-              </div>
-            </div>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Max Danger (1-5)</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  min="1"
-                  max="5"
-                  value={formData.dangerRange.max}
-                  onChange={(e) => handleNestedChange('dangerRange', 'max', parseInt(e.target.value) || 3)}
-                />
-              </div>
-            </div>
+          <div className="creator-form-row">
+            <FormInput
+              label="Min Danger (1-5)"
+              type="number"
+              value={formData.dangerRange.min}
+              onChange={(v) => handleNestedChange('dangerRange', 'min', v)}
+              min={1}
+              max={5}
+            />
+            <FormInput
+              label="Max Danger (1-5)"
+              type="number"
+              value={formData.dangerRange.max}
+              onChange={(v) => handleNestedChange('dangerRange', 'max', v)}
+              min={1}
+              max={5}
+            />
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Map & Travel */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Map & Travel</div>
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Map Position X</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.mapPosition.x}
-                  onChange={(e) => handleNestedChange('mapPosition', 'x', parseInt(e.target.value) || 0)}
-                />
-              </div>
-            </div>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Map Position Y</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.mapPosition.y}
-                  onChange={(e) => handleNestedChange('mapPosition', 'y', parseInt(e.target.value) || 0)}
-                />
-              </div>
-            </div>
-          </div>
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Travel Cost (Gold)</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  min="0"
-                  value={formData.travelCost.gold}
-                  onChange={(e) => handleNestedChange('travelCost', 'gold', parseInt(e.target.value) || 0)}
-                />
-              </div>
-            </div>
-            <div style={styles.halfWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Travel Time (hours)</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  min="1"
-                  value={formData.travelCost.time}
-                  onChange={(e) => handleNestedChange('travelCost', 'time', parseInt(e.target.value) || 1)}
-                />
-              </div>
-            </div>
-          </div>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Map Icon</label>
-            <input
-              style={styles.input}
-              value={formData.mapIcon}
-              onChange={(e) => handleChange('mapIcon', e.target.value)}
-              placeholder="/icons/region_icon.png"
+        <CollapsibleSection
+          title="Map & Travel"
+          isCollapsed={collapsedSections.mapTravel}
+          onToggle={() => toggleSection('mapTravel')}
+          badge={formData.travelCost.gold > 0 ? `${formData.travelCost.gold}g` : null}
+        >
+          <div className="creator-form-row">
+            <FormInput
+              label="Map Position X"
+              type="number"
+              value={formData.mapPosition.x}
+              onChange={(v) => handleNestedChange('mapPosition', 'x', v)}
+            />
+            <FormInput
+              label="Map Position Y"
+              type="number"
+              value={formData.mapPosition.y}
+              onChange={(v) => handleNestedChange('mapPosition', 'y', v)}
             />
           </div>
-        </div>
+          <div className="creator-form-row">
+            <FormInput
+              label="Travel Cost (Gold)"
+              type="number"
+              value={formData.travelCost.gold}
+              onChange={(v) => handleNestedChange('travelCost', 'gold', v)}
+              min={0}
+            />
+            <FormInput
+              label="Travel Time (hours)"
+              type="number"
+              value={formData.travelCost.time}
+              onChange={(v) => handleNestedChange('travelCost', 'time', v)}
+              min={1}
+            />
+          </div>
+          <FormInput
+            label="Map Icon"
+            value={formData.mapIcon}
+            onChange={(v) => handleChange('mapIcon', v)}
+            placeholder="/icons/region_icon.png"
+          />
+        </CollapsibleSection>
 
-        {/* Neighbor Regions */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Connected Regions</div>
-          <div style={styles.tagInput}>
-            {formData.neighborRegions.map(neighbor => (
-              <span key={neighbor} style={styles.tag}>
-                🗺️ {neighbor}
-                <span style={styles.tagRemove} onClick={() => handleRemoveNeighbor(neighbor)}>×</span>
-              </span>
-            ))}
-            <input
-              style={{ ...styles.input, border: 'none', backgroundColor: 'transparent', flex: 1, minWidth: '100px', padding: '2px' }}
-              value={neighborInput}
-              onChange={(e) => setNeighborInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddNeighbor()}
-              placeholder="Add region ID..."
-            />
-          </div>
-          <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {items.filter(r => r.id !== formData.id && !formData.neighborRegions.includes(r.id)).map(region => (
-              <button
-                key={region.id}
-                style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                onClick={() => {
-                  setFormData(prev => ({
-                    ...prev,
-                    neighborRegions: [...prev.neighborRegions, region.id],
-                  }));
-                }}
-              >
-                + {region.name}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Connected Regions */}
+        <CollapsibleSection
+          title="Connected Regions"
+          isCollapsed={collapsedSections.connectedRegions}
+          onToggle={() => toggleSection('connectedRegions')}
+          badge={formData.neighborRegions.length > 0 ? `${formData.neighborRegions.length} links` : null}
+        >
+          <TagInput
+            value={formData.neighborRegions}
+            onChange={(v) => handleChange('neighborRegions', v)}
+            suggestions={availableNeighbors.map(r => r.id)}
+            placeholder="Add region ID..."
+            showSuggestions
+          />
+          {availableNeighbors.length > 0 && (
+            <div className="form-helper mt-sm">
+              Click regions above to connect them, or type a region ID.
+            </div>
+          )}
+        </CollapsibleSection>
 
         {/* Tags */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Tags</div>
-          <div style={styles.tagInput}>
-            {formData.tags.map(tag => (
-              <span key={tag} style={styles.tag}>
-                {tag}
-                <span style={styles.tagRemove} onClick={() => handleRemoveTag(tag)}>×</span>
-              </span>
-            ))}
-            <input
-              style={{ ...styles.input, border: 'none', backgroundColor: 'transparent', flex: 1, minWidth: '100px', padding: '2px' }}
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddTag(tagInput)}
-              placeholder="Add tag..."
-            />
-          </div>
-          <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {COMMON_TAGS.filter(t => !formData.tags.includes(t)).slice(0, 12).map(tag => (
-              <button
-                key={tag}
-                style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                onClick={() => handleAddTag(tag)}
-              >
-                + {tag}
-              </button>
-            ))}
-          </div>
-        </div>
+        <CollapsibleSection
+          title="Tags"
+          isCollapsed={collapsedSections.tags}
+          onToggle={() => toggleSection('tags')}
+          badge={formData.tags.length > 0 ? `${formData.tags.length} tags` : null}
+        >
+          <TagInput
+            value={formData.tags}
+            onChange={(v) => handleChange('tags', v)}
+            suggestions={suggestedTags}
+            categories={TAG_CATEGORIES}
+            placeholder="Add tag..."
+            showSuggestions
+          />
+        </CollapsibleSection>
 
         {/* Audio */}
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Ambient Music</label>
-          <input
-            style={styles.input}
+        <CollapsibleSection
+          title="Audio"
+          isCollapsed={collapsedSections.audio}
+          onToggle={() => toggleSection('audio')}
+          badge={formData.ambientMusic ? '✓' : null}
+        >
+          <FormInput
+            label="Ambient Music"
             value={formData.ambientMusic}
-            onChange={(e) => handleChange('ambientMusic', e.target.value)}
+            onChange={(v) => handleChange('ambientMusic', v)}
             placeholder="region_ambient_music"
           />
-        </div>
+        </CollapsibleSection>
 
         {/* Action Buttons */}
-        <div style={{ marginTop: '20px' }}>
-          <button
-            style={{ ...styles.button, ...styles.primaryButton }}
-            onClick={handleSubmit}
-          >
-            {editingItem ? '💾 Update Region' : '➕ Add Region'}
-          </button>
+        <div className="creator-actions">
+          <Button variant="success" onClick={handleSubmit}>
+            {editingItem ? 'Update Region' : 'Add Region'}
+          </Button>
           {editingItem && (
-            <button
-              style={{ ...styles.button, ...styles.secondaryButton }}
-              onClick={handleCancel}
-            >
+            <Button variant="ghost" onClick={handleCancel}>
               Cancel
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {/* List Section */}
-      <div style={styles.listSection}>
-        <h3 style={styles.sectionTitle}>📋 Created Regions ({items.length})</h3>
+      <div className="creator-list">
+        <h3 className="creator-form-section-title">
+          Created Regions
+          <span className="count-badge">{items.length}</span>
+        </h3>
 
         {items.length === 0 ? (
-          <div style={styles.emptyList}>
-            No regions created yet.<br />
+          <div className="empty-list">
+            No regions created yet.
+            <br />
             Use the form to create your first region.
           </div>
         ) : (
           items.map(item => (
             <div
               key={item._id}
-              style={{
-                ...styles.listItem,
-                ...(hoveredItem === item._id ? styles.listItemHover : {}),
-                ...(editingItem?._id === item._id ? { borderColor: '#ffd700' } : {}),
-              }}
+              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
               onMouseEnter={() => setHoveredItem(item._id)}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <div style={styles.listItemName}>
-                🗺️ {item.name}
+              <div className="creator-item-info">
+                <div className="creator-item-name">
+                  {item.name}
+                </div>
+                <div className="creator-item-id">
+                  ID: {item.id} | Levels: {item.levelRange?.min}-{item.levelRange?.max}
+                </div>
+                {item.tags?.length > 0 && (
+                  <div className="creator-item-tags">
+                    {item.tags.slice(0, 4).map(tag => (
+                      <span key={tag} className="tag-chip">{tag}</span>
+                    ))}
+                    {item.tags.length > 4 && (
+                      <span className="tag-chip more">+{item.tags.length - 4}</span>
+                    )}
+                  </div>
+                )}
               </div>
-              <div style={styles.listItemDetails}>
-                ID: {item.id} | Levels: {item.levelRange?.min}-{item.levelRange?.max}
-              </div>
-              <div style={styles.listItemActions}>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white' }}
-                  onClick={() => onEdit(item)}
-                >
+              <div className="creator-item-actions">
+                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
                   Edit
-                </button>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#4a4a7c', color: 'white' }}
-                  onClick={() => onDuplicate(item)}
-                >
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
                   Duplicate
-                </button>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                  onClick={() => onDelete(item._id)}
-                >
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
                   Delete
-                </button>
+                </Button>
               </div>
             </div>
           ))

@@ -1,226 +1,23 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
+import { FormInput, FormSelect, TagInput, ChipSelect, Button, CollapsibleSection } from '../../ui/shared';
+import { useFormDraft } from '../../../hooks/useFormDraft';
+import './CreatorStyles.css';
 
-const styles = {
-  container: {
-    display: 'flex',
-    gap: '20px',
-    height: '100%',
-  },
-  formSection: {
-    flex: '1',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '20px',
-    overflowY: 'auto',
-  },
-  listSection: {
-    width: '320px',
-    backgroundColor: '#252540',
-    borderRadius: '8px',
-    padding: '15px',
-    overflowY: 'auto',
-  },
-  sectionTitle: {
-    color: '#ffd700',
-    fontSize: '18px',
-    marginBottom: '15px',
-    borderBottom: '1px solid #4a4a6a',
-    paddingBottom: '10px',
-  },
-  formGroup: {
-    marginBottom: '15px',
-  },
-  label: {
-    display: 'block',
-    color: '#a0a0c0',
-    marginBottom: '5px',
-    fontSize: '13px',
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  select: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    boxSizing: 'border-box',
-  },
-  textarea: {
-    width: '100%',
-    padding: '10px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '14px',
-    minHeight: '80px',
-    resize: 'vertical',
-    boxSizing: 'border-box',
-  },
-  row: {
-    display: 'flex',
-    gap: '15px',
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  thirdWidth: {
-    flex: 1,
-  },
-  button: {
-    padding: '10px 20px',
-    borderRadius: '6px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    transition: 'all 0.2s ease',
-    marginRight: '10px',
-  },
-  primaryButton: {
-    backgroundColor: '#4a7c4a',
-    color: 'white',
-  },
-  secondaryButton: {
-    backgroundColor: '#4a4a6a',
-    color: 'white',
-  },
-  smallButton: {
-    padding: '4px 8px',
-    borderRadius: '4px',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '11px',
-  },
-  tagInput: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '5px',
-    padding: '8px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    minHeight: '40px',
-  },
-  tag: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '3px 8px',
-    backgroundColor: '#3a3a5a',
-    borderRadius: '12px',
-    fontSize: '12px',
-    color: '#d0d0e0',
-  },
-  tagRemove: {
-    marginLeft: '5px',
-    cursor: 'pointer',
-    color: '#ff6666',
-  },
-  listItem: {
-    padding: '12px',
-    backgroundColor: '#1a1a2e',
-    borderRadius: '6px',
-    marginBottom: '8px',
-    cursor: 'pointer',
-    border: '1px solid transparent',
-    transition: 'all 0.2s ease',
-  },
-  listItemHover: {
-    borderColor: '#4a4a6a',
-  },
-  listItemName: {
-    color: '#ffd700',
-    fontSize: '14px',
-    fontWeight: 'bold',
-  },
-  listItemDetails: {
-    color: '#808090',
-    fontSize: '12px',
-    marginTop: '4px',
-  },
-  listItemActions: {
-    display: 'flex',
-    gap: '5px',
-    marginTop: '8px',
-  },
-  emptyList: {
-    color: '#606080',
-    textAlign: 'center',
-    padding: '30px',
-    fontSize: '14px',
-  },
-  subsection: {
-    marginTop: '20px',
-    padding: '15px',
-    backgroundColor: '#1e1e35',
-    borderRadius: '6px',
-  },
-  subsectionTitle: {
-    color: '#c0c0e0',
-    fontSize: '14px',
-    marginBottom: '12px',
-    fontWeight: 'bold',
-  },
-  statRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    marginBottom: '8px',
-  },
-  statLabel: {
-    width: '100px',
-    color: '#a0a0c0',
-    fontSize: '13px',
-  },
-  statInput: {
-    width: '80px',
-    padding: '6px',
-    borderRadius: '4px',
-    border: '1px solid #4a4a6a',
-    backgroundColor: '#1a1a2e',
-    color: 'white',
-    fontSize: '13px',
-    textAlign: 'center',
-  },
-  actionItem: {
-    backgroundColor: '#252540',
-    borderRadius: '6px',
-    padding: '10px',
-    marginTop: '8px',
-    border: '1px solid #3a3a5a',
-  },
-};
+const DRAFT_KEY = 'contentGenerator_draft_enemies';
 
-// Suggested enemy types - users can also type custom values
-const SUGGESTED_ENEMY_TYPES = [
+// Enemy types
+const ENEMY_TYPES = [
   'humanoid', 'beast', 'demon', 'undead', 'plant', 'elemental',
   'construct', 'dragon', 'slime', 'insect', 'aquatic', 'aberration',
 ];
 
-// Suggested variants - users can also type custom values
-const SUGGESTED_VARIANTS = [
+// Enemy variants
+const VARIANTS = [
   'normal', 'elite', 'boss', 'miniboss', 'champion', 'legendary', 'swarm',
 ];
 
-// Fallback tags when no dynamic tags available
-const FALLBACK_TAGS = [
-  'humanoid', 'beast', 'demon', 'undead', 'boss', 'elite',
-  'nsfw', 'corruption', 'male', 'female', 'futa',
-  'wolf', 'goblin', 'orc', 'tentacle', 'slime',
-];
-
+// NSFW action types
 const NSFW_ACTION_TYPES = [
   { value: 'grope', label: 'Grope' },
   { value: 'fondle', label: 'Fondle' },
@@ -233,6 +30,13 @@ const NSFW_ACTION_TYPES = [
   { value: 'restrain', label: 'Restrain' },
   { value: 'hypnotize', label: 'Hypnotize' },
 ];
+
+// Tag categories for suggestions
+const TAG_CATEGORIES = {
+  type: ['humanoid', 'beast', 'demon', 'undead', 'boss', 'elite'],
+  species: ['wolf', 'goblin', 'orc', 'tentacle', 'slime'],
+  nsfw: ['nsfw', 'corruption', 'male', 'female', 'futa'],
+};
 
 const DEFAULT_ENEMY = {
   id: '',
@@ -269,7 +73,7 @@ const DEFAULT_NSFW_ACTION = {
   id: '',
   type: 'grope',
   name: '',
-  sceneId: '', // Link to an NSFW scene
+  sceneId: '',
   arousalDamage: 5,
   corruptionDamage: 0,
   weight: 1,
@@ -290,37 +94,48 @@ const EnemyCreator = ({
   datapackContent = {},
   datapackLoading = false,
 }) => {
-  // Combine datapack scenes with user-created scenes
   const allScenes = [...(datapackContent.scenes || []), ...scenes];
-  // Combine datapack items with user-created items (for loot drops)
   const allItems = [...(datapackContent.items || [])];
 
-  // Get NSFW scenes filtered by action type (supports both old single value and new array format)
+  // Collapsed sections state
+  const [collapsedSections, setCollapsedSections] = useState({
+    stats: true,
+    rewards: true,
+    nsfw: true,
+    tags: true,
+  });
+
+  const toggleSection = (section) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
   const getNsfwScenesForType = (actionType) => {
     return allScenes.filter(scene => {
       if (!scene.isNSFW) return false;
-      // Handle new array format
       if (scene.nsfwActionTypes?.length > 0) {
         return scene.nsfwActionTypes.includes(actionType);
       }
-      // Handle old single value format (backwards compatibility)
       return scene.nsfwActionType === actionType || !scene.nsfwActionType;
     });
   };
 
-  // Get all NSFW scenes
   const allNsfwScenes = allScenes.filter(scene => scene.isNSFW);
   const [formData, setFormData] = useState({ ...DEFAULT_ENEMY });
-  const [tagInput, setTagInput] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
   const [dropInput, setDropInput] = useState({ itemId: '', chance: 0.1 });
 
-  // Compute dynamic tag suggestions from datapack content and user-created enemies
+  const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
+    defaultValues: DEFAULT_ENEMY,
+  });
+
   const suggestedTags = useMemo(() => {
     return collectTags({
       datapackContent,
       userContent: items,
-      commonTags: FALLBACK_TAGS,
+      commonTags: Object.values(TAG_CATEGORIES).flat(),
       contentType: 'enemies',
     });
   }, [datapackContent, items]);
@@ -368,23 +183,6 @@ const EnemyCreator = ({
     }));
   };
 
-  const handleAddTag = (tag) => {
-    if (tag && !formData.tags.includes(tag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag],
-      }));
-    }
-    setTagInput('');
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(t => t !== tagToRemove),
-    }));
-  };
-
   const handleAddDrop = () => {
     if (dropInput.itemId) {
       setFormData(prev => ({
@@ -408,7 +206,6 @@ const EnemyCreator = ({
     }));
   };
 
-  // NSFW Action management
   const handleAddNsfwAction = () => {
     const newAction = {
       ...DEFAULT_NSFW_ACTION,
@@ -460,6 +257,7 @@ const EnemyCreator = ({
       onUpdate(editingItem._id, formData);
     } else {
       onAdd(formData);
+      clearDraft();
     }
 
     setFormData({ ...DEFAULT_ENEMY });
@@ -471,571 +269,396 @@ const EnemyCreator = ({
   };
 
   return (
-    <div style={styles.container}>
+    <div className="creator-container">
       {/* Form Section */}
-      <div style={styles.formSection}>
-        <h3 style={styles.sectionTitle}>
-          {editingItem ? '✏️ Edit Enemy' : '➕ Create New Enemy'}
+      <div className="creator-form">
+        <h3 className="creator-form-section-title">
+          {editingItem ? 'Edit Enemy' : 'Create New Enemy'}
         </h3>
 
         {/* Basic Info */}
-        <div style={styles.row}>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>ID *</label>
-              <input
-                style={styles.input}
-                value={formData.id}
-                onChange={(e) => handleChange('id', e.target.value.toLowerCase().replace(/\s/g, '_'))}
-                placeholder="unique_enemy_id"
-              />
-            </div>
+        <div className="creator-form-section">
+          <div className="creator-form-row">
+            <FormInput
+              label="ID"
+              required
+              value={formData.id}
+              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
+              placeholder="unique_enemy_id"
+            />
+            <FormInput
+              label="Name"
+              required
+              value={formData.name}
+              onChange={(v) => handleChange('name', v)}
+              placeholder="Enemy Name"
+            />
           </div>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Name *</label>
-              <input
-                style={styles.input}
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="Enemy Name"
-              />
-            </div>
-          </div>
-        </div>
 
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Description</label>
-          <textarea
-            style={styles.textarea}
+          <FormInput
+            label="Description"
+            type="textarea"
             value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
+            onChange={(v) => handleChange('description', v)}
             placeholder="Describe this enemy..."
+            rows={3}
           />
-        </div>
 
-        <div style={styles.row}>
-          <div style={styles.thirdWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Type</label>
-              <input
-                style={styles.input}
-                value={formData.type}
-                onChange={(e) => handleChange('type', e.target.value)}
-                placeholder="e.g., humanoid, beast, demon"
-              />
-              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                {SUGGESTED_ENEMY_TYPES.filter(t => t !== formData.type).map(type => (
-                  <button
-                    key={type}
-                    type="button"
-                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                    onClick={() => handleChange('type', type)}
-                  >
-                    + {type}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="creator-form-row cols-3">
+            <FormSelect
+              label="Type"
+              value={formData.type}
+              onChange={(v) => handleChange('type', v)}
+              options={ENEMY_TYPES}
+            />
+            <FormSelect
+              label="Variant"
+              value={formData.variant}
+              onChange={(v) => handleChange('variant', v)}
+              options={VARIANTS}
+            />
+            <FormInput
+              label="Level"
+              type="number"
+              value={formData.level}
+              onChange={(v) => handleChange('level', v)}
+              min={1}
+            />
           </div>
-          <div style={styles.thirdWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Variant</label>
-              <input
-                style={styles.input}
-                value={formData.variant}
-                onChange={(e) => handleChange('variant', e.target.value)}
-                placeholder="e.g., normal, elite, boss"
-              />
-              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                {SUGGESTED_VARIANTS.filter(v => v !== formData.variant).map(variant => (
-                  <button
-                    key={variant}
-                    type="button"
-                    style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                    onClick={() => handleChange('variant', variant)}
-                  >
-                    + {variant}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div style={styles.thirdWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Level</label>
-              <input
-                style={styles.input}
-                type="number"
-                min="1"
-                value={formData.level}
-                onChange={(e) => handleChange('level', parseInt(e.target.value) || 1)}
-              />
-            </div>
-          </div>
-        </div>
 
-        <div style={styles.row}>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Sprite Image</label>
-              <input
-                style={styles.input}
-                value={formData.sprite}
-                onChange={(e) => handleChange('sprite', e.target.value)}
-                placeholder="/enemies/enemy_sprite.png"
-              />
-            </div>
-          </div>
-          <div style={styles.halfWidth}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Portrait Image</label>
-              <input
-                style={styles.input}
-                value={formData.portrait}
-                onChange={(e) => handleChange('portrait', e.target.value)}
-                placeholder="/enemies/enemy_portrait.png"
-              />
-            </div>
+          <div className="creator-form-row">
+            <FormInput
+              label="Sprite Image"
+              value={formData.sprite}
+              onChange={(v) => handleChange('sprite', v)}
+              placeholder="/enemies/enemy_sprite.png"
+            />
+            <FormInput
+              label="Portrait Image"
+              value={formData.portrait}
+              onChange={(v) => handleChange('portrait', v)}
+              placeholder="/enemies/enemy_portrait.png"
+            />
           </div>
         </div>
 
         {/* Base Stats */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Base Stats</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+        <CollapsibleSection
+          title="Base Stats"
+          isCollapsed={collapsedSections.stats}
+          onToggle={() => toggleSection('stats')}
+        >
+          <div className="stats-grid">
             {Object.entries(formData.baseStats).map(([stat, value]) => (
-              <div key={stat} style={styles.statRow}>
-                <span style={styles.statLabel}>{stat.toUpperCase()}</span>
+              <div key={stat} className="stat-row">
+                <span className="stat-label">{stat.toUpperCase()}</span>
                 <input
-                  style={styles.statInput}
                   type="number"
+                  className="stat-input"
                   value={value}
                   onChange={(e) => handleNestedChange('baseStats', stat, parseInt(e.target.value) || 0)}
                 />
               </div>
             ))}
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Rewards */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Rewards</div>
-          <div style={styles.row}>
-            <div style={styles.thirdWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>XP</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.rewards.xp}
-                  onChange={(e) => handleNestedChange('rewards', 'xp', parseInt(e.target.value) || 0)}
-                />
-              </div>
-            </div>
-            <div style={styles.thirdWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Gold Min</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.rewards.gold.min}
-                  onChange={(e) => handleDeepNestedChange('rewards', 'gold', 'min', parseInt(e.target.value) || 0)}
-                />
-              </div>
-            </div>
-            <div style={styles.thirdWidth}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Gold Max</label>
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={formData.rewards.gold.max}
-                  onChange={(e) => handleDeepNestedChange('rewards', 'gold', 'max', parseInt(e.target.value) || 0)}
-                />
-              </div>
-            </div>
+        <CollapsibleSection
+          title="Rewards"
+          isCollapsed={collapsedSections.rewards}
+          onToggle={() => toggleSection('rewards')}
+          badge={formData.rewards.drops.length > 0 ? `${formData.rewards.drops.length} drops` : null}
+        >
+          <div className="creator-form-row cols-3">
+            <FormInput
+              label="XP"
+              type="number"
+              value={formData.rewards.xp}
+              onChange={(v) => handleNestedChange('rewards', 'xp', v)}
+              min={0}
+            />
+            <FormInput
+              label="Gold Min"
+              type="number"
+              value={formData.rewards.gold.min}
+              onChange={(v) => handleDeepNestedChange('rewards', 'gold', 'min', v)}
+              min={0}
+            />
+            <FormInput
+              label="Gold Max"
+              type="number"
+              value={formData.rewards.gold.max}
+              onChange={(v) => handleDeepNestedChange('rewards', 'gold', 'max', v)}
+              min={0}
+            />
           </div>
 
-          <div style={styles.subsectionTitle}>Item Drops</div>
-          {formData.rewards.drops.map((drop, index) => {
-            const itemData = allItems.find(i => i.id === drop.itemId);
-            return (
-            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
-              <span style={{ color: '#a0a0c0' }}>{itemData?.name || drop.itemId}</span>
-              <span style={{ color: '#808090' }}>({(drop.chance * 100).toFixed(0)}%)</span>
-              <button
-                style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                onClick={() => handleRemoveDrop(index)}
-              >
-                ×
-              </button>
-            </div>
-            );
-          })}
-          <div style={styles.row}>
-            <div style={styles.halfWidth}>
-              {allItems.length > 0 ? (
-                <select
-                  style={styles.select}
-                  value={dropInput.itemId}
-                  onChange={(e) => setDropInput(prev => ({ ...prev, itemId: e.target.value }))}
-                >
-                  <option value="">Select item to drop...</option>
-                  {allItems.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {item.name || item.id} ({item.type || 'item'})
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  style={styles.input}
-                  value={dropInput.itemId}
-                  onChange={(e) => setDropInput(prev => ({ ...prev, itemId: e.target.value }))}
-                  placeholder="item_id"
-                />
-              )}
-            </div>
-            <div style={styles.halfWidth}>
-              <input
-                style={styles.input}
-                type="number"
-                step="0.05"
-                min="0"
-                max="1"
-                value={dropInput.chance}
-                onChange={(e) => setDropInput(prev => ({ ...prev, chance: parseFloat(e.target.value) || 0.1 }))}
-                placeholder="Chance (0-1)"
+          <div className="subsection">
+            <div className="subsection-title">Item Drops</div>
+            {formData.rewards.drops.map((drop, index) => {
+              const itemData = allItems.find(i => i.id === drop.itemId);
+              return (
+                <div key={index} className="array-item">
+                  <div className="array-item-content">
+                    <span className="text-primary">{itemData?.name || drop.itemId}</span>
+                    <span className="text-muted ml-sm">({(drop.chance * 100).toFixed(0)}%)</span>
+                  </div>
+                  <Button variant="danger" size="sm" onClick={() => handleRemoveDrop(index)}>
+                    Remove
+                  </Button>
+                </div>
+              );
+            })}
+            <div className="creator-form-row mt-sm">
+              <FormSelect
+                value={dropInput.itemId}
+                onChange={(v) => setDropInput(prev => ({ ...prev, itemId: v }))}
+                options={allItems.map(item => ({ value: item.id, label: `${item.name || item.id} (${item.type || 'item'})` }))}
+                placeholder="Select item..."
               />
+              <FormInput
+                type="number"
+                value={dropInput.chance}
+                onChange={(v) => setDropInput(prev => ({ ...prev, chance: v }))}
+                placeholder="Chance (0-1)"
+                min={0}
+                max={1}
+                step={0.05}
+              />
+              <Button variant="success" size="sm" onClick={handleAddDrop}>
+                Add Drop
+              </Button>
             </div>
-            <button
-              style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white' }}
-              onClick={handleAddDrop}
-            >
-              + Add
-            </button>
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* NSFW Settings */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>NSFW Settings</div>
-          <label style={styles.label}>
-            <input
-              type="checkbox"
-              checked={formData.nsfwEnabled}
-              onChange={(e) => handleChange('nsfwEnabled', e.target.checked)}
-              style={{ marginRight: '8px' }}
-            />
-            NSFW Content Enabled
-          </label>
+        <CollapsibleSection
+          title="NSFW Settings"
+          isCollapsed={collapsedSections.nsfw}
+          onToggle={() => toggleSection('nsfw')}
+          badge={formData.nsfwEnabled ? (formData.nsfwActionData.actions.length > 0 ? `${formData.nsfwActionData.actions.length} actions` : 'Enabled') : null}
+        >
+          <div className={`highlight-section-inner ${formData.nsfwEnabled ? 'active' : ''}`}>
+            <div className="form-group">
+              <label className="form-label checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={formData.nsfwEnabled}
+                  onChange={(e) => handleChange('nsfwEnabled', e.target.checked)}
+                />
+                <span className="checkbox-text">NSFW Content Enabled</span>
+              </label>
+            </div>
 
-          {formData.nsfwEnabled && (
-            <>
-              <div style={styles.row}>
-                <div style={styles.halfWidth}>
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Grapple Chance (0-1)</label>
-                    <input
-                      style={styles.input}
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="1"
-                      value={formData.nsfwActionData.grappleChance}
-                      onChange={(e) => handleNestedChange('nsfwActionData', 'grappleChance', parseFloat(e.target.value) || 0.3)}
-                    />
-                  </div>
+            {formData.nsfwEnabled && (
+              <>
+                <div className="creator-form-row">
+                  <FormInput
+                    label="Grapple Chance"
+                    type="number"
+                    value={formData.nsfwActionData.grappleChance}
+                    onChange={(v) => handleNestedChange('nsfwActionData', 'grappleChance', v)}
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    helper="0-1 probability"
+                  />
+                  <FormInput
+                    label="Base Arousal Damage"
+                    type="number"
+                    value={formData.nsfwActionData.arousalDamage}
+                    onChange={(v) => handleNestedChange('nsfwActionData', 'arousalDamage', v)}
+                    min={0}
+                  />
                 </div>
-                <div style={styles.halfWidth}>
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Base Arousal Damage</label>
-                    <input
-                      style={styles.input}
-                      type="number"
-                      value={formData.nsfwActionData.arousalDamage}
-                      onChange={(e) => handleNestedChange('nsfwActionData', 'arousalDamage', parseInt(e.target.value) || 5)}
-                    />
-                  </div>
-                </div>
-              </div>
 
-              <div style={styles.subsectionTitle}>NSFW Actions</div>
-              <div style={{ fontSize: '11px', color: '#808090', marginBottom: '10px' }}>
-                Link actions to NSFW scenes created in the Scenes tab. Scenes with matching action types are shown first.
-              </div>
-              {formData.nsfwActionData.actions.map((action, index) => {
-                const matchingScenes = getNsfwScenesForType(action.type);
-                const otherScenes = allNsfwScenes.filter(s => {
-                  // Handle new array format
-                  if (s.nsfwActionTypes?.length > 0) {
-                    return !s.nsfwActionTypes.includes(action.type);
-                  }
-                  // Handle old single value format
-                  return s.nsfwActionType !== action.type && s.nsfwActionType;
-                });
-                return (
-                <div key={index} style={styles.actionItem}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ color: '#ffd700', fontSize: '12px' }}>Action #{index + 1}</span>
-                    <button
-                      style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                      onClick={() => handleRemoveNsfwAction(index)}
-                    >
-                      Remove
-                    </button>
+                <div className="subsection mt-md">
+                  <div className="subsection-title">NSFW Actions</div>
+                  <div className="form-helper mb-sm">
+                    Link actions to NSFW scenes created in the Scenes tab.
                   </div>
-                  <div style={styles.row}>
-                    <div style={styles.halfWidth}>
-                      <label style={styles.label}>Action Type</label>
-                      <input
-                        style={styles.input}
-                        value={action.type}
-                        onChange={(e) => handleUpdateNsfwAction(index, { type: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
-                        placeholder="grope, penetrate, custom_action..."
-                      />
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '5px' }}>
-                        {NSFW_ACTION_TYPES.map(t => (
-                          <button
-                            key={t.value}
-                            style={{
-                              ...styles.smallButton,
-                              backgroundColor: action.type === t.value ? '#7c4a6a' : '#2a2a4a',
-                              color: action.type === t.value ? '#ff9dbd' : '#808090',
-                              padding: '2px 6px',
-                              fontSize: '10px',
-                            }}
-                            onClick={() => handleUpdateNsfwAction(index, { type: t.value })}
-                          >
-                            {t.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div style={styles.halfWidth}>
-                      <label style={styles.label}>Action Name</label>
-                      <input
-                        style={styles.input}
-                        value={action.name}
-                        onChange={(e) => handleUpdateNsfwAction(index, { name: e.target.value })}
-                        placeholder="Action Name"
-                      />
-                      <div style={styles.row}>
-                        <div style={{ flex: 1 }}>
-                          <label style={{ ...styles.label, fontSize: '11px', marginTop: '5px' }}>Arousal</label>
-                          <input
-                            style={{ ...styles.input, padding: '6px' }}
+
+                  {formData.nsfwActionData.actions.map((action, index) => {
+                    const matchingScenes = getNsfwScenesForType(action.type);
+                    const otherScenes = allNsfwScenes.filter(s => {
+                      if (s.nsfwActionTypes?.length > 0) {
+                        return !s.nsfwActionTypes.includes(action.type);
+                      }
+                      return s.nsfwActionType !== action.type && s.nsfwActionType;
+                    });
+
+                    return (
+                      <div key={index} className="array-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
+                          <span className="text-gold text-sm">Action #{index + 1}</span>
+                          <Button variant="danger" size="sm" onClick={() => handleRemoveNsfwAction(index)}>
+                            Remove
+                          </Button>
+                        </div>
+
+                        <div className="creator-form-row">
+                          <div className="form-group">
+                            <label className="form-label">Action Type</label>
+                            <ChipSelect
+                              value={action.type}
+                              onChange={(v) => handleUpdateNsfwAction(index, { type: v })}
+                              options={NSFW_ACTION_TYPES}
+                            />
+                          </div>
+                          <FormInput
+                            label="Action Name"
+                            value={action.name}
+                            onChange={(v) => handleUpdateNsfwAction(index, { name: v })}
+                            placeholder="Action Name"
+                          />
+                        </div>
+
+                        <div className="creator-form-row">
+                          <FormInput
+                            label="Arousal Damage"
                             type="number"
                             value={action.arousalDamage}
-                            onChange={(e) => handleUpdateNsfwAction(index, { arousalDamage: parseInt(e.target.value) || 5 })}
+                            onChange={(v) => handleUpdateNsfwAction(index, { arousalDamage: v })}
+                            min={0}
                           />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <label style={{ ...styles.label, fontSize: '11px', marginTop: '5px' }}>Corruption</label>
-                          <input
-                            style={{ ...styles.input, padding: '6px' }}
+                          <FormInput
+                            label="Corruption Damage"
                             type="number"
                             value={action.corruptionDamage}
-                            onChange={(e) => handleUpdateNsfwAction(index, { corruptionDamage: parseInt(e.target.value) || 0 })}
+                            onChange={(v) => handleUpdateNsfwAction(index, { corruptionDamage: v })}
+                            min={0}
                           />
                         </div>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Scene Selection */}
-                  <div style={{ ...styles.formGroup, marginTop: '10px' }}>
-                    <label style={styles.label}>
-                      Linked Scene
-                      {action.sceneId && (
-                        <span style={{ marginLeft: '8px', color: '#4a7c4a' }}>
-                          (Scene linked)
-                        </span>
-                      )}
-                    </label>
-                    <select
-                      style={{
-                        ...styles.select,
-                        borderColor: action.sceneId ? '#4a7c4a' : '#4a4a6a',
-                      }}
-                      value={action.sceneId || ''}
-                      onChange={(e) => handleUpdateNsfwAction(index, { sceneId: e.target.value })}
-                    >
-                      <option value="">-- No scene linked --</option>
-                      {matchingScenes.length > 0 && (
-                        <optgroup label={`Matching: ${action.type}`}>
-                          {matchingScenes.map(scene => (
-                            <option key={scene.id} value={scene.id}>
-                              {scene.name} ({scene.id})
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                      {otherScenes.length > 0 && (
-                        <optgroup label="Other NSFW Scenes">
-                          {otherScenes.map(scene => (
-                            <option key={scene.id} value={scene.id}>
-                              {scene.name} ({scene.nsfwActionTypes?.join(', ') || scene.nsfwActionType || 'untyped'})
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                      {allNsfwScenes.length === 0 && (
-                        <option disabled>No NSFW scenes available - create in Scenes tab</option>
-                      )}
-                    </select>
-                  </div>
-
-                  <div style={{ ...styles.row, marginTop: '8px' }}>
-                    <div style={styles.halfWidth}>
-                      <label style={styles.label}>Corruption Dmg</label>
-                      <input
-                        style={styles.input}
-                        type="number"
-                        value={action.corruptionDamage}
-                        onChange={(e) => handleUpdateNsfwAction(index, { corruptionDamage: parseInt(e.target.value) || 0 })}
-                        placeholder="Corruption"
-                      />
-                    </div>
-                    <div style={styles.halfWidth}>
-                      <label style={{ ...styles.label, display: 'flex', alignItems: 'center', marginTop: '20px' }}>
-                        <input
-                          type="checkbox"
-                          checked={action.requiresGrapple}
-                          onChange={(e) => handleUpdateNsfwAction(index, { requiresGrapple: e.target.checked })}
-                          style={{ marginRight: '8px' }}
+                        <FormSelect
+                          label="Linked Scene"
+                          value={action.sceneId || ''}
+                          onChange={(v) => handleUpdateNsfwAction(index, { sceneId: v })}
+                          groups={{
+                            [`Matching: ${action.type}`]: matchingScenes.map(s => ({ value: s.id, label: `${s.name} (${s.id})` })),
+                            'Other NSFW Scenes': otherScenes.map(s => ({ value: s.id, label: `${s.name} (${s.nsfwActionTypes?.join(', ') || s.nsfwActionType || 'untyped'})` })),
+                          }}
+                          placeholder="-- No scene linked --"
                         />
-                        Requires Grapple
-                      </label>
+
+                        <div className="form-group mt-sm">
+                          <label className="form-label checkbox-label">
+                            <input
+                              type="checkbox"
+                              checked={action.requiresGrapple}
+                              onChange={(e) => handleUpdateNsfwAction(index, { requiresGrapple: e.target.checked })}
+                            />
+                            <span className="checkbox-text">Requires Grapple</span>
+                          </label>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  <Button variant="success" size="sm" onClick={handleAddNsfwAction} className="mt-sm">
+                    + Add NSFW Action
+                  </Button>
+
+                  {allNsfwScenes.length === 0 && (
+                    <div className="form-helper mt-sm text-warning">
+                      Tip: Create NSFW scenes in the Scenes tab to link them to actions
                     </div>
-                  </div>
+                  )}
                 </div>
-                );
-              })}
-              <button
-                style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white', marginTop: '10px' }}
-                onClick={handleAddNsfwAction}
-              >
-                + Add NSFW Action
-              </button>
-              {allNsfwScenes.length === 0 && (
-                <div style={{ fontSize: '11px', color: '#ca8a4a', marginTop: '8px' }}>
-                  Tip: Create NSFW scenes in the Scenes tab to link them to actions
-                </div>
-              )}
-            </>
-          )}
-        </div>
+              </>
+            )}
+          </div>
+        </CollapsibleSection>
 
         {/* Tags */}
-        <div style={styles.subsection}>
-          <div style={styles.subsectionTitle}>Tags</div>
-          <div style={styles.tagInput}>
-            {formData.tags.map(tag => (
-              <span key={tag} style={styles.tag}>
-                {tag}
-                <span style={styles.tagRemove} onClick={() => handleRemoveTag(tag)}>×</span>
-              </span>
-            ))}
-            <input
-              style={{ ...styles.input, border: 'none', backgroundColor: 'transparent', flex: 1, minWidth: '100px', padding: '2px' }}
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddTag(tagInput)}
-              placeholder="Add tag..."
-            />
-          </div>
-          <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-            {suggestedTags.filter(t => !formData.tags.includes(t)).slice(0, 20).map(tag => (
-              <button
-                key={tag}
-                style={{ ...styles.smallButton, backgroundColor: '#3a3a5a', color: '#a0a0c0' }}
-                onClick={() => handleAddTag(tag)}
-              >
-                + {tag}
-              </button>
-            ))}
-          </div>
-        </div>
+        <CollapsibleSection
+          title="Tags"
+          isCollapsed={collapsedSections.tags}
+          onToggle={() => toggleSection('tags')}
+          badge={formData.tags.length > 0 ? formData.tags.length : null}
+        >
+          <TagInput
+            value={formData.tags}
+            onChange={(v) => handleChange('tags', v)}
+            suggestions={suggestedTags}
+            categories={TAG_CATEGORIES}
+            placeholder="Add tag..."
+            showSuggestions
+          />
+        </CollapsibleSection>
 
         {/* Action Buttons */}
-        <div style={{ marginTop: '20px' }}>
-          <button
-            style={{ ...styles.button, ...styles.primaryButton }}
-            onClick={handleSubmit}
-          >
-            {editingItem ? '💾 Update Enemy' : '➕ Add Enemy'}
-          </button>
+        <div className="creator-actions">
+          <Button variant="success" onClick={handleSubmit}>
+            {editingItem ? 'Update Enemy' : 'Add Enemy'}
+          </Button>
           {editingItem && (
-            <button
-              style={{ ...styles.button, ...styles.secondaryButton }}
-              onClick={handleCancel}
-            >
+            <Button variant="ghost" onClick={handleCancel}>
               Cancel
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {/* List Section */}
-      <div style={styles.listSection}>
-        <h3 style={styles.sectionTitle}>📋 Created Enemies ({items.length})</h3>
+      <div className="creator-list">
+        <h3 className="creator-form-section-title">
+          Created Enemies
+          <span className="count-badge">{items.length}</span>
+        </h3>
 
         {items.length === 0 ? (
-          <div style={styles.emptyList}>
-            No enemies created yet.<br />
+          <div className="empty-list">
+            No enemies created yet.
+            <br />
             Use the form to create your first enemy.
           </div>
         ) : (
           items.map(item => (
             <div
               key={item._id}
-              style={{
-                ...styles.listItem,
-                ...(hoveredItem === item._id ? styles.listItemHover : {}),
-                ...(editingItem?._id === item._id ? { borderColor: '#ffd700' } : {}),
-              }}
+              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
               onMouseEnter={() => setHoveredItem(item._id)}
               onMouseLeave={() => setHoveredItem(null)}
             >
-              <div style={styles.listItemName}>
-                👹 {item.name}
-                {item.variant !== 'normal' && (
-                  <span style={{
-                    marginLeft: '8px',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    fontSize: '10px',
-                    backgroundColor: item.variant === 'boss' ? '#7c4a4a' : '#4a4a7c',
-                    color: 'white',
-                  }}>
-                    {item.variant}
-                  </span>
+              <div className="creator-item-info">
+                <div className="creator-item-name">
+                  {item.name}
+                  {item.variant !== 'normal' && (
+                    <span
+                      className="rarity-badge"
+                      style={{ backgroundColor: item.variant === 'boss' ? 'var(--color-accent-danger)' : 'var(--color-accent-secondary)' }}
+                    >
+                      {item.variant}
+                    </span>
+                  )}
+                </div>
+                <div className="creator-item-id">
+                  ID: {item.id} | Lvl: {item.level} | Type: {item.type}
+                </div>
+                {item.tags?.length > 0 && (
+                  <div className="creator-item-tags">
+                    {item.tags.slice(0, 4).map(tag => (
+                      <span key={tag} className="tag-chip">{tag}</span>
+                    ))}
+                    {item.tags.length > 4 && (
+                      <span className="tag-chip more">+{item.tags.length - 4}</span>
+                    )}
+                  </div>
                 )}
               </div>
-              <div style={styles.listItemDetails}>
-                ID: {item.id} | Lvl: {item.level} | Type: {item.type}
-              </div>
-              <div style={styles.listItemActions}>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#4a7c4a', color: 'white' }}
-                  onClick={() => onEdit(item)}
-                >
+              <div className="creator-item-actions">
+                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
                   Edit
-                </button>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#4a4a7c', color: 'white' }}
-                  onClick={() => onDuplicate(item)}
-                >
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
                   Duplicate
-                </button>
-                <button
-                  style={{ ...styles.smallButton, backgroundColor: '#7c4a4a', color: 'white' }}
-                  onClick={() => onDelete(item._id)}
-                >
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
                   Delete
-                </button>
+                </Button>
               </div>
             </div>
           ))
