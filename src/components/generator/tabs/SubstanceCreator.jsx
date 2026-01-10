@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
-import { FormInput, FormSelect, TagInput, Button, NumericModifierInput, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, Button, NumericModifierInput, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
 import './CreatorStyles.css';
 
@@ -147,16 +148,7 @@ const SubstanceCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_SUBSTANCE });
-  const [hoveredItem, setHoveredItem] = useState(null);
-  const [collapsedSections, setCollapsedSections] = useState({
-    dosing: true,
-    timing: true,
-    effects: true,
-    tolerance: true,
-    addiction: true,
-    overdose: true,
-    resistance: true,
-  });
+  const [activeTab, setActiveTab] = useState('basic');
 
   const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
     defaultValues: DEFAULT_SUBSTANCE,
@@ -170,6 +162,25 @@ const SubstanceCreator = ({
       contentType: 'substances',
     });
   }, [datapackContent, items]);
+
+  // Define tabs with badges
+  const tabs = useMemo(() => {
+    const hasEffects = EFFECT_PHASES.some(phase => {
+      const phaseData = formData.effects[phase];
+      return Object.keys(phaseData?.statModifiers || {}).length > 0 ||
+             (phaseData?.statusEffects?.length || 0) > 0;
+    });
+    const hasAddiction = formData.addiction.addictiveness > 0;
+
+    return [
+      { id: 'basic', label: 'Basic' },
+      { id: 'dosing', label: 'Dosing' },
+      { id: 'timing', label: 'Timing' },
+      { id: 'effects', label: 'Effects', badge: hasEffects ? '!' : null },
+      { id: 'addiction', label: 'Addiction', badge: hasAddiction ? '!' : null },
+      { id: 'overdose', label: 'Overdose' },
+    ];
+  }, [formData.effects, formData.addiction.addictiveness]);
 
   useEffect(() => {
     if (editingItem) {
@@ -194,10 +205,6 @@ const SubstanceCreator = ({
       setFormData({ ...DEFAULT_SUBSTANCE });
     }
   }, [editingItem]);
-
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -383,33 +390,23 @@ const SubstanceCreator = ({
           {editingItem ? 'Edit Substance' : 'Create New Substance'}
         </h3>
 
-        {/* Basic Info Section - Not collapsible */}
-        <div className="creator-form-section">
-          <h4 className="creator-form-section-title">Basic Info</h4>
-          <div className="creator-form-row">
-            <FormInput
-              label="ID"
-              required
-              value={formData.id}
-              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
-              placeholder="unique_substance_id"
-            />
-            <FormInput
-              label="Name"
-              required
-              value={formData.name}
-              onChange={(v) => handleChange('name', v)}
-              placeholder="Substance Name"
-            />
-          </div>
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-          <FormInput
-            label="Description"
-            type="textarea"
+        {/* Basic Tab */}
+        <FormTabPanel id="basic" activeTab={activeTab}>
+          <IdNameFields
+            idValue={formData.id}
+            nameValue={formData.name}
+            onIdChange={(v) => handleChange('id', v)}
+            onNameChange={(v) => handleChange('name', v)}
+            idPlaceholder="unique_substance_id"
+            namePlaceholder="Substance Name"
+          />
+
+          <DescriptionField
             value={formData.description}
             onChange={(v) => handleChange('description', v)}
             placeholder="What this substance does and its effects..."
-            rows={3}
           />
 
           <div className="creator-form-row cols-3">
@@ -465,14 +462,10 @@ const SubstanceCreator = ({
             placeholder="Add tag..."
             showSuggestions
           />
-        </div>
+        </FormTabPanel>
 
-        {/* Dosing Section */}
-        <CollapsibleSection
-          title="Dosing"
-          isCollapsed={collapsedSections.dosing}
-          onToggle={() => toggleSection('dosing')}
-        >
+        {/* Dosing Tab */}
+        <FormTabPanel id="dosing" activeTab={activeTab}>
           <div className="creator-form-row cols-3">
             <FormInput
               label="Standard Dose"
@@ -527,14 +520,10 @@ const SubstanceCreator = ({
               )}
             </div>
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Timing Section */}
-        <CollapsibleSection
-          title="Timing"
-          isCollapsed={collapsedSections.timing}
-          onToggle={() => toggleSection('timing')}
-        >
+        {/* Timing Tab */}
+        <FormTabPanel id="timing" activeTab={activeTab}>
           <div className="creator-form-row cols-2">
             <FormInput
               label="Onset Duration (ms)"
@@ -594,14 +583,10 @@ const SubstanceCreator = ({
               (formData.timing.aftermathDuration || 0)
             )}
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Effects Section */}
-        <CollapsibleSection
-          title="Phase Effects"
-          isCollapsed={collapsedSections.effects}
-          onToggle={() => toggleSection('effects')}
-        >
+        {/* Effects Tab */}
+        <FormTabPanel id="effects" activeTab={activeTab}>
           {EFFECT_PHASES.map(phase => (
             <div key={phase} style={{
               marginBottom: 'var(--space-md)',
@@ -631,7 +616,7 @@ const SubstanceCreator = ({
                       compact
                     />
                     <Button variant="danger" size="sm" onClick={() => handleRemoveStatModifier(phase, stat)}>
-                      ×
+                      x
                     </Button>
                   </div>
                 ))}
@@ -651,7 +636,7 @@ const SubstanceCreator = ({
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-xs)', marginBottom: 'var(--space-xs)' }}>
                   {(formData.effects[phase]?.statusEffects || []).map((effect, idx) => (
                     <span key={idx} className="tag-chip" onClick={() => handleRemoveStatusEffect(phase, idx)} style={{ cursor: 'pointer' }}>
-                      {effect} ×
+                      {effect} x
                     </span>
                   ))}
                 </div>
@@ -674,7 +659,7 @@ const SubstanceCreator = ({
                     <div key={idx} className="array-item" style={{ marginBottom: 'var(--space-xs)' }}>
                       <span style={{ flex: 1, fontSize: 'var(--font-sm)' }}>{msg}</span>
                       <Button variant="danger" size="sm" onClick={() => handleRemoveMessage(phase, idx)}>
-                        ×
+                        x
                       </Button>
                     </div>
                   ))}
@@ -691,14 +676,13 @@ const SubstanceCreator = ({
               )}
             </div>
           ))}
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Tolerance Section */}
-        <CollapsibleSection
-          title="Tolerance Scaling"
-          isCollapsed={collapsedSections.tolerance}
-          onToggle={() => toggleSection('tolerance')}
-        >
+        {/* Addiction Tab (combines Tolerance and Addiction) */}
+        <FormTabPanel id="addiction" activeTab={activeTab}>
+          <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+            Tolerance Scaling
+          </h4>
           <div className="creator-form-row cols-2">
             <FormInput
               label="Min Effectiveness"
@@ -754,14 +738,10 @@ const SubstanceCreator = ({
               />
             )}
           </div>
-        </CollapsibleSection>
 
-        {/* Addiction Section */}
-        <CollapsibleSection
-          title="Addiction"
-          isCollapsed={collapsedSections.addiction}
-          onToggle={() => toggleSection('addiction')}
-        >
+          <h4 style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-sm)' }}>
+            Addiction
+          </h4>
           <div className="creator-form-row cols-2">
             <FormInput
               label="Addictiveness"
@@ -796,14 +776,13 @@ const SubstanceCreator = ({
               min={0}
             />
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Overdose Section */}
-        <CollapsibleSection
-          title="Overdose"
-          isCollapsed={collapsedSections.overdose}
-          onToggle={() => toggleSection('overdose')}
-        >
+        {/* Overdose Tab (combines Overdose and Resistance) */}
+        <FormTabPanel id="overdose" activeTab={activeTab}>
+          <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+            Overdose Effects
+          </h4>
           <FormInput
             label="OD Duration (ms)"
             type="number"
@@ -832,14 +811,10 @@ const SubstanceCreator = ({
             min={0}
             max={100}
           />
-        </CollapsibleSection>
 
-        {/* Resistance Section */}
-        <CollapsibleSection
-          title="Resistance"
-          isCollapsed={collapsedSections.resistance}
-          onToggle={() => toggleSection('resistance')}
-        >
+          <h4 style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-sm)' }}>
+            Resistance
+          </h4>
           <div style={{ marginBottom: 'var(--space-sm)' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
               <input
@@ -888,7 +863,7 @@ const SubstanceCreator = ({
               </div>
             </>
           )}
-        </CollapsibleSection>
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -904,78 +879,54 @@ const SubstanceCreator = ({
       </div>
 
       {/* List Section */}
-      <div className="creator-list">
-        <h3 className="creator-form-section-title">
-          Created Substances
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No substances created yet.
-            <br />
-            Use the form to create your first substance.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">
-                  {item.name}
-                  <span
-                    className="rarity-badge"
-                    style={{ backgroundColor: CATEGORY_COLORS[item.category] || 'var(--color-border)' }}
-                  >
-                    {item.category}
-                  </span>
-                  <span
-                    className="rarity-badge"
-                    style={{
-                      backgroundColor: item.legalStatus === 'legal' ? 'var(--color-accent-success)' :
-                                       item.legalStatus === 'illegal' ? 'var(--color-accent-danger)' :
-                                       item.legalStatus === 'forbidden' ? '#7c3aed' : 'var(--color-accent-warning)',
-                    }}
-                  >
-                    {item.legalStatus}
-                  </span>
-                </div>
-                <div className="creator-item-id">
-                  ID: {item.id} | {item.deliveryMethod} | {item.rarity} | ${item.streetValue}
-                </div>
-                <div className="creator-item-id">
-                  Addiction: {item.addiction?.addictiveness || 0}% | Intox: {item.intoxicationValue}
-                </div>
-                {item.tags?.length > 0 && (
-                  <div className="creator-item-tags">
-                    {item.tags.slice(0, 4).map(tag => (
-                      <span key={tag} className="tag-chip">{tag}</span>
-                    ))}
-                    {item.tags.length > 4 && (
-                      <span className="tag-chip more">+{item.tags.length - 4}</span>
-                    )}
-                  </div>
+      <CreatorItemsList
+        items={items}
+        title="Created Substances"
+        itemType="substance"
+        editingItem={editingItem}
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        renderItemContent={(item) => (
+          <>
+            <div className="creator-item-name">
+              {item.name}
+              <span
+                className="rarity-badge"
+                style={{ backgroundColor: CATEGORY_COLORS[item.category] || 'var(--color-border)' }}
+              >
+                {item.category}
+              </span>
+              <span
+                className="rarity-badge"
+                style={{
+                  backgroundColor: item.legalStatus === 'legal' ? 'var(--color-accent-success)' :
+                                   item.legalStatus === 'illegal' ? 'var(--color-accent-danger)' :
+                                   item.legalStatus === 'forbidden' ? '#7c3aed' : 'var(--color-accent-warning)',
+                }}
+              >
+                {item.legalStatus}
+              </span>
+            </div>
+            <div className="creator-item-id">
+              ID: {item.id} | {item.deliveryMethod} | {item.rarity} | ${item.streetValue}
+            </div>
+            <div className="creator-item-id">
+              Addiction: {item.addiction?.addictiveness || 0}% | Intox: {item.intoxicationValue}
+            </div>
+            {item.tags?.length > 0 && (
+              <div className="creator-item-tags">
+                {item.tags.slice(0, 4).map(tag => (
+                  <span key={tag} className="tag-chip">{tag}</span>
+                ))}
+                {item.tags.length > 4 && (
+                  <span className="tag-chip more">+{item.tags.length - 4}</span>
                 )}
               </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
-                  Duplicate
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
-                  Delete
-                </Button>
-              </div>
-            </div>
-          ))
+            )}
+          </>
         )}
-      </div>
+      />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 /**
  * EffectSystem - Declarative rule-based effect/debuff engine
- * 
+ *
  * Effects are data-driven with:
  * - Duration rules (turns, time, permanent, until_condition)
  * - Stacking rules (replace, stack, refresh, max_stacks)
@@ -8,6 +8,8 @@
  * - Triggers (onApply, onRemove, onTurnStart, onTurnEnd, onHit, onDamaged, etc.)
  * - Conditions (if target has tag, if stat > X, if equipped, etc.)
  */
+
+import { nanoid } from 'nanoid';
 
 // Effect trigger types
 export const TRIGGERS = {
@@ -555,7 +557,7 @@ export class EffectSystem {
 
     return {
       id: effectId,
-      instanceId: `${effectId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      instanceId: `${effectId}_${nanoid()}`,
       appliedAt: Date.now(),
       stacks: options.stacks || 1,
       intensity: options.intensity || 1,

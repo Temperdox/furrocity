@@ -823,47 +823,32 @@
 .condition-builder {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--space-md);
-  background-color: var(--color-bg-tertiary);
-}
-
-.condition-block {
-  margin-bottom: var(--space-sm);
   padding: var(--space-sm);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-bg-primary);
+  background-color: var(--color-bg-tertiary);
+  max-width: 100%;
+  overflow-x: auto;
 }
 
-.condition-block.group {
-  padding: var(--space-md);
-  margin-left: var(--space-md);
-  border-left: 3px solid var(--color-accent-secondary);
+.condition-empty {
+  padding: var(--space-sm);
 }
 
-.condition-block.and-group {
-  border-left-color: var(--color-accent-success);
-}
-
-.condition-block.or-group {
-  border-left-color: var(--color-accent-info);
-}
-
-.condition-block.not-group {
-  border-left-color: var(--color-accent-danger);
+.condition-empty .text-muted {
+  font-size: var(--font-sm);
+  margin-bottom: var(--space-xs);
 }
 
 .condition-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-xs);
 }
 
 .condition-type-badge {
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: var(--radius-sm);
-  font-size: var(--font-xxs);
+  font-size: 10px;
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   color: white;
@@ -876,22 +861,24 @@
 .condition-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
 }
 
 .condition-row {
-  display: grid;
-  grid-template-columns: 150px 1fr auto;
-  gap: var(--space-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
   align-items: center;
 }
 
 .condition-add-buttons {
   display: flex;
-  gap: var(--space-xs);
-  margin-top: var(--space-sm);
-  padding-top: var(--space-sm);
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: var(--space-xs);
+  padding-top: var(--space-xs);
   border-top: 1px dashed var(--color-border);
+  align-items: center;
 }
 
 /* Map Placement */
@@ -1612,54 +1599,122 @@
 
 /* ===== Condition Block Styles ===== */
 
-.condition-empty {
-  padding: var(--space-md);
-  background-color: var(--color-bg-tertiary);
-  border-radius: var(--radius-md);
-  border: 1px dashed var(--color-border);
-}
-
 .condition-block-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-xs);
+  gap: var(--space-sm);
 }
 
 .condition-block-header select {
-  padding: var(--space-xs) var(--space-sm);
+  padding: 4px 8px;
   background-color: var(--color-bg-input);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text-primary);
-  font-size: var(--font-sm);
+  font-size: var(--font-xs);
+  max-width: 200px;
+}
+
+.condition-block-header .text-bold {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
 }
 
 .condition-block-children {
-  padding-left: var(--space-md);
-  border-left: 2px solid var(--color-border);
-  margin-left: var(--space-xs);
+  padding-left: var(--space-sm);
+  border-left: 2px solid rgba(255, 255, 255, 0.15);
+  margin-top: var(--space-xs);
 }
 
 .condition-block-params {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-xs);
+  gap: 4px;
+}
+
+.condition-block-params > span {
+  font-size: var(--font-sm);
+  opacity: 0.8;
 }
 
 .condition-block-params select,
 .condition-block-params input {
-  padding: var(--space-xs) var(--space-sm);
+  padding: 4px 8px;
   background-color: var(--color-bg-input);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text-primary);
   font-size: var(--font-xs);
+  height: 26px;
+}
+
+.condition-block-params select {
+  max-width: 150px;
+}
+
+.condition-block-params input {
+  max-width: 80px;
 }
 
 .condition-leaf {
-  padding: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.condition-builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.condition-builder-header::before {
+  content: 'Discovery Conditions';
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.condition-param-missing {
+  border: 2px solid var(--color-accent-warning) !important;
+  background-color: rgba(245, 158, 11, 0.1) !important;
+}
+
+.condition-param-missing::placeholder {
+  color: var(--color-accent-warning);
+}
+
+/* Condition block compact styling */
+.condition-block {
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.condition-block.condition-leaf {
+  display: inline-flex;
+  max-width: fit-content;
+}
+
+.condition-block-children .condition-block {
+  margin-left: 0;
+}
+
+/* Compact add buttons */
+.condition-add-buttons .btn {
+  padding: 4px 8px;
+  font-size: var(--font-xs);
+}
+
+.condition-add-buttons .text-muted {
+  font-size: var(--font-xs);
+  white-space: nowrap;
 }
 
 /* ===== Collapsible Sections ===== */

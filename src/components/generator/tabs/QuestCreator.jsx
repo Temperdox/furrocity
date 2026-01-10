@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
-import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, Button, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
 import './CreatorStyles.css';
 
@@ -119,19 +120,9 @@ const QuestCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_QUEST });
-  const [hoveredItem, setHoveredItem] = useState(null);
   const [newObjective, setNewObjective] = useState({ ...DEFAULT_OBJECTIVE });
   const [newReward, setNewReward] = useState({ ...DEFAULT_REWARD });
-  const [collapsedSections, setCollapsedSections] = useState({
-    objectives: false,
-    rewards: false,
-    dialogue: true,
-    tags: true,
-  });
-
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
+  const [activeTab, setActiveTab] = useState('basic');
 
   const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
     defaultValues: DEFAULT_QUEST,
@@ -145,6 +136,24 @@ const QuestCreator = ({
       contentType: 'quests',
     });
   }, [datapackContent, items]);
+
+  // Define tabs with badges
+  const tabs = useMemo(() => {
+    const hasPrerequisites = formData.prerequisites.level > 0 ||
+      formData.prerequisites.quests.length > 0 ||
+      formData.prerequisites.flags.length > 0 ||
+      formData.prerequisites.items.length > 0;
+    const hasDialogue = formData.dialogue.start || formData.dialogue.progress || formData.dialogue.complete;
+
+    return [
+      { id: 'basic', label: 'Basic' },
+      { id: 'requirements', label: 'Requirements', badge: hasPrerequisites ? '!' : null },
+      { id: 'objectives', label: 'Objectives', badge: formData.objectives.length || null },
+      { id: 'rewards', label: 'Rewards', badge: formData.rewards.length || null },
+      { id: 'dialogue', label: 'Dialogue', badge: hasDialogue ? '!' : null },
+      { id: 'tags', label: 'Tags', badge: formData.tags.length || null },
+    ];
+  }, [formData.prerequisites, formData.objectives.length, formData.rewards.length, formData.dialogue, formData.tags.length]);
 
   // Combine datapack content with user-created content
   const allNPCs = useMemo(() => {
@@ -313,32 +322,23 @@ const QuestCreator = ({
           {editingItem ? 'Edit Quest' : 'Create New Quest'}
         </h3>
 
-        {/* Basic Info */}
-        <div className="creator-form-section">
-          <div className="creator-form-row">
-            <FormInput
-              label="ID"
-              required
-              value={formData.id}
-              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s+/g, '_'))}
-              placeholder="unique_quest_id"
-            />
-            <FormInput
-              label="Name"
-              required
-              value={formData.name}
-              onChange={(v) => handleChange('name', v)}
-              placeholder="Quest Name"
-            />
-          </div>
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-          <FormInput
-            label="Description"
-            type="textarea"
+        {/* Basic Tab */}
+        <FormTabPanel id="basic" activeTab={activeTab}>
+          <IdNameFields
+            idValue={formData.id}
+            nameValue={formData.name}
+            onIdChange={(v) => handleChange('id', v)}
+            onNameChange={(v) => handleChange('name', v)}
+            idPlaceholder="unique_quest_id"
+            namePlaceholder="Quest Name"
+          />
+
+          <DescriptionField
             value={formData.description}
             onChange={(v) => handleChange('description', v)}
-            placeholder="Describe the quest objectives and story..."
-            rows={3}
+            placeholder="Describe this quest..."
           />
 
           <div className="creator-form-row cols-3">
@@ -425,15 +425,52 @@ const QuestCreator = ({
               helper="0 = no cooldown"
             />
           )}
-        </div>
+        </FormTabPanel>
 
-        {/* Objectives */}
-        <CollapsibleSection
-          title="Quest Objectives"
-          isCollapsed={collapsedSections.objectives}
-          onToggle={() => toggleSection('objectives')}
-          badge={formData.objectives.length > 0 ? formData.objectives.length : null}
-        >
+        {/* Requirements Tab */}
+        <FormTabPanel id="requirements" activeTab={activeTab}>
+          <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+            Level Requirements
+          </h4>
+          <FormInput
+            label="Minimum Level"
+            type="number"
+            value={formData.prerequisites.level}
+            onChange={(v) => handleNestedChange('prerequisites', 'level', v)}
+            min={0}
+            helper="0 = no level requirement"
+          />
+
+          <h4 style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-sm)' }}>
+            Prerequisite Quests
+          </h4>
+          <TagInput
+            value={formData.prerequisites.quests}
+            onChange={(v) => handleNestedChange('prerequisites', 'quests', v)}
+            placeholder="Add required quest ID..."
+          />
+
+          <h4 style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-sm)' }}>
+            Required Flags
+          </h4>
+          <TagInput
+            value={formData.prerequisites.flags}
+            onChange={(v) => handleNestedChange('prerequisites', 'flags', v)}
+            placeholder="Add required flag..."
+          />
+
+          <h4 style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-sm)' }}>
+            Required Items
+          </h4>
+          <TagInput
+            value={formData.prerequisites.items}
+            onChange={(v) => handleNestedChange('prerequisites', 'items', v)}
+            placeholder="Add required item ID..."
+          />
+        </FormTabPanel>
+
+        {/* Objectives Tab */}
+        <FormTabPanel id="objectives" activeTab={activeTab}>
           {formData.objectives.map((obj, index) => (
             <div key={obj.id || index} className="array-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -511,15 +548,10 @@ const QuestCreator = ({
               </div>
             </div>
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Rewards */}
-        <CollapsibleSection
-          title="Quest Rewards"
-          isCollapsed={collapsedSections.rewards}
-          onToggle={() => toggleSection('rewards')}
-          badge={formData.rewards.length > 0 ? formData.rewards.length : null}
-        >
+        {/* Rewards Tab */}
+        <FormTabPanel id="rewards" activeTab={activeTab}>
           {formData.rewards.map((reward, index) => (
             <div key={index} className="array-item">
               <div className="array-item-content">
@@ -528,7 +560,7 @@ const QuestCreator = ({
                 </span>
               </div>
               <Button variant="danger" size="sm" onClick={() => handleRemoveReward(index)}>
-                ×
+                x
               </Button>
             </div>
           ))}
@@ -574,14 +606,10 @@ const QuestCreator = ({
               </div>
             </div>
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Dialogue */}
-        <CollapsibleSection
-          title="Quest Dialogue"
-          isCollapsed={collapsedSections.dialogue}
-          onToggle={() => toggleSection('dialogue')}
-        >
+        {/* Dialogue Tab */}
+        <FormTabPanel id="dialogue" activeTab={activeTab}>
           <FormInput
             label="Start Dialogue"
             type="textarea"
@@ -606,15 +634,10 @@ const QuestCreator = ({
             placeholder="What the NPC says when quest is complete..."
             rows={2}
           />
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Tags */}
-        <CollapsibleSection
-          title="Tags"
-          isCollapsed={collapsedSections.tags}
-          onToggle={() => toggleSection('tags')}
-          badge={formData.tags.length > 0 ? formData.tags.length : null}
-        >
+        {/* Tags Tab */}
+        <FormTabPanel id="tags" activeTab={activeTab}>
           <TagInput
             value={formData.tags}
             onChange={(v) => handleChange('tags', v)}
@@ -623,7 +646,7 @@ const QuestCreator = ({
             placeholder="Add tag..."
             showSuggestions
           />
-        </CollapsibleSection>
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -639,67 +662,43 @@ const QuestCreator = ({
       </div>
 
       {/* List Section */}
-      <div className="creator-list">
-        <h3 className="creator-form-section-title">
-          Created Quests
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No quests created yet.
-            <br />
-            Use the form to create your first quest.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id || item.id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">
-                  {item.name}
-                  {item.isHidden && (
-                    <span className="rarity-badge" style={{ backgroundColor: 'var(--color-text-muted)' }}>
-                      Hidden
-                    </span>
-                  )}
-                </div>
-                <div className="creator-item-id">
-                  {item.type} | Level {item.level}
-                </div>
-                <div className="creator-item-id">
-                  {item.objectives?.length || 0} objectives | {item.rewards?.length || 0} rewards
-                </div>
-                {item.tags?.length > 0 && (
-                  <div className="creator-item-tags">
-                    {item.tags.slice(0, 3).map(tag => (
-                      <span key={tag} className="tag-chip">{tag}</span>
-                    ))}
-                    {item.tags.length > 3 && (
-                      <span className="tag-chip more">+{item.tags.length - 3}</span>
-                    )}
-                  </div>
+      <CreatorItemsList
+        items={items}
+        title="Created Quests"
+        itemType="quest"
+        editingItem={editingItem}
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        renderItemContent={(item) => (
+          <>
+            <div className="creator-item-name">
+              {item.name}
+              {item.isHidden && (
+                <span className="rarity-badge" style={{ backgroundColor: 'var(--color-text-muted)' }}>
+                  Hidden
+                </span>
+              )}
+            </div>
+            <div className="creator-item-id">
+              {item.type} | Level {item.level}
+            </div>
+            <div className="creator-item-id">
+              {item.objectives?.length || 0} objectives | {item.rewards?.length || 0} rewards
+            </div>
+            {item.tags?.length > 0 && (
+              <div className="creator-item-tags">
+                {item.tags.slice(0, 3).map(tag => (
+                  <span key={tag} className="tag-chip">{tag}</span>
+                ))}
+                {item.tags.length > 3 && (
+                  <span className="tag-chip more">+{item.tags.length - 3}</span>
                 )}
               </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
-                  Dup
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
-                  Del
-                </Button>
-              </div>
-            </div>
-          ))
+            )}
+          </>
         )}
-      </div>
+      />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 /**
  * SubstanceSystem - Comprehensive drug, addiction, tolerance, and resistance management
- * 
+ *
  * Features:
  * - Multiple substance delivery methods (inhalant, consumable, injectable, contact, implant)
  * - Addiction tracking with withdrawal effects
@@ -10,6 +10,8 @@
  * - Encounter modifiers based on status
  * - Time-based decay for all effects
  */
+
+import { nanoid } from 'nanoid';
 
 // ============================================================================
 // CONSTANTS & ENUMS
@@ -851,7 +853,7 @@ export class SubstanceSystem {
     const currentTime = this.getGameTime(SUBSTANCE_DURATION_TYPE.ACTIONS);
 
     const newResistance = {
-      id: `resist_${currentTime}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `resist_${nanoid()}`,
       source,
       sourceId,
       deliveryMethods: resistanceEffect.deliveryMethods || ['all'],

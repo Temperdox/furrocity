@@ -18,6 +18,8 @@
  * const result = await inventorySystem.addItem(inventory, 'health_potion', 5);
  *
  * // Equip an item
+ *
+ * @requires nanoid
  * await inventorySystem.equipItem(player, inventory, item.uniqueId);
  *
  * // Mark item as junk for auto-sell
@@ -26,6 +28,8 @@
  * @author Furrocity Team
  * @version 1.0.0
  */
+
+import { nanoid } from 'nanoid';
 
 // ============================================================================
 // CONSTANTS - Equipment slots, item categories, and rarity tiers
@@ -140,7 +144,7 @@ export const RARITY_COLORS = {
  * @private
  */
 function generateUniqueId() {
-  return `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `item_${nanoid()}`;
 }
 
 /**

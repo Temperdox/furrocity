@@ -13,6 +13,8 @@
  * @module engine/RumorSystem
  */
 
+import { nanoid } from 'nanoid';
+
 class RumorSystem {
   constructor(reputationSystem = null) {
     this.reputationSystem = reputationSystem;
@@ -51,7 +53,7 @@ class RumorSystem {
    * @returns {string} Unique rumor ID
    */
   generateRumorId() {
-    return `rumor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `rumor_${nanoid()}`;
   }
 
   /**

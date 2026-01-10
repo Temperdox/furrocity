@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
-import { FormInput, FormSelect, TagInput, Button, NumericModifierInput, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, Button, NumericModifierInput, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
 import './CreatorStyles.css';
 
@@ -95,20 +96,7 @@ const EffectCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_EFFECT });
-  const [hoveredItem, setHoveredItem] = useState(null);
-  const [collapsedSections, setCollapsedSections] = useState({
-    duration: false,
-    icon: true,
-    modifiers: false,
-    tags: false,
-  });
-
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
+  const [activeTab, setActiveTab] = useState('basic');
 
   const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
     defaultValues: DEFAULT_EFFECT,
@@ -122,6 +110,19 @@ const EffectCreator = ({
       contentType: 'effects',
     });
   }, [datapackContent, items]);
+
+  const tabs = useMemo(() => {
+    const hasModifiers = formData.modifiers.length > 0;
+    const hasTags = formData.tags.length > 0;
+
+    return [
+      { id: 'basic', label: 'Basic' },
+      { id: 'stats', label: 'Stats', badge: hasModifiers ? formData.modifiers.length : null },
+      { id: 'timing', label: 'Timing' },
+      { id: 'stacking', label: 'Stacking', badge: formData.stackBehavior === 'stack' ? formData.maxStacks : null },
+      { id: 'tags', label: 'Tags', badge: hasTags ? formData.tags.length : null },
+    ];
+  }, [formData.modifiers.length, formData.tags.length, formData.stackBehavior, formData.maxStacks]);
 
   useEffect(() => {
     if (editingItem) {
@@ -205,91 +206,36 @@ const EffectCreator = ({
           {editingItem ? 'Edit Effect' : 'Create New Effect'}
         </h3>
 
-        {/* Basic Info */}
-        <div className="creator-form-section">
-          <div className="creator-form-row">
-            <FormInput
-              label="ID"
-              required
-              value={formData.id}
-              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
-              placeholder="unique_effect_id"
-            />
-            <FormInput
-              label="Name"
-              required
-              value={formData.name}
-              onChange={(v) => handleChange('name', v)}
-              placeholder="Effect Name"
-            />
-          </div>
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-          <FormInput
-            label="Description"
-            type="textarea"
+        {/* Basic Tab */}
+        <FormTabPanel id="basic" activeTab={activeTab}>
+          <IdNameFields
+            idValue={formData.id}
+            nameValue={formData.name}
+            onIdChange={(v) => handleChange('id', v)}
+            onNameChange={(v) => handleChange('name', v)}
+            idPlaceholder="unique_effect_id"
+            namePlaceholder="Effect Name"
+          />
+
+          <DescriptionField
             value={formData.description}
             onChange={(v) => handleChange('description', v)}
             placeholder="What this effect does..."
-            rows={3}
           />
 
-          <div className="creator-form-row">
-            <FormSelect
-              label="Type"
-              value={formData.type}
-              onChange={(v) => handleChange('type', v)}
-              options={EFFECT_TYPES}
-            />
-            <FormSelect
-              label="Stack Behavior"
-              value={formData.stackBehavior}
-              onChange={(v) => handleChange('stackBehavior', v)}
-              options={STACK_BEHAVIORS}
-            />
-          </div>
+          <FormSelect
+            label="Type"
+            value={formData.type}
+            onChange={(v) => handleChange('type', v)}
+            options={EFFECT_TYPES}
+          />
 
-          {formData.stackBehavior === 'stack' && (
-            <FormInput
-              label="Max Stacks"
-              type="number"
-              value={formData.maxStacks}
-              onChange={(v) => handleChange('maxStacks', v)}
-              min={1}
-            />
-          )}
-        </div>
-
-        {/* Duration */}
-        <CollapsibleSection
-          title="Duration"
-          isCollapsed={collapsedSections.duration}
-          onToggle={() => toggleSection('duration')}
-        >
-          <div className="creator-form-row">
-            <FormSelect
-              label="Duration Type"
-              value={formData.duration.type}
-              onChange={(v) => handleNestedChange('duration', 'type', v)}
-              options={DURATION_TYPES}
-            />
-            {formData.duration.type === 'turns' && (
-              <FormInput
-                label="Turn Count"
-                type="number"
-                value={formData.duration.value}
-                onChange={(v) => handleNestedChange('duration', 'value', v)}
-                min={1}
-              />
-            )}
-          </div>
-        </CollapsibleSection>
-
-        {/* Icon */}
-        <CollapsibleSection
-          title="Icon"
-          isCollapsed={collapsedSections.icon}
-          onToggle={() => toggleSection('icon')}
-        >
+          {/* Icon Configuration */}
+          <h4 style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-sm)' }}>
+            Icon
+          </h4>
           <div className="creator-form-row">
             <FormInput
               label="Sprite Sheet ID"
@@ -304,15 +250,13 @@ const EffectCreator = ({
               placeholder="effect_icon"
             />
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Stat Modifiers */}
-        <CollapsibleSection
-          title="Stat Modifiers"
-          isCollapsed={collapsedSections.modifiers}
-          onToggle={() => toggleSection('modifiers')}
-          badge={formData.modifiers.length > 0 ? formData.modifiers.length : null}
-        >
+        {/* Stats Tab */}
+        <FormTabPanel id="stats" activeTab={activeTab}>
+          <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+            Stat Modifiers
+          </h4>
           {formData.modifiers.map((mod, index) => (
             <div key={index} className="array-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
@@ -341,14 +285,75 @@ const EffectCreator = ({
           <Button variant="success" size="sm" onClick={handleAddModifier} className="mt-sm">
             + Add Modifier
           </Button>
-        </CollapsibleSection>
 
-        {/* Tags */}
-        <CollapsibleSection
-          title="Tags"
-          isCollapsed={collapsedSections.tags}
-          onToggle={() => toggleSection('tags')}
-        >
+          {formData.modifiers.length === 0 && (
+            <div className="empty-list" style={{ marginTop: 'var(--space-md)' }}>
+              No stat modifiers configured.
+              <br />
+              Click the button above to add stat modifications.
+            </div>
+          )}
+        </FormTabPanel>
+
+        {/* Timing Tab */}
+        <FormTabPanel id="timing" activeTab={activeTab}>
+          <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+            Duration
+          </h4>
+          <div className="creator-form-row">
+            <FormSelect
+              label="Duration Type"
+              value={formData.duration.type}
+              onChange={(v) => handleNestedChange('duration', 'type', v)}
+              options={DURATION_TYPES}
+            />
+            {formData.duration.type === 'turns' && (
+              <FormInput
+                label="Turn Count"
+                type="number"
+                value={formData.duration.value}
+                onChange={(v) => handleNestedChange('duration', 'value', v)}
+                min={1}
+              />
+            )}
+          </div>
+        </FormTabPanel>
+
+        {/* Stacking Tab */}
+        <FormTabPanel id="stacking" activeTab={activeTab}>
+          <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+            Stack Behavior
+          </h4>
+          <FormSelect
+            label="Stack Behavior"
+            value={formData.stackBehavior}
+            onChange={(v) => handleChange('stackBehavior', v)}
+            options={STACK_BEHAVIORS}
+          />
+
+          {formData.stackBehavior === 'stack' && (
+            <FormInput
+              label="Max Stacks"
+              type="number"
+              value={formData.maxStacks}
+              onChange={(v) => handleChange('maxStacks', v)}
+              min={1}
+            />
+          )}
+
+          <div className="form-helper" style={{ marginTop: 'var(--space-md)' }}>
+            <strong>Behavior descriptions:</strong>
+            <ul style={{ marginTop: 'var(--space-xs)', paddingLeft: 'var(--space-md)' }}>
+              <li><strong>Refresh:</strong> Reapplying resets the duration</li>
+              <li><strong>Stack:</strong> Each application adds a stack up to max</li>
+              <li><strong>Intensify:</strong> Each application increases severity</li>
+              <li><strong>Replace:</strong> New application overwrites the old one</li>
+            </ul>
+          </div>
+        </FormTabPanel>
+
+        {/* Tags Tab */}
+        <FormTabPanel id="tags" activeTab={activeTab}>
           <TagInput
             value={formData.tags}
             onChange={(v) => handleChange('tags', v)}
@@ -357,7 +362,7 @@ const EffectCreator = ({
             placeholder="Add tag..."
             showSuggestions
           />
-        </CollapsibleSection>
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -373,65 +378,41 @@ const EffectCreator = ({
       </div>
 
       {/* List Section */}
-      <div className="creator-list">
-        <h3 className="creator-form-section-title">
-          Created Effects
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No effects created yet.
-            <br />
-            Use the form to create your first effect.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">
-                  {item.name}
-                  <span
-                    className="rarity-badge"
-                    style={{ backgroundColor: EFFECT_TYPE_COLORS[item.type] || 'var(--color-border)' }}
-                  >
-                    {item.type}
-                  </span>
-                </div>
-                <div className="creator-item-id">
-                  ID: {item.id} | {item.duration?.type === 'turns' ? `${item.duration.value} turns` : item.duration?.type}
-                </div>
-                {item.tags?.length > 0 && (
-                  <div className="creator-item-tags">
-                    {item.tags.slice(0, 4).map(tag => (
-                      <span key={tag} className="tag-chip">{tag}</span>
-                    ))}
-                    {item.tags.length > 4 && (
-                      <span className="tag-chip more">+{item.tags.length - 4}</span>
-                    )}
-                  </div>
+      <CreatorItemsList
+        items={items}
+        title="Created Effects"
+        itemType="effect"
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        editingItem={editingItem}
+        renderItemContent={(item) => (
+          <>
+            <div className="creator-item-name">
+              {item.name}
+              <span
+                className="rarity-badge"
+                style={{ backgroundColor: EFFECT_TYPE_COLORS[item.type] || 'var(--color-border)' }}
+              >
+                {item.type}
+              </span>
+            </div>
+            <div className="creator-item-id">
+              ID: {item.id} | {item.duration?.type === 'turns' ? `${item.duration.value} turns` : item.duration?.type}
+            </div>
+            {item.tags?.length > 0 && (
+              <div className="creator-item-tags">
+                {item.tags.slice(0, 4).map(tag => (
+                  <span key={tag} className="tag-chip">{tag}</span>
+                ))}
+                {item.tags.length > 4 && (
+                  <span className="tag-chip more">+{item.tags.length - 4}</span>
                 )}
               </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
-                  Duplicate
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
-                  Delete
-                </Button>
-              </div>
-            </div>
-          ))
+            )}
+          </>
         )}
-      </div>
+      />
     </div>
   );
 };

@@ -1,0 +1,119 @@
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  animation: fadeIn 150ms ease-out;
+}
+
+/* Modal Content */
+.modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-bg-secondary, #1a1a2e);
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  padding: var(--space-lg, 24px);
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow: auto;
+  z-index: 1001;
+  animation: slideIn 200ms ease-out;
+}
+
+.modal-content:focus {
+  outline: none;
+}
+
+/* Modal Title */
+.modal-title {
+  font-size: var(--font-lg, 1.25rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-primary, #f5f5f5);
+  margin: 0 0 var(--space-sm, 8px) 0;
+}
+
+/* Modal Description */
+.modal-description {
+  font-size: var(--font-sm, 0.875rem);
+  color: var(--color-text-muted, #9ca3af);
+  margin: 0 0 var(--space-md, 16px) 0;
+}
+
+/* Close Button */
+.modal-close-btn {
+  position: absolute;
+  top: var(--space-md, 16px);
+  right: var(--space-md, 16px);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-sm, 6px);
+  color: var(--color-text-secondary, #a0a0a0);
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.modal-close-btn:hover {
+  background: var(--color-bg-hover, rgba(255, 255, 255, 0.1));
+  color: var(--color-text-primary, #f5f5f5);
+  border-color: var(--color-text-secondary, #a0a0a0);
+}
+
+.modal-close-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-accent-primary, #ffd700);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Size Variants */
+.modal-content.modal-sm {
+  width: 400px;
+}
+
+.modal-content.modal-md {
+  width: 600px;
+}
+
+.modal-content.modal-lg {
+  width: 800px;
+}
+
+.modal-content.modal-xl {
+  width: 1000px;
+}
+
+.modal-content.modal-full {
+  width: 95vw;
+  height: 90vh;
+}

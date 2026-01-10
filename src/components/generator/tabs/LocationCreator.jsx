@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { collectTags } from '../DatapackLoader';
-import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, Button, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
+import { LogicBuilder } from '../LogicBuilder';
 import './CreatorStyles.css';
 
 const DRAFT_KEY = 'contentGenerator_draft_locations';
@@ -120,90 +122,7 @@ const DEFAULT_LOCATION = {
   icon: { type: 'default', data: null, spriteSheet: null, cellRow: 0, cellCol: 0 },
 };
 
-// Condition types for discovery requirements
-const CONDITION_CATEGORIES = [
-  { id: 'item', label: 'Item', icon: '📦' },
-  { id: 'equipment', label: 'Equipment', icon: '⚔️' },
-  { id: 'stat', label: 'Player Stat', icon: '📊' },
-  { id: 'quest', label: 'Quest', icon: '📜' },
-  { id: 'scene', label: 'Scene', icon: '🎬' },
-  { id: 'flag', label: 'Game Flag', icon: '🚩' },
-  { id: 'location', label: 'Location', icon: '📍' },
-];
-
-const CONDITION_CHECKS = {
-  item: [
-    { id: 'hasItem', label: 'Has Item', params: ['itemId'] },
-    { id: 'hasItemCount', label: 'Has Item Count', params: ['itemId', 'operator', 'value'] },
-  ],
-  equipment: [
-    { id: 'hasEquipped', label: 'Has Equipped', params: ['itemId'] },
-    { id: 'hasSlotEquipped', label: 'Slot Has Equipment', params: ['slot'] },
-  ],
-  stat: [
-    { id: 'statCheck', label: 'Stat Value', params: ['statName', 'operator', 'value'] },
-    { id: 'levelCheck', label: 'Player Level', params: ['operator', 'value'] },
-  ],
-  quest: [
-    { id: 'questCompleted', label: 'Quest Completed', params: ['questId'] },
-    { id: 'questActive', label: 'Quest Active', params: ['questId'] },
-    { id: 'questObjective', label: 'Quest Objective Done', params: ['questId', 'objectiveIndex'] },
-  ],
-  scene: [
-    { id: 'sceneCompleted', label: 'Scene Completed', params: ['sceneId'] },
-    { id: 'sceneChoice', label: 'Scene Choice Made', params: ['sceneId', 'choiceId'] },
-  ],
-  flag: [
-    { id: 'flagSet', label: 'Flag Is Set', params: ['flagName'] },
-    { id: 'flagValue', label: 'Flag Value', params: ['flagName', 'operator', 'value'] },
-  ],
-  location: [
-    { id: 'visitedLocation', label: 'Visited Location', params: ['locationId'] },
-    { id: 'currentLocation', label: 'Is At Location', params: ['locationId'] },
-  ],
-};
-
-const OPERATORS = [
-  { value: 'eq', label: '= Equal' },
-  { value: 'ne', label: '≠ Not equal' },
-  { value: 'gt', label: '> Greater' },
-  { value: 'gte', label: '≥ Greater or equal' },
-  { value: 'lt', label: '< Less' },
-  { value: 'lte', label: '≤ Less or equal' },
-];
-
-const PLAYER_STATS = [
-  'hp', 'maxHp', 'stamina', 'maxStamina', 'level', 'experience',
-  'strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma',
-  'gold', 'corruption', 'lust', 'arousal',
-];
-
-const EQUIPMENT_SLOTS = [
-  'head', 'body', 'hands', 'feet', 'accessory', 'weapon', 'offhand',
-  'neck', 'ring', 'piercings', 'intimate',
-];
-
-const BLOCK_COLORS = {
-  group: { bg: '#4a6fa5', border: '#3a5a8a' },
-  and: { bg: '#5a8a5a', border: '#4a7a4a' },
-  or: { bg: '#8a6a5a', border: '#7a5a4a' },
-  not: { bg: '#8a5a5a', border: '#7a4a4a' },
-  condition: { bg: '#5a5a8a', border: '#4a4a7a' },
-  item: { bg: '#6a8a6a', border: '#5a7a5a' },
-  equipment: { bg: '#8a7a5a', border: '#7a6a4a' },
-  stat: { bg: '#5a7a8a', border: '#4a6a7a' },
-  quest: { bg: '#7a6a8a', border: '#6a5a7a' },
-  scene: { bg: '#8a6a7a', border: '#7a5a6a' },
-  flag: { bg: '#6a6a6a', border: '#5a5a5a' },
-  location: { bg: '#5a8a7a', border: '#4a7a6a' },
-};
-
-const createConditionNode = (type = 'condition', category = 'item') => {
-  if (type === 'group') return { type: 'group', operator: 'and', children: [] };
-  if (type === 'not') return { type: 'not', child: null };
-  const checks = CONDITION_CHECKS[category] || [];
-  return { type: 'condition', category, check: checks[0]?.id || 'hasItem', params: {} };
-};
+// Note: Condition builder constants are now in ConditionBuilder/constants.js
 
 // Icon Selection Modal
 const IconSelectorModal = ({ isOpen, onClose, sprites = [], currentIcon, onSave }) => {
@@ -469,180 +388,6 @@ const LocationSelectModal = ({ isOpen, onClose, onSelect, locations, currentLoca
   );
 };
 
-// Condition Builder Component (simplified for brevity)
-const ConditionBuilder = ({ conditions, onChange, items = [], quests = [], scenes = [], locations = [] }) => {
-  const renderConditionBlock = (node, path = [], depth = 0) => {
-    if (!node) return null;
-    const colors = BLOCK_COLORS[node.type === 'condition' ? node.category : node.type] || BLOCK_COLORS.condition;
-
-    const updateNode = (updates) => {
-      const newConditions = JSON.parse(JSON.stringify(conditions));
-      let target = newConditions;
-      for (let i = 0; i < path.length - 1; i++) {
-        target = path[i] === 'child' ? target.child : target.children[path[i]];
-      }
-      if (path.length > 0) {
-        const lastKey = path[path.length - 1];
-        Object.assign(lastKey === 'child' ? target.child : target.children[lastKey], updates);
-      } else {
-        Object.assign(newConditions, updates);
-      }
-      onChange(newConditions);
-    };
-
-    const removeNode = () => {
-      if (path.length === 0) { onChange(null); return; }
-      const newConditions = JSON.parse(JSON.stringify(conditions));
-      let target = newConditions;
-      for (let i = 0; i < path.length - 1; i++) {
-        target = path[i] === 'child' ? target.child : target.children[path[i]];
-      }
-      const lastKey = path[path.length - 1];
-      if (lastKey === 'child') target.child = null;
-      else target.children.splice(lastKey, 1);
-      onChange(newConditions);
-    };
-
-    const addChild = (childType = 'condition', category = 'item') => {
-      const newChild = createConditionNode(childType, category);
-      const newConditions = JSON.parse(JSON.stringify(conditions));
-      let target = newConditions;
-      for (const key of path) target = key === 'child' ? target.child : target.children[key];
-      if (node.type === 'group') target.children.push(newChild);
-      else if (node.type === 'not') target.child = newChild;
-      onChange(newConditions);
-    };
-
-    if (node.type === 'group') {
-      return (
-        <div key={path.join('-')} className="condition-block" style={{ backgroundColor: node.operator === 'and' ? BLOCK_COLORS.and.bg : BLOCK_COLORS.or.bg, marginLeft: depth * 20 }}>
-          <div className="condition-block-header">
-            <select value={node.operator} onChange={(e) => updateNode({ operator: e.target.value })}>
-              <option value="and">AND (all must be true)</option>
-              <option value="or">OR (any can be true)</option>
-            </select>
-            <Button variant="danger" size="sm" onClick={removeNode}>×</Button>
-          </div>
-          <div className="condition-block-children">
-            {node.children.map((child, idx) => renderConditionBlock(child, [...path, idx], depth + 1))}
-            <div className="condition-add-buttons">
-              <Button variant="success" size="sm" onClick={() => addChild('group')}>+ Group</Button>
-              <Button variant="danger" size="sm" onClick={() => addChild('not')}>+ NOT</Button>
-              {CONDITION_CATEGORIES.map(cat => (
-                <Button key={cat.id} size="sm" onClick={() => addChild('condition', cat.id)} style={{ backgroundColor: BLOCK_COLORS[cat.id]?.bg }}>
-                  + {cat.icon}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (node.type === 'not') {
-      return (
-        <div key={path.join('-')} className="condition-block" style={{ backgroundColor: BLOCK_COLORS.not.bg, marginLeft: depth * 20 }}>
-          <div className="condition-block-header">
-            <span className="text-bold">NOT (invert result)</span>
-            <Button variant="danger" size="sm" onClick={removeNode}>×</Button>
-          </div>
-          <div className="condition-block-children">
-            {node.child ? renderConditionBlock(node.child, [...path, 'child'], depth + 1) : (
-              <div className="condition-add-buttons">
-                <Button variant="success" size="sm" onClick={() => addChild('group')}>+ Group</Button>
-                {CONDITION_CATEGORIES.map(cat => (
-                  <Button key={cat.id} size="sm" onClick={() => addChild('condition', cat.id)} style={{ backgroundColor: BLOCK_COLORS[cat.id]?.bg }}>
-                    + {cat.icon}
-                  </Button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    const category = node.category || 'item';
-    const checks = CONDITION_CHECKS[category] || [];
-    const currentCheck = checks.find(c => c.id === node.check) || checks[0];
-
-    return (
-      <div key={path.join('-')} className="condition-block condition-leaf" style={{ backgroundColor: colors.bg, marginLeft: depth * 20 }}>
-        <div className="condition-block-params">
-          <span>{CONDITION_CATEGORIES.find(c => c.id === category)?.icon}</span>
-          <select value={category} onChange={(e) => updateNode({ category: e.target.value, check: CONDITION_CHECKS[e.target.value]?.[0]?.id, params: {} })}>
-            {CONDITION_CATEGORIES.map(cat => <option key={cat.id} value={cat.id}>{cat.label}</option>)}
-          </select>
-          <select value={node.check} onChange={(e) => updateNode({ check: e.target.value, params: {} })}>
-            {checks.map(check => <option key={check.id} value={check.id}>{check.label}</option>)}
-          </select>
-          {currentCheck?.params?.includes('itemId') && (
-            <select value={node.params.itemId || ''} onChange={(e) => updateNode({ params: { ...node.params, itemId: e.target.value } })}>
-              <option value="">Select item...</option>
-              {items.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-            </select>
-          )}
-          {currentCheck?.params?.includes('questId') && (
-            <select value={node.params.questId || ''} onChange={(e) => updateNode({ params: { ...node.params, questId: e.target.value } })}>
-              <option value="">Select quest...</option>
-              {quests.map(q => <option key={q.id} value={q.id}>{q.name}</option>)}
-            </select>
-          )}
-          {currentCheck?.params?.includes('locationId') && (
-            <select value={node.params.locationId || ''} onChange={(e) => updateNode({ params: { ...node.params, locationId: e.target.value } })}>
-              <option value="">Select location...</option>
-              {locations.map(loc => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
-            </select>
-          )}
-          {currentCheck?.params?.includes('statName') && (
-            <select value={node.params.statName || ''} onChange={(e) => updateNode({ params: { ...node.params, statName: e.target.value } })}>
-              <option value="">Select stat...</option>
-              {PLAYER_STATS.map(stat => <option key={stat} value={stat}>{stat}</option>)}
-            </select>
-          )}
-          {currentCheck?.params?.includes('slot') && (
-            <select value={node.params.slot || ''} onChange={(e) => updateNode({ params: { ...node.params, slot: e.target.value } })}>
-              <option value="">Select slot...</option>
-              {EQUIPMENT_SLOTS.map(slot => <option key={slot} value={slot}>{slot}</option>)}
-            </select>
-          )}
-          {currentCheck?.params?.includes('flagName') && (
-            <input type="text" placeholder="Flag name..." value={node.params.flagName || ''} onChange={(e) => updateNode({ params: { ...node.params, flagName: e.target.value } })} />
-          )}
-          {currentCheck?.params?.includes('operator') && (
-            <select value={node.params.operator || 'eq'} onChange={(e) => updateNode({ params: { ...node.params, operator: e.target.value } })}>
-              {OPERATORS.map(op => <option key={op.value} value={op.value}>{op.label}</option>)}
-            </select>
-          )}
-          {currentCheck?.params?.includes('value') && (
-            <input type="number" placeholder="Value" value={node.params.value ?? ''} onChange={(e) => updateNode({ params: { ...node.params, value: parseInt(e.target.value) || 0 } })} style={{ width: '60px' }} />
-          )}
-          <Button variant="danger" size="sm" onClick={removeNode}>×</Button>
-        </div>
-      </div>
-    );
-  };
-
-  if (!conditions) {
-    return (
-      <div className="condition-empty">
-        <div className="text-muted mb-sm">No discovery conditions set.</div>
-        <div className="condition-add-buttons">
-          <Button size="sm" style={{ backgroundColor: BLOCK_COLORS.and.bg }} onClick={() => onChange(createConditionNode('group'))}>+ AND Group</Button>
-          <Button size="sm" style={{ backgroundColor: BLOCK_COLORS.or.bg }} onClick={() => onChange({ ...createConditionNode('group'), operator: 'or' })}>+ OR Group</Button>
-          {CONDITION_CATEGORIES.map(cat => (
-            <Button key={cat.id} size="sm" style={{ backgroundColor: BLOCK_COLORS[cat.id]?.bg }} onClick={() => onChange(createConditionNode('condition', cat.id))}>
-              + {cat.icon} {cat.label}
-            </Button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return <div className="condition-builder">{renderConditionBlock(conditions)}</div>;
-};
-
 const LocationCreator = ({
   items = [],
   allContent = {},
@@ -659,7 +404,6 @@ const LocationCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_LOCATION });
-  const [hoveredItem, setHoveredItem] = useState(null);
   const [mapTab, setMapTab] = useState('global');
   const [iconModalOpen, setIconModalOpen] = useState(false);
   const [selectedNpc, setSelectedNpc] = useState('');
@@ -668,17 +412,7 @@ const LocationCreator = ({
   const [editingDirection, setEditingDirection] = useState(null);
   const [availableMaps, setAvailableMaps] = useState({ global: [], kingdom: [], local: [] });
   const [selectedMaps, setSelectedMaps] = useState({ global: '', kingdom: '', local: '' });
-  const [collapsedSections, setCollapsedSections] = useState({
-    basic: false,
-    discovery: true,
-    mapPlacement: false,
-    navigation: true,
-    services: true,
-    npcs: true,
-    enemies: true,
-    tags: true,
-    visuals: true,
-  });
+  const [activeTab, setActiveTab] = useState('basic');
   const [mapZoom, setMapZoom] = useState(1);
   const [mapPan, setMapPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -686,10 +420,6 @@ const LocationCreator = ({
   const [zoomOrigin, setZoomOrigin] = useState({ x: 50, y: 50 }); // percentage
   const mapRef = useRef(null);
   const mapContainerRef = useRef(null);
-
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
 
   // Use useEffect to attach wheel handler with { passive: false } to properly prevent default
   useEffect(() => {
@@ -814,6 +544,23 @@ const LocationCreator = ({
   const kingdoms = allLocations.filter(loc => loc.locationType === 'kingdom');
   const regions = allLocations.filter(loc => loc.locationType === 'region');
   const localLocations = allLocations.filter(loc => loc.locationType === 'local' || loc.locationType === 'region');
+
+  // Define tabs with badges
+  const tabs = useMemo(() => {
+    const navigationCount = Object.keys(formData.navigation).length;
+    const encounterBadge = formData.encounterChance > 0 ? `${formData.encounterChance}%` : null;
+    const servicesCount = formData.services.length + formData.npcs.length;
+    const hasVisuals = formData.background || formData.ambientSound || formData.mapPlacement.mapType;
+
+    return [
+      { id: 'basic', label: 'Basic' },
+      { id: 'navigation', label: 'Navigation', badge: navigationCount || null },
+      { id: 'encounters', label: 'Encounters', badge: encounterBadge },
+      { id: 'services', label: 'Services', badge: servicesCount || null },
+      { id: 'nsfw', label: 'NSFW', badge: formData.tags.includes('nsfw') ? '!' : null },
+      { id: 'visuals', label: 'Visuals', badge: hasVisuals ? '✓' : null },
+    ];
+  }, [formData.navigation, formData.encounterChance, formData.services.length, formData.npcs.length, formData.background, formData.ambientSound, formData.mapPlacement.mapType, formData.tags]);
 
   useEffect(() => {
     if (editingItem) {
@@ -955,78 +702,180 @@ const LocationCreator = ({
           {editingItem ? 'Edit Location' : 'Create New Location'}
         </h3>
 
-        {/* Basic Info */}
-        <div className="creator-form-section">
-          <div className="creator-form-row">
-            <FormInput
-              label="ID"
-              required
-              value={formData.id}
-              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
-              placeholder="unique_location_id"
-            />
-            <FormInput
-              label="Name"
-              required
-              value={formData.name}
-              onChange={(v) => handleChange('name', v)}
-              placeholder="Location Name"
-            />
-          </div>
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-          <FormInput
-            label="Description"
-            type="textarea"
-            value={formData.description}
-            onChange={(v) => handleChange('description', v)}
-            placeholder="Describe this location..."
-            rows={3}
-          />
-
-          <div className="creator-form-row">
-            <FormSelect
-              label="Location Scope"
-              value={formData.locationType}
-              onChange={(v) => handleChange('locationType', v)}
-              options={LOCATION_SCOPES}
-              helperText={SCOPE_DESCRIPTIONS[formData.locationType]}
+        {/* Basic Tab */}
+        <FormTabPanel id="basic" activeTab={activeTab}>
+          <div className="creator-form-section">
+            <IdNameFields
+              idValue={formData.id}
+              nameValue={formData.name}
+              onIdChange={(v) => handleChange('id', v)}
+              onNameChange={(v) => handleChange('name', v)}
+              idPlaceholder="unique_location_id"
+              namePlaceholder="Location Name"
             />
-            <div>
-              <FormInput
-                label="Type"
-                value={formData.type}
-                onChange={(v) => handleChange('type', v)}
-                placeholder="e.g., outdoor, dungeon, town"
+
+            <DescriptionField
+              value={formData.description}
+              onChange={(v) => handleChange('description', v)}
+              placeholder="Describe this location..."
+            />
+
+            <div className="creator-form-row">
+              <FormSelect
+                label="Location Scope"
+                value={formData.locationType}
+                onChange={(v) => handleChange('locationType', v)}
+                options={LOCATION_SCOPES}
+                helperText={SCOPE_DESCRIPTIONS[formData.locationType]}
               />
-              <div className="location-type-suggestions">
-                {SUGGESTED_LOCATION_TYPES.filter(t => t !== formData.type).slice(0, 8).map(type => (
-                  <button key={type} className="location-type-btn" onClick={() => handleChange('type', type)}>
-                    + {type}
-                  </button>
-                ))}
+              <div>
+                <FormInput
+                  label="Type"
+                  value={formData.type}
+                  onChange={(v) => handleChange('type', v)}
+                  placeholder="e.g., outdoor, dungeon, town"
+                />
+                <div className="location-type-suggestions">
+                  {SUGGESTED_LOCATION_TYPES.filter(t => t !== formData.type).slice(0, 8).map(type => (
+                    <button key={type} className="location-type-btn" onClick={() => handleChange('type', type)}>
+                      + {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {formData.locationType === 'region' && (
+              <FormSelect
+                label="Parent Kingdom"
+                value={formData.parentKingdom}
+                onChange={(v) => handleChange('parentKingdom', v)}
+                options={[{ value: '', label: 'Select Parent Kingdom...' }, ...kingdoms.map(k => ({ value: k.id, label: `${k.name} (${k.id})` }))]}
+                helperText="The kingdom this region belongs to"
+              />
+            )}
+
+            {formData.locationType === 'local' && (
+              <FormSelect
+                label="Parent Region"
+                value={formData.parentRegion}
+                onChange={(v) => handleChange('parentRegion', v)}
+                options={[{ value: '', label: 'Select Parent Region...' }, ...regions.map(r => ({ value: r.id, label: `${r.name} (${r.id})` }))]}
+                helperText="The region this location is in"
+              />
+            )}
+
+            <div className="creator-form-row">
+              <FormInput
+                label="Danger Level (1-5)"
+                type="number"
+                value={formData.dangerLevel}
+                onChange={(v) => handleChange('dangerLevel', parseInt(v) || 1)}
+                min={1}
+                max={5}
+              />
+              <div className="checkbox-row">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.hidden}
+                    onChange={(e) => handleChange('hidden', e.target.checked)}
+                  />
+                  Hidden (requires discovery)
+                </label>
               </div>
             </div>
           </div>
 
-          {formData.locationType === 'region' && (
+          {/* Discovery Conditions */}
+          {formData.hidden && (
+            <div className="creator-form-section">
+              <h4 className="creator-form-section-title">Discovery Requirements</h4>
+              <div className="form-helper mb-sm">
+                Define conditions that must be met before this location can be discovered.
+              </div>
+              <LogicBuilder
+                value={formData.discoveryConditions}
+                onChange={(conditions) => handleChange('discoveryConditions', conditions)}
+                title="Discovery Conditions"
+                height={350}
+                items={allItems}
+                quests={allQuests}
+                scenes={allScenes}
+                locations={allLocations}
+              />
+            </div>
+          )}
+
+          {/* Tags */}
+          <div className="creator-form-section">
+            <h4 className="creator-form-section-title">Tags</h4>
+            <TagInput
+              value={formData.tags}
+              onChange={(v) => handleChange('tags', v)}
+              suggestions={suggestedTags}
+              categories={TAG_CATEGORIES}
+              placeholder="Add tag..."
+              showSuggestions
+            />
+          </div>
+        </FormTabPanel>
+
+        {/* Navigation Tab */}
+        <FormTabPanel id="navigation" activeTab={activeTab}>
+          <div className="form-helper mb-sm">Link directions to other locations for navigation.</div>
+
+          {formData.locationType === 'sub' && (
             <FormSelect
-              label="Parent Kingdom"
-              value={formData.parentKingdom}
-              onChange={(v) => handleChange('parentKingdom', v)}
-              options={[{ value: '', label: 'Select Parent Kingdom...' }, ...kingdoms.map(k => ({ value: k.id, label: `${k.name} (${k.id})` }))]}
-              helperText="The kingdom this region belongs to"
+              label="Parent Location"
+              value={formData.parentLocation}
+              onChange={(v) => handleChange('parentLocation', v)}
+              options={[{ value: '', label: 'Select parent location...' }, ...localLocations.filter(loc => loc.id !== formData.id).map(loc => ({ value: loc.id, label: `${loc.name} (${loc.id})` }))]}
             />
           )}
 
-          {formData.locationType === 'local' && (
-            <FormSelect
-              label="Parent Region"
-              value={formData.parentRegion}
-              onChange={(v) => handleChange('parentRegion', v)}
-              options={[{ value: '', label: 'Select Parent Region...' }, ...regions.map(r => ({ value: r.id, label: `${r.name} (${r.id})` }))]}
-              helperText="The region this location is in"
+          <div className="location-navigation-grid">
+            {NAVIGATION_DIRECTIONS.map(dir => {
+              const linkedLoc = allLocations.find(l => l.id === formData.navigation[dir.id]);
+              return (
+                <div key={dir.id}>
+                  <label className="form-label">{dir.icon} {dir.label}</label>
+                  <button
+                    className={`location-nav-btn ${linkedLoc ? 'has-link' : ''}`}
+                    onClick={() => { setEditingDirection(dir); setLocationModalOpen(true); }}
+                  >
+                    <span>{linkedLoc ? linkedLoc.name : '-- No link --'}</span>
+                    <span className="text-muted">▼</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </FormTabPanel>
+
+        {/* Encounters Tab */}
+        <FormTabPanel id="encounters" activeTab={activeTab}>
+          <div className="creator-form-row">
+            <FormInput
+              label="Encounter Chance (%)"
+              type="number"
+              value={formData.encounterChance}
+              onChange={(v) => handleChange('encounterChance', Math.max(0, Math.min(100, parseInt(v) || 0)))}
+              min={0}
+              max={100}
+              helperText="0 = No encounters, 100 = Always"
             />
-          )}
+            <FormInput
+              label="Max Enemies per Encounter"
+              type="number"
+              value={formData.maxEnemyCount}
+              onChange={(v) => handleChange('maxEnemyCount', Math.max(1, Math.min(10, parseInt(v) || 1)))}
+              min={1}
+              max={10}
+            />
+          </div>
 
           <div className="creator-form-row">
             <FormInput
@@ -1037,61 +886,204 @@ const LocationCreator = ({
               min={1}
               max={5}
             />
-            <div className="checkbox-row">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={formData.hidden}
-                  onChange={(e) => handleChange('hidden', e.target.checked)}
-                />
-                Hidden (requires discovery)
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* Discovery Conditions */}
-        {formData.hidden && (
-          <div className="creator-form-section">
-            <h4 className="creator-form-section-title">Discovery Requirements</h4>
-            <div className="form-helper mb-sm">
-              Define conditions that must be met before this location can be discovered.
-            </div>
-            <ConditionBuilder
-              conditions={formData.discoveryConditions}
-              onChange={(conditions) => handleChange('discoveryConditions', conditions)}
-              items={allItems}
-              quests={allQuests}
-              scenes={allScenes}
-              locations={allLocations}
-            />
-          </div>
-        )}
-
-        {/* Icon & Map Placement */}
-        <CollapsibleSection
-          title="Icon & Map Placement"
-          isCollapsed={collapsedSections.mapPlacement}
-          onToggle={() => toggleSection('mapPlacement')}
-          badge={formData.mapPlacement.mapType ? '📍' : null}
-        >
-          <div className="creator-form-row">
-            <div>
-              <label className="form-label">Location Icon</label>
-              <div className="location-icon-row">
-                <div className="location-icon-preview">{getIconPreview()}</div>
-                <Button variant="secondary" onClick={() => setIconModalOpen(true)}>Change Icon</Button>
-              </div>
-            </div>
-            <FormSelect
-              label="Icon Size on Map"
-              value={formData.iconSize}
-              onChange={(v) => handleChange('iconSize', v)}
-              options={ICON_SIZES}
-            />
           </div>
 
           <div className="mt-md">
+            <label className="form-label">Enemy Spawn Table</label>
+            <div className="location-add-row">
+              <FormSelect
+                value={selectedEnemy}
+                onChange={setSelectedEnemy}
+                options={[{ value: '', label: 'Select an enemy to add...' }, ...allEnemies.filter(e => !formData.enemyTables.some(et => et.enemyId === e.id)).map(enemy => ({ value: enemy.id, label: `${enemy.name} (${enemy.id})` }))]}
+              />
+              <Button variant="success" onClick={() => handleAddEnemyToTable(selectedEnemy)} disabled={!selectedEnemy}>+ Add Enemy</Button>
+            </div>
+
+            {formData.enemyTables.length > 0 ? (
+              <div className="location-enemy-table">
+                {formData.enemyTables.map(entry => {
+                  const enemyData = allEnemies.find(e => e.id === entry.enemyId);
+                  const totalVariant = Object.values(entry.variantChances).reduce((a, b) => a + b, 0);
+                  return (
+                    <div key={entry.enemyId} className="location-enemy-card">
+                      <div className="location-enemy-header">
+                        <span>👹 <strong style={{ color: 'var(--color-accent-primary)' }}>{enemyData?.name || entry.enemyId}</strong></span>
+                        <Button variant="danger" size="sm" onClick={() => handleRemoveEnemyFromTable(entry.enemyId)}>Remove</Button>
+                      </div>
+                      <div className="location-enemy-weight">
+                        <span>Spawn Weight:</span>
+                        <input type="number" value={entry.weight} onChange={(e) => handleUpdateEnemyWeight(entry.enemyId, e.target.value)} min={1} max={100} />
+                        <span className="text-muted text-sm">Higher = more likely</span>
+                      </div>
+                      <div className="location-variant-grid">
+                        {ENEMY_VARIANTS.map(variant => (
+                          <div key={variant.value} className="location-variant-item">
+                            <div style={{ color: variant.color }}>{variant.label}</div>
+                            <input
+                              type="number"
+                              value={entry.variantChances[variant.value]}
+                              onChange={(e) => handleUpdateVariantChance(entry.enemyId, variant.value, e.target.value)}
+                              min={0}
+                              max={100}
+                            />
+                            <div className="text-muted text-sm">{variant.modifier}x</div>
+                          </div>
+                        ))}
+                      </div>
+                      {totalVariant !== 100 && (
+                        <div className="text-danger text-sm">Variant chances total {totalVariant}% - should equal 100%</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="empty-list text-sm">No enemies in spawn table.</div>
+            )}
+          </div>
+        </FormTabPanel>
+
+        {/* Services Tab */}
+        <FormTabPanel id="services" activeTab={activeTab}>
+          <h4 className="creator-form-section-title">Available Services</h4>
+          <div className="location-services-grid">
+            {SERVICES.map(service => (
+              <label key={service.id} className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={formData.services.includes(service.id)}
+                  onChange={() => toggleService(service.id)}
+                />
+                {service.icon} {service.label}
+              </label>
+            ))}
+          </div>
+
+          <h4 className="creator-form-section-title mt-lg">NPCs at this Location</h4>
+          <div className="location-add-row">
+            <FormSelect
+              value={selectedNpc}
+              onChange={setSelectedNpc}
+              options={[{ value: '', label: 'Select an NPC to add...' }, ...allNPCs.filter(npc => !formData.npcs.includes(npc.id)).map(npc => ({ value: npc.id, label: `${npc.name} (${npc.id})` }))]}
+            />
+            <Button variant="success" onClick={() => handleAddNpc(selectedNpc)} disabled={!selectedNpc}>+ Add</Button>
+          </div>
+          {formData.npcs.length > 0 ? (
+            <div className="location-tags-display">
+              {formData.npcs.map(npcId => {
+                const npcData = allNPCs.find(n => n.id === npcId);
+                return (
+                  <div key={npcId} className="location-tag-item">
+                    <span>👤 {npcData?.name || npcId}</span>
+                    <span className="location-tag-remove" onClick={() => handleRemoveNpc(npcId)}>×</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="empty-list text-sm">No NPCs added.</div>
+          )}
+        </FormTabPanel>
+
+        {/* NSFW Tab */}
+        <FormTabPanel id="nsfw" activeTab={activeTab}>
+          <div className="creator-form-section">
+            <h4 className="creator-form-section-title">NSFW Settings</h4>
+            <div className="form-helper mb-md">
+              Configure adult content settings for this location.
+            </div>
+
+            <div className="checkbox-row mb-md">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={formData.tags.includes('nsfw')}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      handleChange('tags', [...formData.tags.filter(t => t !== 'nsfw'), 'nsfw']);
+                    } else {
+                      handleChange('tags', formData.tags.filter(t => t !== 'nsfw'));
+                    }
+                  }}
+                />
+                Enable NSFW Content
+              </label>
+            </div>
+
+            {formData.tags.includes('nsfw') && (
+              <>
+                <div className="form-helper mb-sm">
+                  NSFW-specific services available at this location:
+                </div>
+                <div className="location-services-grid">
+                  {SERVICES.filter(s => s.id === 'brothel').map(service => (
+                    <label key={service.id} className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={formData.services.includes(service.id)}
+                        onChange={() => toggleService(service.id)}
+                      />
+                      {service.icon} {service.label}
+                    </label>
+                  ))}
+                </div>
+
+                <div className="form-helper mt-md mb-sm">
+                  Additional NSFW tags:
+                </div>
+                <div className="location-services-grid">
+                  {['corruption', 'lust_zone', 'breeding_ground', 'slave_market'].map(tag => (
+                    <label key={tag} className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={formData.tags.includes(tag)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            handleChange('tags', [...formData.tags, tag]);
+                          } else {
+                            handleChange('tags', formData.tags.filter(t => t !== tag));
+                          }
+                        }}
+                      />
+                      {tag.replace(/_/g, ' ')}
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {!formData.tags.includes('nsfw') && (
+              <div className="empty-list">
+                Enable NSFW content above to configure adult settings.
+              </div>
+            )}
+          </div>
+        </FormTabPanel>
+
+        {/* Visuals Tab */}
+        <FormTabPanel id="visuals" activeTab={activeTab}>
+          {/* Icon & Map Placement */}
+          <div className="creator-form-section">
+            <h4 className="creator-form-section-title">Location Icon</h4>
+            <div className="creator-form-row">
+              <div>
+                <label className="form-label">Location Icon</label>
+                <div className="location-icon-row">
+                  <div className="location-icon-preview">{getIconPreview()}</div>
+                  <Button variant="secondary" onClick={() => setIconModalOpen(true)}>Change Icon</Button>
+                </div>
+              </div>
+              <FormSelect
+                label="Icon Size on Map"
+                value={formData.iconSize}
+                onChange={(v) => handleChange('iconSize', v)}
+                options={ICON_SIZES}
+              />
+            </div>
+          </div>
+
+          <div className="creator-form-section">
+            <h4 className="creator-form-section-title">Map Placement</h4>
             <div className="map-controls-row">
               <div className="location-map-tabs">
                 {MAP_TABS.map(tab => (
@@ -1189,217 +1181,24 @@ const LocationCreator = ({
               )}
             </div>
           </div>
-        </CollapsibleSection>
 
-        {/* Navigation */}
-        <CollapsibleSection
-          title="Navigation (Sub-locations)"
-          isCollapsed={collapsedSections.navigation}
-          onToggle={() => toggleSection('navigation')}
-          badge={Object.keys(formData.navigation).length > 0 ? `${Object.keys(formData.navigation).length} links` : null}
-        >
-          <div className="form-helper mb-sm">Link directions to other locations for navigation.</div>
-
-          {formData.locationType === 'sub' && (
-            <FormSelect
-              label="Parent Location"
-              value={formData.parentLocation}
-              onChange={(v) => handleChange('parentLocation', v)}
-              options={[{ value: '', label: 'Select parent location...' }, ...localLocations.filter(loc => loc.id !== formData.id).map(loc => ({ value: loc.id, label: `${loc.name} (${loc.id})` }))]}
-            />
-          )}
-
-          <div className="location-navigation-grid">
-            {NAVIGATION_DIRECTIONS.map(dir => {
-              const linkedLoc = allLocations.find(l => l.id === formData.navigation[dir.id]);
-              return (
-                <div key={dir.id}>
-                  <label className="form-label">{dir.icon} {dir.label}</label>
-                  <button
-                    className={`location-nav-btn ${linkedLoc ? 'has-link' : ''}`}
-                    onClick={() => { setEditingDirection(dir); setLocationModalOpen(true); }}
-                  >
-                    <span>{linkedLoc ? linkedLoc.name : '-- No link --'}</span>
-                    <span className="text-muted">▼</span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </CollapsibleSection>
-
-        {/* Services */}
-        <CollapsibleSection
-          title="Available Services"
-          isCollapsed={collapsedSections.services}
-          onToggle={() => toggleSection('services')}
-          badge={formData.services.length > 0 ? `${formData.services.length} active` : null}
-        >
-          <div className="location-services-grid">
-            {SERVICES.map(service => (
-              <label key={service.id} className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={formData.services.includes(service.id)}
-                  onChange={() => toggleService(service.id)}
-                />
-                {service.icon} {service.label}
-              </label>
-            ))}
-          </div>
-        </CollapsibleSection>
-
-        {/* NPCs */}
-        <CollapsibleSection
-          title="NPCs at this Location"
-          isCollapsed={collapsedSections.npcs}
-          onToggle={() => toggleSection('npcs')}
-          badge={formData.npcs.length > 0 ? `${formData.npcs.length} NPCs` : null}
-        >
-          <div className="location-add-row">
-            <FormSelect
-              value={selectedNpc}
-              onChange={setSelectedNpc}
-              options={[{ value: '', label: 'Select an NPC to add...' }, ...allNPCs.filter(npc => !formData.npcs.includes(npc.id)).map(npc => ({ value: npc.id, label: `${npc.name} (${npc.id})` }))]}
-            />
-            <Button variant="success" onClick={() => handleAddNpc(selectedNpc)} disabled={!selectedNpc}>+ Add</Button>
-          </div>
-          {formData.npcs.length > 0 ? (
-            <div className="location-tags-display">
-              {formData.npcs.map(npcId => {
-                const npcData = allNPCs.find(n => n.id === npcId);
-                return (
-                  <div key={npcId} className="location-tag-item">
-                    <span>👤 {npcData?.name || npcId}</span>
-                    <span className="location-tag-remove" onClick={() => handleRemoveNpc(npcId)}>×</span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="empty-list text-sm">No NPCs added.</div>
-          )}
-        </CollapsibleSection>
-
-        {/* Enemy Encounters */}
-        <CollapsibleSection
-          title="Enemy Encounters"
-          isCollapsed={collapsedSections.enemies}
-          onToggle={() => toggleSection('enemies')}
-          badge={formData.encounterChance > 0 ? `${formData.encounterChance}%` : null}
-        >
-          <div className="creator-form-row">
+          {/* Background & Audio */}
+          <div className="creator-form-section">
+            <h4 className="creator-form-section-title">Background & Audio</h4>
             <FormInput
-              label="Encounter Chance (%)"
-              type="number"
-              value={formData.encounterChance}
-              onChange={(v) => handleChange('encounterChance', Math.max(0, Math.min(100, parseInt(v) || 0)))}
-              min={0}
-              max={100}
-              helperText="0 = No encounters, 100 = Always"
+              label="Background Image"
+              value={formData.background}
+              onChange={(v) => handleChange('background', v)}
+              placeholder="/backgrounds/location_bg.png"
             />
             <FormInput
-              label="Max Enemies per Encounter"
-              type="number"
-              value={formData.maxEnemyCount}
-              onChange={(v) => handleChange('maxEnemyCount', Math.max(1, Math.min(10, parseInt(v) || 1)))}
-              min={1}
-              max={10}
+              label="Ambient Sound"
+              value={formData.ambientSound}
+              onChange={(v) => handleChange('ambientSound', v)}
+              placeholder="forest_ambience"
             />
           </div>
-
-          <div className="mt-md">
-            <label className="form-label">Enemy Spawn Table</label>
-            <div className="location-add-row">
-              <FormSelect
-                value={selectedEnemy}
-                onChange={setSelectedEnemy}
-                options={[{ value: '', label: 'Select an enemy to add...' }, ...allEnemies.filter(e => !formData.enemyTables.some(et => et.enemyId === e.id)).map(enemy => ({ value: enemy.id, label: `${enemy.name} (${enemy.id})` }))]}
-              />
-              <Button variant="success" onClick={() => handleAddEnemyToTable(selectedEnemy)} disabled={!selectedEnemy}>+ Add Enemy</Button>
-            </div>
-
-            {formData.enemyTables.length > 0 ? (
-              <div className="location-enemy-table">
-                {formData.enemyTables.map(entry => {
-                  const enemyData = allEnemies.find(e => e.id === entry.enemyId);
-                  const totalVariant = Object.values(entry.variantChances).reduce((a, b) => a + b, 0);
-                  return (
-                    <div key={entry.enemyId} className="location-enemy-card">
-                      <div className="location-enemy-header">
-                        <span>👹 <strong style={{ color: 'var(--color-accent-primary)' }}>{enemyData?.name || entry.enemyId}</strong></span>
-                        <Button variant="danger" size="sm" onClick={() => handleRemoveEnemyFromTable(entry.enemyId)}>Remove</Button>
-                      </div>
-                      <div className="location-enemy-weight">
-                        <span>Spawn Weight:</span>
-                        <input type="number" value={entry.weight} onChange={(e) => handleUpdateEnemyWeight(entry.enemyId, e.target.value)} min={1} max={100} />
-                        <span className="text-muted text-sm">Higher = more likely</span>
-                      </div>
-                      <div className="location-variant-grid">
-                        {ENEMY_VARIANTS.map(variant => (
-                          <div key={variant.value} className="location-variant-item">
-                            <div style={{ color: variant.color }}>{variant.label}</div>
-                            <input
-                              type="number"
-                              value={entry.variantChances[variant.value]}
-                              onChange={(e) => handleUpdateVariantChance(entry.enemyId, variant.value, e.target.value)}
-                              min={0}
-                              max={100}
-                            />
-                            <div className="text-muted text-sm">{variant.modifier}x</div>
-                          </div>
-                        ))}
-                      </div>
-                      {totalVariant !== 100 && (
-                        <div className="text-danger text-sm">Variant chances total {totalVariant}% - should equal 100%</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="empty-list text-sm">No enemies in spawn table.</div>
-            )}
-          </div>
-        </CollapsibleSection>
-
-        {/* Tags */}
-        <CollapsibleSection
-          title="Tags"
-          isCollapsed={collapsedSections.tags}
-          onToggle={() => toggleSection('tags')}
-          badge={formData.tags.length > 0 ? `${formData.tags.length} tags` : null}
-        >
-          <TagInput
-            value={formData.tags}
-            onChange={(v) => handleChange('tags', v)}
-            suggestions={suggestedTags}
-            categories={TAG_CATEGORIES}
-            placeholder="Add tag..."
-            showSuggestions
-          />
-        </CollapsibleSection>
-
-        {/* Visuals */}
-        <CollapsibleSection
-          title="Visuals & Audio"
-          isCollapsed={collapsedSections.visuals}
-          onToggle={() => toggleSection('visuals')}
-          badge={formData.background || formData.ambientSound ? '✓' : null}
-        >
-          <FormInput
-            label="Background Image"
-            value={formData.background}
-            onChange={(v) => handleChange('background', v)}
-            placeholder="/backgrounds/location_bg.png"
-          />
-          <FormInput
-            label="Ambient Sound"
-            value={formData.ambientSound}
-            onChange={(v) => handleChange('ambientSound', v)}
-            placeholder="forest_ambience"
-          />
-        </CollapsibleSection>
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -1413,57 +1212,39 @@ const LocationCreator = ({
       </div>
 
       {/* List Section */}
-      <div className="creator-list">
-        <h3 className="creator-form-section-title">
-          Created Locations
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No locations created yet.
-            <br />
-            Use the form to create your first location.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">
-                  {item.name}
-                  <span className="rarity-badge" style={{ backgroundColor: 'var(--color-accent-info)' }}>
-                    {item.locationType || 'local'}
-                  </span>
-                </div>
-                <div className="creator-item-id">
-                  ID: {item.id} | Type: {item.type}
-                  {item.parentRegion && ` | Region: ${item.parentRegion}`}
-                </div>
-                {item.encounterChance > 0 && (
-                  <div className="creator-item-id" style={{ color: 'var(--color-accent-danger)' }}>
-                    ⚔️ {item.encounterChance}% encounter | {item.enemyTables?.length || 0} enemy types
-                  </div>
-                )}
-                {item.npcs?.length > 0 && (
-                  <div className="creator-item-id" style={{ color: 'var(--color-accent-success)' }}>
-                    👤 NPCs: {item.npcs.length}
-                  </div>
-                )}
-              </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>Edit</Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>Duplicate</Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>Delete</Button>
-              </div>
+      <CreatorItemsList
+        items={items}
+        title="Created Locations"
+        itemType="location"
+        editingItem={editingItem}
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        renderItemContent={(item) => (
+          <>
+            <div className="creator-item-name">
+              {item.name}
+              <span className="rarity-badge" style={{ backgroundColor: 'var(--color-accent-info)' }}>
+                {item.locationType || 'local'}
+              </span>
             </div>
-          ))
+            <div className="creator-item-id">
+              ID: {item.id} | Type: {item.type}
+              {item.parentRegion && ` | Region: ${item.parentRegion}`}
+            </div>
+            {item.encounterChance > 0 && (
+              <div className="creator-item-id" style={{ color: 'var(--color-accent-danger)' }}>
+                {item.encounterChance}% encounter | {item.enemyTables?.length || 0} enemy types
+              </div>
+            )}
+            {item.npcs?.length > 0 && (
+              <div className="creator-item-id" style={{ color: 'var(--color-accent-success)' }}>
+                NPCs: {item.npcs.length}
+              </div>
+            )}
+          </>
         )}
-      </div>
+      />
 
       <IconSelectorModal
         isOpen={iconModalOpen}

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useContext, createContext, useCallback, useMemo, useRef } from 'react';
+import { nanoid } from 'nanoid';
+import { clamp } from 'lodash-es';
 import GameConfig from './GameConfig.js';
 import MerchantView from './components/inventory/MerchantView.jsx';
 import UniversalInventory from './components/inventory/UniversalInventory.jsx';
@@ -112,13 +114,9 @@ const GameData = {
 // UTILITY FUNCTIONS
 // ============================================================================
 
-const generateId = () => Math.random().toString(36).substring(2, 15);
-
 const rollDice = (sides) => Math.floor(Math.random() * sides) + 1;
 
 const rollChance = (percentage) => Math.random() * 100 < percentage;
-
-const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 const pickWeighted = (items) => {
   const totalWeight = items.reduce((sum, item) => sum + (item.weight || item.dropWeight || 1), 0);
@@ -821,7 +819,7 @@ const CombatSystem = {
       const scaledLevel = Math.max(1, playerLevel + rollDice(3) - 2);
       enemies.push({
         ...enemyTemplate,
-        uniqueId: generateId(),
+        uniqueId: nanoid(),
         level: scaledLevel,
         stats: scaleStats(enemyTemplate.baseStats, scaledLevel, difficulty),
         currentHp: scaleStats(enemyTemplate.baseStats, scaledLevel, difficulty).hp
@@ -858,7 +856,7 @@ const CombatSystem = {
           
           const item = {
             ...baseItem,
-            uniqueId: generateId(),
+            uniqueId: nanoid(),
             name: generateItemName(baseItem, rarity.id, curse, bonusStat),
             rarity: rarity.id,
             rarityColor: rarity.color,
@@ -5346,7 +5344,7 @@ const Game = () => {
     // Create full player state
     const newPlayer = {
       ...defaultPlayerState,
-      id: generateId(),
+      id: nanoid(),
       characterId: selectedCharacter.id,
       name: selectedCharacter.name,
       stats: finalStats,

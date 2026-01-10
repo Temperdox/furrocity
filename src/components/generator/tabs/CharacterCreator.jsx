@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FormInput, FormSelect, TagInput, Button, ChipSelect, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, Button, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
 import './CreatorStyles.css';
 
@@ -79,14 +80,6 @@ const FACE_STYLE_OPTIONS = [
   { value: 'playful', label: 'Playful' },
 ];
 
-const TAB_OPTIONS = [
-  { value: 'basic', label: 'Basic' },
-  { value: 'paperdoll', label: 'Paperdoll' },
-  { value: 'stats', label: 'Stats' },
-  { value: 'colors', label: 'Colors' },
-  { value: 'background', label: 'Background' },
-];
-
 const DEFAULT_CHARACTER = {
   id: '',
   name: '',
@@ -144,24 +137,7 @@ const CharacterCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_CHARACTER });
-  const [hoveredItem, setHoveredItem] = useState(null);
   const [activeTab, setActiveTab] = useState('basic');
-  const [collapsedSections, setCollapsedSections] = useState({
-    imageFolder: false,
-    breastConfig: false,
-    genitaliaConfig: false,
-    faceConfig: false,
-    baseStats: false,
-    appearanceColors: false,
-    background: false,
-  });
-
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
 
   const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
     defaultValues: DEFAULT_CHARACTER,
@@ -170,6 +146,21 @@ const CharacterCreator = ({
   const cupSizeOptions = useMemo(() => {
     return CUP_SIZES.map(c => ({ value: c.value, label: c.label }));
   }, []);
+
+  // Define tabs with badges
+  const tabs = useMemo(() => {
+    const hasStats = Object.values(formData.baseStats).some(v => v !== 5);
+    const hasBackground = formData.backstory || formData.personality;
+    const hasEquipment = formData.startingEquipment.length > 0 || formData.startingItems.length > 0;
+
+    return [
+      { id: 'basic', label: 'Basic' },
+      { id: 'paperdoll', label: 'Paperdoll' },
+      { id: 'stats', label: 'Stats', badge: hasStats ? '!' : null },
+      { id: 'colors', label: 'Colors' },
+      { id: 'background', label: 'Background', badge: hasBackground ? '!' : null },
+    ];
+  }, [formData.baseStats, formData.backstory, formData.personality, formData.startingEquipment.length, formData.startingItems.length]);
 
   useEffect(() => {
     if (editingItem) {
@@ -259,36 +250,19 @@ const CharacterCreator = ({
           {editingItem ? 'Edit Character' : 'Create New Character'}
         </h3>
 
-        {/* Tab Navigation */}
-        <div style={{ marginBottom: 'var(--space-lg)' }}>
-          <ChipSelect
-            value={activeTab}
-            onChange={(v) => setActiveTab(v)}
-            options={TAB_OPTIONS}
-            multiple={false}
-            showCheckbox={false}
-          />
-        </div>
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
         {/* Basic Tab */}
-        {activeTab === 'basic' && (
+        <FormTabPanel id="basic" activeTab={activeTab}>
           <div className="creator-form-section">
-            <div className="creator-form-row">
-              <FormInput
-                label="ID"
-                required
-                value={formData.id}
-                onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
-                placeholder="unique_character_id"
-              />
-              <FormInput
-                label="Name"
-                required
-                value={formData.name}
-                onChange={(v) => handleChange('name', v)}
-                placeholder="Character Name"
-              />
-            </div>
+            <IdNameFields
+              idValue={formData.id}
+              nameValue={formData.name}
+              onIdChange={(v) => handleChange('id', v)}
+              onNameChange={(v) => handleChange('name', v)}
+              idPlaceholder="unique_character_id"
+              namePlaceholder="Character Name"
+            />
 
             <div className="creator-form-row cols-3">
               <FormSelect
@@ -311,212 +285,187 @@ const CharacterCreator = ({
               />
             </div>
 
-            <FormInput
-              label="Description"
-              type="textarea"
+            <DescriptionField
               value={formData.description}
               onChange={(v) => handleChange('description', v)}
               placeholder="A brief description of the character..."
-              rows={3}
             />
           </div>
-        )}
+        </FormTabPanel>
 
         {/* Paperdoll Tab */}
-        {activeTab === 'paperdoll' && (
-          <>
-            <CollapsibleSection
-              title="Image Folder"
-              isCollapsed={collapsedSections.imageFolder}
-              onToggle={() => toggleSection('imageFolder')}
-            >
-              <div className="creator-form-section">
-                <FormInput
-                  label="Paperdoll Folder Name"
-                  required
-                  value={formData.paperdollFolder}
-                  onChange={(v) => handleChange('paperdollFolder', String(v).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''))}
-                  placeholder="character_folder_name"
-                />
-                <div className="path-preview">
-                  <div className="path-preview-label">Image Path:</div>
-                  <div className="path-preview-value valid">{getImagePathPreview()}</div>
-                </div>
-              </div>
-            </CollapsibleSection>
+        <FormTabPanel id="paperdoll" activeTab={activeTab}>
+          {/* Image Folder Section */}
+          <div className="creator-form-section">
+            <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+              Image Folder
+            </h4>
+            <FormInput
+              label="Paperdoll Folder Name"
+              required
+              value={formData.paperdollFolder}
+              onChange={(v) => handleChange('paperdollFolder', String(v).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''))}
+              placeholder="character_folder_name"
+            />
+            <div className="path-preview">
+              <div className="path-preview-label">Image Path:</div>
+              <div className="path-preview-value valid">{getImagePathPreview()}</div>
+            </div>
+          </div>
 
-            <CollapsibleSection
-              title="Breast Configuration"
-              isCollapsed={collapsedSections.breastConfig}
-              onToggle={() => toggleSection('breastConfig')}
-            >
-              <div className="creator-form-section">
-                <div className="creator-form-row">
-                  <div className="checkbox-row">
-                    <label className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={formData.paperdoll.hasBreasts}
-                        onChange={(e) => handleNestedChange('paperdoll', 'hasBreasts', e.target.checked)}
-                      />
-                      <span className="checkbox-text">Has Breast Images</span>
-                    </label>
-                  </div>
-                  <FormSelect
-                    label="Maximum Breast Size"
-                    value={formData.paperdoll.maxBreastSize}
-                    onChange={(v) => handleNestedChange('paperdoll', 'maxBreastSize', v)}
-                    options={cupSizeOptions}
-                    disabled={!formData.paperdoll.hasBreasts}
+          {/* Breast Configuration Section */}
+          <div className="creator-form-section">
+            <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+              Breast Configuration
+            </h4>
+            <div className="creator-form-row">
+              <div className="checkbox-row">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.paperdoll.hasBreasts}
+                    onChange={(e) => handleNestedChange('paperdoll', 'hasBreasts', e.target.checked)}
                   />
-                </div>
-                {formData.paperdoll.hasBreasts && (
-                  <div className="form-helper mt-sm">
-                    Required: {formData.paperdoll.breastImageCount} breast images (breast_flat.png through breast_{formData.paperdoll.maxBreastSize}.png)
-                  </div>
-                )}
+                  <span className="checkbox-text">Has Breast Images</span>
+                </label>
               </div>
-            </CollapsibleSection>
+              <FormSelect
+                label="Maximum Breast Size"
+                value={formData.paperdoll.maxBreastSize}
+                onChange={(v) => handleNestedChange('paperdoll', 'maxBreastSize', v)}
+                options={cupSizeOptions}
+                disabled={!formData.paperdoll.hasBreasts}
+              />
+            </div>
+            {formData.paperdoll.hasBreasts && (
+              <div className="form-helper mt-sm">
+                Required: {formData.paperdoll.breastImageCount} breast images (breast_flat.png through breast_{formData.paperdoll.maxBreastSize}.png)
+              </div>
+            )}
+          </div>
 
-            <CollapsibleSection
-              title="Genitalia Configuration"
-              isCollapsed={collapsedSections.genitaliaConfig}
-              onToggle={() => toggleSection('genitaliaConfig')}
-            >
-              <div className="creator-form-section">
-                <div className="creator-form-row">
-                  <div className="checkbox-row">
-                    <label className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={formData.paperdoll.hasGenitalia}
-                        onChange={(e) => handleNestedChange('paperdoll', 'hasGenitalia', e.target.checked)}
-                      />
-                      <span className="checkbox-text">Has Genitalia Images</span>
-                    </label>
-                  </div>
-                  <FormSelect
-                    label="Genitalia Type"
-                    value={formData.paperdoll.genitaliaType}
-                    onChange={(v) => handleNestedChange('paperdoll', 'genitaliaType', v)}
-                    options={GENITALIA_OPTIONS}
-                    disabled={!formData.paperdoll.hasGenitalia}
+          {/* Genitalia Configuration Section */}
+          <div className="creator-form-section">
+            <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+              Genitalia Configuration
+            </h4>
+            <div className="creator-form-row">
+              <div className="checkbox-row">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.paperdoll.hasGenitalia}
+                    onChange={(e) => handleNestedChange('paperdoll', 'hasGenitalia', e.target.checked)}
                   />
-                </div>
+                  <span className="checkbox-text">Has Genitalia Images</span>
+                </label>
               </div>
-            </CollapsibleSection>
+              <FormSelect
+                label="Genitalia Type"
+                value={formData.paperdoll.genitaliaType}
+                onChange={(v) => handleNestedChange('paperdoll', 'genitaliaType', v)}
+                options={GENITALIA_OPTIONS}
+                disabled={!formData.paperdoll.hasGenitalia}
+              />
+            </div>
+          </div>
 
-            <CollapsibleSection
-              title="Face Configuration"
-              isCollapsed={collapsedSections.faceConfig}
-              onToggle={() => toggleSection('faceConfig')}
-            >
-              <div className="creator-form-section">
-                <div className="creator-form-row">
-                  <FormSelect
-                    label="Face Style"
-                    value={formData.paperdoll.faceStyle}
-                    onChange={(v) => handleNestedChange('paperdoll', 'faceStyle', v)}
-                    options={FACE_STYLE_OPTIONS}
-                  />
-                  <FormInput
-                    label="Face Variants Count"
-                    type="number"
-                    value={formData.paperdoll.faceVariants}
-                    onChange={(v) => handleNestedChange('paperdoll', 'faceVariants', v)}
-                    min={1}
-                    max={20}
-                  />
-                </div>
-              </div>
-            </CollapsibleSection>
-          </>
-        )}
+          {/* Face Configuration Section */}
+          <div className="creator-form-section">
+            <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+              Face Configuration
+            </h4>
+            <div className="creator-form-row">
+              <FormSelect
+                label="Face Style"
+                value={formData.paperdoll.faceStyle}
+                onChange={(v) => handleNestedChange('paperdoll', 'faceStyle', v)}
+                options={FACE_STYLE_OPTIONS}
+              />
+              <FormInput
+                label="Face Variants Count"
+                type="number"
+                value={formData.paperdoll.faceVariants}
+                onChange={(v) => handleNestedChange('paperdoll', 'faceVariants', v)}
+                min={1}
+                max={20}
+              />
+            </div>
+          </div>
+        </FormTabPanel>
 
         {/* Stats Tab */}
-        {activeTab === 'stats' && (
-          <CollapsibleSection
-            title="Base Stats"
-            isCollapsed={collapsedSections.baseStats}
-            onToggle={() => toggleSection('baseStats')}
-          >
-            <div className="creator-form-section">
-              <div className="stats-grid">
-                {Object.entries(formData.baseStats).map(([stat, value]) => (
-                  <div key={stat} className="stat-row">
-                    <span className="stat-label">{stat.charAt(0).toUpperCase() + stat.slice(1)}</span>
-                    <input
-                      type="number"
-                      className="stat-input"
-                      min={1}
-                      max={10}
-                      value={value}
-                      onChange={(e) => handleNestedChange('baseStats', stat, parseInt(e.target.value) || 5)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CollapsibleSection>
-        )}
-
-        {/* Colors Tab */}
-        {activeTab === 'colors' && (
-          <CollapsibleSection
-            title="Appearance Colors"
-            isCollapsed={collapsedSections.appearanceColors}
-            onToggle={() => toggleSection('appearanceColors')}
-          >
-            <div className="creator-form-section">
-              {Object.entries(formData.appearance).map(([colorKey, colorValue]) => (
-                <div key={colorKey} className="creator-form-row" style={{ alignItems: 'flex-end' }}>
-                  <div style={{ width: '50px' }}>
-                    <label className="form-label">{colorKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</label>
-                    <input
-                      type="color"
-                      value={colorValue}
-                      onChange={(e) => handleNestedChange('appearance', colorKey, e.target.value)}
-                      style={{ width: '40px', height: '30px', padding: 0, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
-                    />
-                  </div>
-                  <FormInput
-                    value={colorValue}
-                    onChange={(v) => handleNestedChange('appearance', colorKey, v)}
-                    placeholder="#FFFFFF"
+        <FormTabPanel id="stats" activeTab={activeTab}>
+          <div className="creator-form-section">
+            <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+              Base Stats
+            </h4>
+            <div className="stats-grid">
+              {Object.entries(formData.baseStats).map(([stat, value]) => (
+                <div key={stat} className="stat-row">
+                  <span className="stat-label">{stat.charAt(0).toUpperCase() + stat.slice(1)}</span>
+                  <input
+                    type="number"
+                    className="stat-input"
+                    min={1}
+                    max={10}
+                    value={value}
+                    onChange={(e) => handleNestedChange('baseStats', stat, parseInt(e.target.value) || 5)}
                   />
                 </div>
               ))}
             </div>
-          </CollapsibleSection>
-        )}
+          </div>
+        </FormTabPanel>
+
+        {/* Colors Tab */}
+        <FormTabPanel id="colors" activeTab={activeTab}>
+          <div className="creator-form-section">
+            <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+              Appearance Colors
+            </h4>
+            {Object.entries(formData.appearance).map(([colorKey, colorValue]) => (
+              <div key={colorKey} className="creator-form-row" style={{ alignItems: 'flex-end' }}>
+                <div style={{ width: '50px' }}>
+                  <label className="form-label">{colorKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</label>
+                  <input
+                    type="color"
+                    value={colorValue}
+                    onChange={(e) => handleNestedChange('appearance', colorKey, e.target.value)}
+                    style={{ width: '40px', height: '30px', padding: 0, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
+                  />
+                </div>
+                <FormInput
+                  value={colorValue}
+                  onChange={(v) => handleNestedChange('appearance', colorKey, v)}
+                  placeholder="#FFFFFF"
+                />
+              </div>
+            ))}
+          </div>
+        </FormTabPanel>
 
         {/* Background Tab */}
-        {activeTab === 'background' && (
-          <CollapsibleSection
-            title="Background"
-            isCollapsed={collapsedSections.background}
-            onToggle={() => toggleSection('background')}
-          >
-            <div className="creator-form-section">
-              <FormInput
-                label="Backstory"
-                type="textarea"
-                value={formData.backstory}
-                onChange={(v) => handleChange('backstory', v)}
-                placeholder="The character's history and origins..."
-                rows={5}
-              />
-              <FormInput
-                label="Personality"
-                type="textarea"
-                value={formData.personality}
-                onChange={(v) => handleChange('personality', v)}
-                placeholder="Personality traits, behaviors, quirks..."
-                rows={3}
-              />
-            </div>
-          </CollapsibleSection>
-        )}
+        <FormTabPanel id="background" activeTab={activeTab}>
+          <div className="creator-form-section">
+            <FormInput
+              label="Backstory"
+              type="textarea"
+              value={formData.backstory}
+              onChange={(v) => handleChange('backstory', v)}
+              placeholder="The character's history and origins..."
+              rows={5}
+            />
+            <FormInput
+              label="Personality"
+              type="textarea"
+              value={formData.personality}
+              onChange={(v) => handleChange('personality', v)}
+              placeholder="Personality traits, behaviors, quirks..."
+              rows={3}
+            />
+          </div>
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -572,46 +521,27 @@ const CharacterCreator = ({
         </div>
 
         {/* Characters List */}
-        <h3 className="creator-form-section-title mt-lg">
-          Characters
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No characters created yet.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">{item.name}</div>
-                <div className="creator-item-id">
-                  {item.species} | {item.gender} | {item.paperdoll?.maxBreastSize?.toUpperCase() || 'C'} Cup
-                </div>
-                <div className="creator-item-id" style={{ color: 'var(--color-accent-success)' }}>
-                  {item.paperdollFolder || 'no folder'}
-                </div>
+        <CreatorItemsList
+          items={items}
+          title="Characters"
+          itemType="character"
+          emptyMessage="No characters created yet."
+          editingItem={editingItem}
+          onEdit={onEdit}
+          onDuplicate={onDuplicate}
+          onDelete={onDelete}
+          renderItemContent={(item) => (
+            <>
+              <div className="creator-item-name">{item.name}</div>
+              <div className="creator-item-id">
+                {item.species} | {item.gender} | {item.paperdoll?.maxBreastSize?.toUpperCase() || 'C'} Cup
               </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
-                  Dup
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
-                  Del
-                </Button>
+              <div className="creator-item-id" style={{ color: 'var(--color-accent-success)' }}>
+                {item.paperdollFolder || 'no folder'}
               </div>
-            </div>
-          ))
-        )}
+            </>
+          )}
+        />
       </div>
     </div>
   );

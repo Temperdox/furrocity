@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
-import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, Button, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
 import './CreatorStyles.css';
 
@@ -90,18 +91,7 @@ const NPCCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_NPC });
-  const [hoveredItem, setHoveredItem] = useState(null);
-  const [collapsedSections, setCollapsedSections] = useState({
-    schedule: true,
-    nsfw: true,
-    dialogue: false,
-    merchant: false,
-    tags: false,
-  });
-
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
+  const [activeTab, setActiveTab] = useState('basic');
 
   const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
     defaultValues: DEFAULT_NPC,
@@ -138,6 +128,29 @@ const NPCCreator = ({
       contentType: 'items',
     });
   }, [datapackContent]);
+
+  const isMerchant = formData.role === 'merchant' || formData.role === 'blacksmith' || formData.role === 'innkeeper';
+
+  // Define tabs with badges
+  const tabs = useMemo(() => {
+    const tabList = [
+      { id: 'basic', label: 'Basic' },
+      { id: 'schedule', label: 'Schedule', badge: formData.schedule?.length > 0 ? formData.schedule.length : null },
+      { id: 'dialogue', label: 'Dialogue' },
+    ];
+
+    // Only show merchant tab if role is merchant-related
+    if (isMerchant) {
+      tabList.push({ id: 'merchant', label: 'Merchant' });
+    }
+
+    tabList.push(
+      { id: 'nsfw', label: 'NSFW', badge: formData.nsfwEnabled ? 'On' : null },
+      { id: 'tags', label: 'Tags', badge: formData.tags?.length > 0 ? formData.tags.length : null }
+    );
+
+    return tabList;
+  }, [formData.schedule?.length, formData.nsfwEnabled, formData.tags?.length, isMerchant]);
 
   useEffect(() => {
     if (editingItem) {
@@ -209,8 +222,6 @@ const NPCCreator = ({
     onCancelEdit();
   };
 
-  const isMerchant = formData.role === 'merchant' || formData.role === 'blacksmith' || formData.role === 'innkeeper';
-
   // Generate hour options for schedule
   const hourOptions = useMemo(() => {
     return Array.from({ length: 24 }, (_, i) => ({
@@ -227,32 +238,23 @@ const NPCCreator = ({
           {editingItem ? 'Edit NPC' : 'Create New NPC'}
         </h3>
 
-        {/* Basic Info */}
-        <div className="creator-form-section">
-          <div className="creator-form-row">
-            <FormInput
-              label="ID"
-              required
-              value={formData.id}
-              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
-              placeholder="unique_npc_id"
-            />
-            <FormInput
-              label="Name"
-              required
-              value={formData.name}
-              onChange={(v) => handleChange('name', v)}
-              placeholder="NPC Name"
-            />
-          </div>
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-          <FormInput
-            label="Description"
-            type="textarea"
+        {/* Basic Tab */}
+        <FormTabPanel id="basic" activeTab={activeTab}>
+          <IdNameFields
+            idValue={formData.id}
+            nameValue={formData.name}
+            onIdChange={(v) => handleChange('id', v)}
+            onNameChange={(v) => handleChange('name', v)}
+            idPlaceholder="unique_npc_id"
+            namePlaceholder="NPC Name"
+          />
+
+          <DescriptionField
             value={formData.description}
             onChange={(v) => handleChange('description', v)}
             placeholder="Describe this NPC..."
-            rows={3}
           />
 
           <div className="creator-form-row">
@@ -278,15 +280,10 @@ const NPCCreator = ({
             onChange={(v) => handleChange('portrait', v)}
             placeholder="/npcs/character.png"
           />
-        </div>
+        </FormTabPanel>
 
-        {/* Schedule Editor */}
-        <CollapsibleSection
-          title="Travel Schedule"
-          isCollapsed={collapsedSections.schedule}
-          onToggle={() => toggleSection('schedule')}
-          badge={formData.schedule?.length > 0 ? formData.schedule.length : null}
-        >
+        {/* Schedule Tab */}
+        <FormTabPanel id="schedule" activeTab={activeTab}>
           <div className="creator-form-section">
             <div style={{ marginBottom: 'var(--space-sm)' }}>
               <Button variant="success" size="sm" onClick={handleAddScheduleSlot}>
@@ -331,58 +328,10 @@ const NPCCreator = ({
               ))
             )}
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* NSFW Settings */}
-        <CollapsibleSection
-          title="NSFW Settings"
-          isCollapsed={collapsedSections.nsfw}
-          onToggle={() => toggleSection('nsfw')}
-          badge={formData.nsfwEnabled ? 'Enabled' : null}
-        >
-          <div className="creator-form-section">
-            <div className="creator-form-row">
-              <div className="checkbox-row">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.nsfwEnabled}
-                    onChange={(e) => handleChange('nsfwEnabled', e.target.checked)}
-                  />
-                  <span className="checkbox-text">NSFW Content Enabled</span>
-                </label>
-              </div>
-              <div className="checkbox-row">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.canBeSeduced}
-                    onChange={(e) => handleChange('canBeSeduced', e.target.checked)}
-                  />
-                  <span className="checkbox-text">Can Be Seduced</span>
-                </label>
-              </div>
-            </div>
-            {formData.canBeSeduced && (
-              <FormInput
-                label="Seduction Difficulty"
-                type="number"
-                value={formData.seductionDifficulty}
-                onChange={(v) => handleChange('seductionDifficulty', v)}
-                min={0}
-                max={100}
-                helper="0-100, higher = harder"
-              />
-            )}
-          </div>
-        </CollapsibleSection>
-
-        {/* Dialogue */}
-        <CollapsibleSection
-          title="Dialogue Lines"
-          isCollapsed={collapsedSections.dialogue}
-          onToggle={() => toggleSection('dialogue')}
-        >
+        {/* Dialogue Tab */}
+        <FormTabPanel id="dialogue" activeTab={activeTab}>
           <div className="creator-form-section">
             <div className="creator-form-row">
               <FormInput
@@ -421,88 +370,116 @@ const NPCCreator = ({
               </div>
             )}
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Merchant Config */}
-        {isMerchant && (
-          <CollapsibleSection
-            title="Merchant Settings"
-            isCollapsed={collapsedSections.merchant}
-            onToggle={() => toggleSection('merchant')}
-          >
-            <div className="creator-form-section">
-              <div className="subsection">
-                <div className="subsection-title">Accepted Item Tags</div>
-                <TagInput
-                  value={formData.buyConfig.acceptedTags}
-                  onChange={(v) => handleNestedChange('buyConfig', 'acceptedTags', v)}
-                  suggestions={suggestedItemTags}
-                  categories={ITEM_TAG_CATEGORIES}
-                  placeholder="Add accepted tag..."
-                  showSuggestions
-                />
+        {/* Merchant Tab (only if merchant role) */}
+        <FormTabPanel id="merchant" activeTab={activeTab}>
+          <div className="creator-form-section">
+            <div className="subsection">
+              <div className="subsection-title">Accepted Item Tags</div>
+              <TagInput
+                value={formData.buyConfig.acceptedTags}
+                onChange={(v) => handleNestedChange('buyConfig', 'acceptedTags', v)}
+                suggestions={suggestedItemTags}
+                categories={ITEM_TAG_CATEGORIES}
+                placeholder="Add accepted tag..."
+                showSuggestions
+              />
+            </div>
+
+            <div className="subsection mt-md">
+              <div className="subsection-title">Rejected Item Tags</div>
+              <TagInput
+                value={formData.buyConfig.rejectedTags}
+                onChange={(v) => handleNestedChange('buyConfig', 'rejectedTags', v)}
+                suggestions={suggestedItemTags}
+                categories={ITEM_TAG_CATEGORIES}
+                placeholder="Add rejected tag..."
+                showSuggestions
+              />
+            </div>
+
+            <div className="creator-form-row mt-md">
+              <FormInput
+                label="Buy Price Multiplier"
+                type="number"
+                value={formData.buyConfig.buyPriceMultiplier}
+                onChange={(v) => handleNestedChange('buyConfig', 'buyPriceMultiplier', v)}
+                min={0}
+                max={1}
+                step={0.1}
+                helper="0.4 = 40% of item value"
+              />
+              <FormInput
+                label="Max Buy Value"
+                type="number"
+                value={formData.buyConfig.maxBuyValue}
+                onChange={(v) => handleNestedChange('buyConfig', 'maxBuyValue', v)}
+                min={0}
+              />
+            </div>
+
+            <div className="creator-form-row">
+              <FormInput
+                label="Stock ID"
+                value={formData.sellConfig.stockId}
+                onChange={(v) => handleNestedChange('sellConfig', 'stockId', v)}
+                placeholder="shop_stock_id"
+              />
+              <FormInput
+                label="Sell Price Multiplier"
+                type="number"
+                value={formData.sellConfig.sellPriceMultiplier}
+                onChange={(v) => handleNestedChange('sellConfig', 'sellPriceMultiplier', v)}
+                min={0}
+                step={0.1}
+                helper="1.0 = base price"
+              />
+            </div>
+          </div>
+        </FormTabPanel>
+
+        {/* NSFW Tab */}
+        <FormTabPanel id="nsfw" activeTab={activeTab}>
+          <div className="creator-form-section">
+            <div className="creator-form-row">
+              <div className="checkbox-row">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.nsfwEnabled}
+                    onChange={(e) => handleChange('nsfwEnabled', e.target.checked)}
+                  />
+                  <span className="checkbox-text">NSFW Content Enabled</span>
+                </label>
               </div>
-
-              <div className="subsection mt-md">
-                <div className="subsection-title">Rejected Item Tags</div>
-                <TagInput
-                  value={formData.buyConfig.rejectedTags}
-                  onChange={(v) => handleNestedChange('buyConfig', 'rejectedTags', v)}
-                  suggestions={suggestedItemTags}
-                  categories={ITEM_TAG_CATEGORIES}
-                  placeholder="Add rejected tag..."
-                  showSuggestions
-                />
-              </div>
-
-              <div className="creator-form-row mt-md">
-                <FormInput
-                  label="Buy Price Multiplier"
-                  type="number"
-                  value={formData.buyConfig.buyPriceMultiplier}
-                  onChange={(v) => handleNestedChange('buyConfig', 'buyPriceMultiplier', v)}
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  helper="0.4 = 40% of item value"
-                />
-                <FormInput
-                  label="Max Buy Value"
-                  type="number"
-                  value={formData.buyConfig.maxBuyValue}
-                  onChange={(v) => handleNestedChange('buyConfig', 'maxBuyValue', v)}
-                  min={0}
-                />
-              </div>
-
-              <div className="creator-form-row">
-                <FormInput
-                  label="Stock ID"
-                  value={formData.sellConfig.stockId}
-                  onChange={(v) => handleNestedChange('sellConfig', 'stockId', v)}
-                  placeholder="shop_stock_id"
-                />
-                <FormInput
-                  label="Sell Price Multiplier"
-                  type="number"
-                  value={formData.sellConfig.sellPriceMultiplier}
-                  onChange={(v) => handleNestedChange('sellConfig', 'sellPriceMultiplier', v)}
-                  min={0}
-                  step={0.1}
-                  helper="1.0 = base price"
-                />
+              <div className="checkbox-row">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.canBeSeduced}
+                    onChange={(e) => handleChange('canBeSeduced', e.target.checked)}
+                  />
+                  <span className="checkbox-text">Can Be Seduced</span>
+                </label>
               </div>
             </div>
-          </CollapsibleSection>
-        )}
+            {formData.canBeSeduced && (
+              <FormInput
+                label="Seduction Difficulty"
+                type="number"
+                value={formData.seductionDifficulty}
+                onChange={(v) => handleChange('seductionDifficulty', v)}
+                min={0}
+                max={100}
+                helper="0-100, higher = harder"
+              />
+            )}
+          </div>
+        </FormTabPanel>
 
-        {/* Tags */}
-        <CollapsibleSection
-          title="Tags"
-          isCollapsed={collapsedSections.tags}
-          onToggle={() => toggleSection('tags')}
-          badge={formData.tags?.length > 0 ? formData.tags.length : null}
-        >
+        {/* Tags Tab */}
+        <FormTabPanel id="tags" activeTab={activeTab}>
           <div className="creator-form-section">
             <TagInput
               value={formData.tags}
@@ -513,7 +490,7 @@ const NPCCreator = ({
               showSuggestions
             />
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -529,64 +506,40 @@ const NPCCreator = ({
       </div>
 
       {/* List Section */}
-      <div className="creator-list">
-        <h3 className="creator-form-section-title">
-          Created NPCs
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No NPCs created yet.
-            <br />
-            Use the form to create your first NPC.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">
-                  {item.name}
-                  {item.nsfwEnabled && (
-                    <span className="rarity-badge" style={{ backgroundColor: 'var(--color-accent-danger)' }}>
-                      NSFW
-                    </span>
-                  )}
-                </div>
-                <div className="creator-item-id">
-                  ID: {item.id} | Role: {item.role}
-                </div>
-                {item.tags?.length > 0 && (
-                  <div className="creator-item-tags">
-                    {item.tags.slice(0, 4).map(tag => (
-                      <span key={tag} className="tag-chip">{tag}</span>
-                    ))}
-                    {item.tags.length > 4 && (
-                      <span className="tag-chip more">+{item.tags.length - 4}</span>
-                    )}
-                  </div>
+      <CreatorItemsList
+        items={items}
+        title="Created NPCs"
+        itemType="NPC"
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        editingItem={editingItem}
+        renderItemContent={(item) => (
+          <>
+            <div className="creator-item-name">
+              {item.name}
+              {item.nsfwEnabled && (
+                <span className="rarity-badge" style={{ backgroundColor: 'var(--color-accent-danger)' }}>
+                  NSFW
+                </span>
+              )}
+            </div>
+            <div className="creator-item-id">
+              ID: {item.id} | Role: {item.role}
+            </div>
+            {item.tags?.length > 0 && (
+              <div className="creator-item-tags">
+                {item.tags.slice(0, 4).map(tag => (
+                  <span key={tag} className="tag-chip">{tag}</span>
+                ))}
+                {item.tags.length > 4 && (
+                  <span className="tag-chip more">+{item.tags.length - 4}</span>
                 )}
               </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
-                  Duplicate
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
-                  Delete
-                </Button>
-              </div>
-            </div>
-          ))
+            )}
+          </>
         )}
-      </div>
+      />
     </div>
   );
 };

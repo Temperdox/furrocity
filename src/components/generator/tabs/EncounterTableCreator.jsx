@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
-import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, Button, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
 import './CreatorStyles.css';
 
@@ -85,12 +86,7 @@ const EncounterTableCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_ENCOUNTER_TABLE });
-  const [hoveredItem, setHoveredItem] = useState(null);
-  const [collapsedSections, setCollapsedSections] = useState({
-    conditions: true,
-    encounters: false,
-    loot: true,
-  });
+  const [activeTab, setActiveTab] = useState('basic');
 
   const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
     defaultValues: DEFAULT_ENCOUNTER_TABLE,
@@ -104,6 +100,21 @@ const EncounterTableCreator = ({
       contentType: 'encounterTables',
     });
   }, [datapackContent, items]);
+
+  // Define tabs with badges
+  const tabs = useMemo(() => {
+    const hasConditions = (formData.conditions.time_of_day?.length > 0) ||
+      (formData.conditions.location_tags?.length > 0) ||
+      formData.conditions.player_level_min ||
+      formData.conditions.player_level_max;
+
+    return [
+      { id: 'basic', label: 'Basic' },
+      { id: 'conditions', label: 'Conditions', badge: hasConditions ? '✓' : null },
+      { id: 'encounters', label: 'Encounters', badge: formData.encounters.length || null },
+      { id: 'loot', label: 'Loot', badge: formData.loot_tables.length || null },
+    ];
+  }, [formData.conditions, formData.encounters.length, formData.loot_tables.length]);
 
   // Get enemy IDs from datapack content
   const availableEnemies = useMemo(() => {
@@ -139,10 +150,6 @@ const EncounterTableCreator = ({
       setFormData({ ...DEFAULT_ENCOUNTER_TABLE });
     }
   }, [editingItem]);
-
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -260,25 +267,18 @@ const EncounterTableCreator = ({
           {editingItem ? 'Edit Encounter Table' : 'Create New Encounter Table'}
         </h3>
 
-        {/* Basic Info Section - Not collapsible */}
-        <div className="creator-form-section">
-          <h4 className="creator-form-section-title">Basic Info</h4>
-          <div className="creator-form-row">
-            <FormInput
-              label="ID"
-              required
-              value={formData.id}
-              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
-              placeholder="forest_day_common"
-            />
-            <FormInput
-              label="Name"
-              required
-              value={formData.name}
-              onChange={(v) => handleChange('name', v)}
-              placeholder="Forest Daytime Common"
-            />
-          </div>
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+
+        {/* Basic Tab */}
+        <FormTabPanel id="basic" activeTab={activeTab}>
+          <IdNameFields
+            idValue={formData.id}
+            nameValue={formData.name}
+            onIdChange={(v) => handleChange('id', v)}
+            onNameChange={(v) => handleChange('name', v)}
+            idPlaceholder="forest_day_common"
+            namePlaceholder="Forest Daytime Common"
+          />
 
           <div className="creator-form-row">
             <FormInput
@@ -301,14 +301,10 @@ const EncounterTableCreator = ({
             placeholder="Add tag..."
             showSuggestions
           />
-        </div>
+        </FormTabPanel>
 
-        {/* Conditions Section */}
-        <CollapsibleSection
-          title="Conditions"
-          isCollapsed={collapsedSections.conditions}
-          onToggle={() => toggleSection('conditions')}
-        >
+        {/* Conditions Tab */}
+        <FormTabPanel id="conditions" activeTab={activeTab}>
           <div style={{ marginBottom: 'var(--space-md)' }}>
             <label className="form-label">Time of Day</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
@@ -378,15 +374,10 @@ const EncounterTableCreator = ({
               ))}
             </div>
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Encounters Section */}
-        <CollapsibleSection
-          title="Encounters"
-          isCollapsed={collapsedSections.encounters}
-          onToggle={() => toggleSection('encounters')}
-          badge={formData.encounters.length}
-        >
+        {/* Encounters Tab */}
+        <FormTabPanel id="encounters" activeTab={activeTab}>
           <div style={{
             padding: 'var(--space-sm)',
             background: 'var(--color-bg-tertiary)',
@@ -542,15 +533,10 @@ const EncounterTableCreator = ({
           <Button variant="success" size="sm" onClick={handleAddEncounter}>
             + Add Encounter
           </Button>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Loot Tables Section */}
-        <CollapsibleSection
-          title="Loot Tables"
-          isCollapsed={collapsedSections.loot}
-          onToggle={() => toggleSection('loot')}
-          badge={formData.loot_tables.length}
-        >
+        {/* Loot Tab */}
+        <FormTabPanel id="loot" activeTab={activeTab}>
           <div style={{ marginBottom: 'var(--space-sm)' }}>
             {availableLootTables.length > 0 ? (
               <FormSelect
@@ -585,7 +571,7 @@ const EncounterTableCreator = ({
               </span>
             ))}
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -601,75 +587,51 @@ const EncounterTableCreator = ({
       </div>
 
       {/* List Section */}
-      <div className="creator-list">
-        <h3 className="creator-form-section-title">
-          Created Encounter Tables
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No encounter tables created yet.
-            <br />
-            Use the form to create your first encounter table.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">
-                  {item.name}
-                  <span
-                    className="rarity-badge"
-                    style={{
-                      backgroundColor: item.rate_multiplier > 1.5 ? 'var(--color-accent-danger)' :
-                                       item.rate_multiplier > 1 ? 'var(--color-accent-warning)' :
-                                       item.rate_multiplier < 1 ? 'var(--color-accent-secondary)' :
-                                       'var(--color-border)',
-                    }}
-                  >
-                    {item.rate_multiplier}x
-                  </span>
-                </div>
-                <div className="creator-item-id">
-                  ID: {item.id} | {item.encounters?.length || 0} encounters
-                </div>
-                {item.conditions?.time_of_day?.length > 0 && (
-                  <div className="creator-item-id">
-                    Time: {item.conditions.time_of_day.join(', ')}
-                  </div>
-                )}
-                {item.tags?.length > 0 && (
-                  <div className="creator-item-tags">
-                    {item.tags.slice(0, 4).map(tag => (
-                      <span key={tag} className="tag-chip">{tag}</span>
-                    ))}
-                    {item.tags.length > 4 && (
-                      <span className="tag-chip more">+{item.tags.length - 4}</span>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
-                  Duplicate
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
-                  Delete
-                </Button>
-              </div>
+      <CreatorItemsList
+        items={items}
+        title="Created Encounter Tables"
+        itemType="encounter table"
+        editingItem={editingItem}
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        renderItemContent={(item) => (
+          <>
+            <div className="creator-item-name">
+              {item.name}
+              <span
+                className="rarity-badge"
+                style={{
+                  backgroundColor: item.rate_multiplier > 1.5 ? 'var(--color-accent-danger)' :
+                                   item.rate_multiplier > 1 ? 'var(--color-accent-warning)' :
+                                   item.rate_multiplier < 1 ? 'var(--color-accent-secondary)' :
+                                   'var(--color-border)',
+                }}
+              >
+                {item.rate_multiplier}x
+              </span>
             </div>
-          ))
+            <div className="creator-item-id">
+              ID: {item.id} | {item.encounters?.length || 0} encounters
+            </div>
+            {item.conditions?.time_of_day?.length > 0 && (
+              <div className="creator-item-id">
+                Time: {item.conditions.time_of_day.join(', ')}
+              </div>
+            )}
+            {item.tags?.length > 0 && (
+              <div className="creator-item-tags">
+                {item.tags.slice(0, 4).map(tag => (
+                  <span key={tag} className="tag-chip">{tag}</span>
+                ))}
+                {item.tags.length > 4 && (
+                  <span className="tag-chip more">+{item.tags.length - 4}</span>
+                )}
+              </div>
+            )}
+          </>
         )}
-      </div>
+      />
     </div>
   );
 };

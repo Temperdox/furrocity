@@ -973,3 +973,63 @@
   color: var(--color-accent-secondary);
   font-style: italic;
 }
+
+/* ===== FormTabs Component ===== */
+
+.form-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.form-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  height: 28px;
+  padding: 0 var(--space-sm);
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.form-tab:hover {
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-border-light);
+  color: var(--color-text-primary);
+}
+
+.form-tab.active {
+  background-color: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
+  color: var(--color-text-inverse);
+}
+
+.form-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--space-xs);
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.form-tab.active .form-tab-badge {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.form-tab-panel {
+  animation: fadeIn var(--transition-fast);
+}

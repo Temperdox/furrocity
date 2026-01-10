@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
-import { FormInput, FormSelect, TagInput, ChipSelect, Button, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, ChipSelect, Button, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField, StatsGrid } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
 import './CreatorStyles.css';
 
@@ -97,20 +98,7 @@ const EnemyCreator = ({
   const allScenes = [...(datapackContent.scenes || []), ...scenes];
   const allItems = [...(datapackContent.items || [])];
 
-  // Collapsed sections state
-  const [collapsedSections, setCollapsedSections] = useState({
-    stats: true,
-    rewards: true,
-    nsfw: true,
-    tags: true,
-  });
-
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
+  const [activeTab, setActiveTab] = useState('basic');
 
   const getNsfwScenesForType = (actionType) => {
     return allScenes.filter(scene => {
@@ -124,7 +112,6 @@ const EnemyCreator = ({
 
   const allNsfwScenes = allScenes.filter(scene => scene.isNSFW);
   const [formData, setFormData] = useState({ ...DEFAULT_ENEMY });
-  const [hoveredItem, setHoveredItem] = useState(null);
   const [dropInput, setDropInput] = useState({ itemId: '', chance: 0.1 });
 
   const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
@@ -139,6 +126,22 @@ const EnemyCreator = ({
       contentType: 'enemies',
     });
   }, [datapackContent, items]);
+
+  // Define tabs with badges
+  const tabs = useMemo(() => {
+    const hasStats = Object.values(formData.baseStats).some(v => v !== 0);
+    const hasDrops = formData.rewards.drops.length > 0;
+    const hasNsfwActions = formData.nsfwActionData.actions.length > 0;
+
+    return [
+      { id: 'basic', label: 'Basic' },
+      { id: 'stats', label: 'Stats', badge: hasStats ? '✓' : null },
+      { id: 'loot', label: 'Loot', badge: hasDrops ? formData.rewards.drops.length : null },
+      { id: 'nsfw', label: 'NSFW', badge: formData.nsfwEnabled ? (hasNsfwActions ? formData.nsfwActionData.actions.length : '✓') : null },
+      { id: 'visuals', label: 'Visuals', badge: (formData.sprite || formData.portrait) ? '✓' : null },
+      { id: 'tags', label: 'Tags', badge: formData.tags.length || null },
+    ];
+  }, [formData.baseStats, formData.rewards.drops.length, formData.nsfwEnabled, formData.nsfwActionData.actions.length, formData.sprite, formData.portrait, formData.tags.length]);
 
   useEffect(() => {
     if (editingItem) {
@@ -276,32 +279,23 @@ const EnemyCreator = ({
           {editingItem ? 'Edit Enemy' : 'Create New Enemy'}
         </h3>
 
-        {/* Basic Info */}
-        <div className="creator-form-section">
-          <div className="creator-form-row">
-            <FormInput
-              label="ID"
-              required
-              value={formData.id}
-              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
-              placeholder="unique_enemy_id"
-            />
-            <FormInput
-              label="Name"
-              required
-              value={formData.name}
-              onChange={(v) => handleChange('name', v)}
-              placeholder="Enemy Name"
-            />
-          </div>
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-          <FormInput
-            label="Description"
-            type="textarea"
+        {/* Basic Tab */}
+        <FormTabPanel id="basic" activeTab={activeTab}>
+          <IdNameFields
+            idValue={formData.id}
+            nameValue={formData.name}
+            onIdChange={(v) => handleChange('id', v)}
+            onNameChange={(v) => handleChange('name', v)}
+            idPlaceholder="unique_enemy_id"
+            namePlaceholder="Enemy Name"
+          />
+
+          <DescriptionField
             value={formData.description}
             onChange={(v) => handleChange('description', v)}
             placeholder="Describe this enemy..."
-            rows={3}
           />
 
           <div className="creator-form-row cols-3">
@@ -325,51 +319,22 @@ const EnemyCreator = ({
               min={1}
             />
           </div>
+        </FormTabPanel>
 
-          <div className="creator-form-row">
-            <FormInput
-              label="Sprite Image"
-              value={formData.sprite}
-              onChange={(v) => handleChange('sprite', v)}
-              placeholder="/enemies/enemy_sprite.png"
-            />
-            <FormInput
-              label="Portrait Image"
-              value={formData.portrait}
-              onChange={(v) => handleChange('portrait', v)}
-              placeholder="/enemies/enemy_portrait.png"
-            />
-          </div>
-        </div>
+        {/* Stats Tab */}
+        <FormTabPanel id="stats" activeTab={activeTab}>
+          <StatsGrid
+            stats={formData.baseStats}
+            onChange={(stat, value) => handleNestedChange('baseStats', stat, value)}
+            title="Base Stats"
+          />
+        </FormTabPanel>
 
-        {/* Base Stats */}
-        <CollapsibleSection
-          title="Base Stats"
-          isCollapsed={collapsedSections.stats}
-          onToggle={() => toggleSection('stats')}
-        >
-          <div className="stats-grid">
-            {Object.entries(formData.baseStats).map(([stat, value]) => (
-              <div key={stat} className="stat-row">
-                <span className="stat-label">{stat.toUpperCase()}</span>
-                <input
-                  type="number"
-                  className="stat-input"
-                  value={value}
-                  onChange={(e) => handleNestedChange('baseStats', stat, parseInt(e.target.value) || 0)}
-                />
-              </div>
-            ))}
-          </div>
-        </CollapsibleSection>
-
-        {/* Rewards */}
-        <CollapsibleSection
-          title="Rewards"
-          isCollapsed={collapsedSections.rewards}
-          onToggle={() => toggleSection('rewards')}
-          badge={formData.rewards.drops.length > 0 ? `${formData.rewards.drops.length} drops` : null}
-        >
+        {/* Loot Tab */}
+        <FormTabPanel id="loot" activeTab={activeTab}>
+          <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+            Rewards
+          </h4>
           <div className="creator-form-row cols-3">
             <FormInput
               label="XP"
@@ -431,15 +396,10 @@ const EnemyCreator = ({
               </Button>
             </div>
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* NSFW Settings */}
-        <CollapsibleSection
-          title="NSFW Settings"
-          isCollapsed={collapsedSections.nsfw}
-          onToggle={() => toggleSection('nsfw')}
-          badge={formData.nsfwEnabled ? (formData.nsfwActionData.actions.length > 0 ? `${formData.nsfwActionData.actions.length} actions` : 'Enabled') : null}
-        >
+        {/* NSFW Tab */}
+        <FormTabPanel id="nsfw" activeTab={activeTab}>
           <div className={`highlight-section-inner ${formData.nsfwEnabled ? 'active' : ''}`}>
             <div className="form-group">
               <label className="form-label checkbox-label">
@@ -570,15 +530,33 @@ const EnemyCreator = ({
               </>
             )}
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Tags */}
-        <CollapsibleSection
-          title="Tags"
-          isCollapsed={collapsedSections.tags}
-          onToggle={() => toggleSection('tags')}
-          badge={formData.tags.length > 0 ? formData.tags.length : null}
-        >
+        {/* Visuals Tab */}
+        <FormTabPanel id="visuals" activeTab={activeTab}>
+          <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+            Enemy Images
+          </h4>
+          <div className="creator-form-row">
+            <FormInput
+              label="Sprite Image"
+              value={formData.sprite}
+              onChange={(v) => handleChange('sprite', v)}
+              placeholder="/enemies/enemy_sprite.png"
+              helper="Battle sprite image path"
+            />
+            <FormInput
+              label="Portrait Image"
+              value={formData.portrait}
+              onChange={(v) => handleChange('portrait', v)}
+              placeholder="/enemies/enemy_portrait.png"
+              helper="Portrait/dialogue image path"
+            />
+          </div>
+        </FormTabPanel>
+
+        {/* Tags Tab */}
+        <FormTabPanel id="tags" activeTab={activeTab}>
           <TagInput
             value={formData.tags}
             onChange={(v) => handleChange('tags', v)}
@@ -587,7 +565,7 @@ const EnemyCreator = ({
             placeholder="Add tag..."
             showSuggestions
           />
-        </CollapsibleSection>
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -603,67 +581,43 @@ const EnemyCreator = ({
       </div>
 
       {/* List Section */}
-      <div className="creator-list">
-        <h3 className="creator-form-section-title">
-          Created Enemies
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No enemies created yet.
-            <br />
-            Use the form to create your first enemy.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">
-                  {item.name}
-                  {item.variant !== 'normal' && (
-                    <span
-                      className="rarity-badge"
-                      style={{ backgroundColor: item.variant === 'boss' ? 'var(--color-accent-danger)' : 'var(--color-accent-secondary)' }}
-                    >
-                      {item.variant}
-                    </span>
-                  )}
-                </div>
-                <div className="creator-item-id">
-                  ID: {item.id} | Lvl: {item.level} | Type: {item.type}
-                </div>
-                {item.tags?.length > 0 && (
-                  <div className="creator-item-tags">
-                    {item.tags.slice(0, 4).map(tag => (
-                      <span key={tag} className="tag-chip">{tag}</span>
-                    ))}
-                    {item.tags.length > 4 && (
-                      <span className="tag-chip more">+{item.tags.length - 4}</span>
-                    )}
-                  </div>
+      <CreatorItemsList
+        items={items}
+        title="Created Enemies"
+        itemType="enemy"
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        editingItem={editingItem}
+        renderItemContent={(item) => (
+          <>
+            <div className="creator-item-name">
+              {item.name}
+              {item.variant !== 'normal' && (
+                <span
+                  className="rarity-badge"
+                  style={{ backgroundColor: item.variant === 'boss' ? 'var(--color-accent-danger)' : 'var(--color-accent-secondary)' }}
+                >
+                  {item.variant}
+                </span>
+              )}
+            </div>
+            <div className="creator-item-id">
+              ID: {item.id} | Lvl: {item.level} | Type: {item.type}
+            </div>
+            {item.tags?.length > 0 && (
+              <div className="creator-item-tags">
+                {item.tags.slice(0, 4).map(tag => (
+                  <span key={tag} className="tag-chip">{tag}</span>
+                ))}
+                {item.tags.length > 4 && (
+                  <span className="tag-chip more">+{item.tags.length - 4}</span>
                 )}
               </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
-                  Duplicate
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
-                  Delete
-                </Button>
-              </div>
-            </div>
-          ))
+            )}
+          </>
         )}
-      </div>
+      />
     </div>
   );
 };

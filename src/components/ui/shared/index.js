@@ -11,6 +11,7 @@ export { default as TagInput } from './TagInput';
 export { default as ChipSelect } from './ChipSelect';
 export { default as NumericModifierInput } from './NumericModifierInput';
 export { default as CollapsibleSection } from './CollapsibleSection';
+export { default as FormTabs, FormTabPanel } from './FormTabs';
 export {
   default as Button,
   PrimaryButton,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
-import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, Button, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
 import './CreatorStyles.css';
 
@@ -46,6 +47,7 @@ const DEFAULT_MERCHANT = {
   locationId: '',
   factionId: '',
   tags: [],
+  schedule: [],
   nsfwEnabled: false,
   canBeSeduced: false,
   seductionDifficulty: 50,
@@ -86,14 +88,7 @@ const MerchantCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_MERCHANT });
-  const [hoveredItem, setHoveredItem] = useState(null);
-  const [collapsedSections, setCollapsedSections] = useState({
-    nsfwSettings: true,
-    buyConfig: true,
-    sellConfig: false,
-    dialogue: true,
-    inventory: true,
-  });
+  const [activeTab, setActiveTab] = useState('basic');
 
   const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
     defaultValues: DEFAULT_MERCHANT,
@@ -120,11 +115,35 @@ const MerchantCreator = ({
     return itemList.map(i => ({ value: i.id, label: i.name || i.id }));
   }, [datapackContent.items]);
 
+  // Generate hour options for schedule
+  const hourOptions = useMemo(() => {
+    return Array.from({ length: 24 }, (_, i) => ({
+      value: i,
+      label: `${i.toString().padStart(2, '0')}:00`,
+    }));
+  }, []);
+
+  // Define tabs with badges
+  const tabs = useMemo(() => {
+    const hasDialogue = formData.dialogue.greeting || formData.dialogue.cannotBuy || formData.dialogue.farewell;
+    const hasNsfw = formData.nsfwEnabled || formData.canBeSeduced;
+
+    return [
+      { id: 'basic', label: 'Basic' },
+      { id: 'schedule', label: 'Schedule', badge: formData.schedule?.length || null },
+      { id: 'trading', label: 'Trading' },
+      { id: 'dialogue', label: 'Dialogue', badge: hasDialogue ? '...' : null },
+      { id: 'inventory', label: 'Inventory', badge: formData.inventory.length || null },
+      { id: 'nsfw', label: 'NSFW', badge: hasNsfw ? '!' : null },
+    ];
+  }, [formData.schedule?.length, formData.dialogue, formData.inventory.length, formData.nsfwEnabled, formData.canBeSeduced]);
+
   useEffect(() => {
     if (editingItem) {
       setFormData({
         ...DEFAULT_MERCHANT,
         ...editingItem,
+        schedule: editingItem.schedule || [],
         buyConfig: { ...DEFAULT_MERCHANT.buyConfig, ...editingItem.buyConfig },
         sellConfig: { ...DEFAULT_MERCHANT.sellConfig, ...editingItem.sellConfig },
         dialogue: { ...DEFAULT_MERCHANT.dialogue, ...editingItem.dialogue },
@@ -135,10 +154,6 @@ const MerchantCreator = ({
     }
   }, [editingItem]);
 
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
-
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -148,6 +163,23 @@ const MerchantCreator = ({
       ...prev,
       [parent]: { ...prev[parent], [field]: value },
     }));
+  };
+
+  // Schedule handlers
+  const handleAddScheduleSlot = () => {
+    const newSchedule = [...(formData.schedule || []), { startHour: 6, endHour: 18, locationId: '' }];
+    handleChange('schedule', newSchedule);
+  };
+
+  const handleUpdateScheduleSlot = (index, field, value) => {
+    const newSchedule = [...formData.schedule];
+    newSchedule[index] = { ...newSchedule[index], [field]: value };
+    handleChange('schedule', newSchedule);
+  };
+
+  const handleRemoveScheduleSlot = (index) => {
+    const newSchedule = formData.schedule.filter((_, i) => i !== index);
+    handleChange('schedule', newSchedule);
   };
 
   const handleAddAcceptedTag = (tag) => {
@@ -242,29 +274,20 @@ const MerchantCreator = ({
           {editingItem ? 'Edit Merchant' : 'Create New Merchant'}
         </h3>
 
-        {/* Basic Info Section - Not Collapsible */}
-        <div className="creator-form-section">
-          <h4 className="creator-form-section-title">Basic Info</h4>
-          <div className="creator-form-row">
-            <FormInput
-              label="ID"
-              required
-              value={formData.id}
-              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
-              placeholder="merchant_id"
-            />
-            <FormInput
-              label="Name"
-              required
-              value={formData.name}
-              onChange={(v) => handleChange('name', v)}
-              placeholder="Joe the Merchant"
-            />
-          </div>
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-          <FormInput
-            label="Description"
-            type="textarea"
+        {/* Basic Tab */}
+        <FormTabPanel id="basic" activeTab={activeTab}>
+          <IdNameFields
+            idValue={formData.id}
+            nameValue={formData.name}
+            onIdChange={(v) => handleChange('id', v)}
+            onNameChange={(v) => handleChange('name', v)}
+            idPlaceholder="merchant_id"
+            namePlaceholder="Joe the Merchant"
+          />
+
+          <DescriptionField
             value={formData.description}
             onChange={(v) => handleChange('description', v)}
             placeholder="A friendly merchant who sells various goods..."
@@ -314,51 +337,68 @@ const MerchantCreator = ({
             placeholder="Add tag..."
             showSuggestions
           />
-        </div>
+        </FormTabPanel>
 
-        {/* NSFW Settings Section */}
-        <CollapsibleSection
-          title="NSFW Settings"
-          isCollapsed={collapsedSections.nsfwSettings}
-          onToggle={() => toggleSection('nsfwSettings')}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-              <input
-                type="checkbox"
-                checked={formData.nsfwEnabled}
-                onChange={(e) => handleChange('nsfwEnabled', e.target.checked)}
-              />
-              NSFW Content Enabled
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-              <input
-                type="checkbox"
-                checked={formData.canBeSeduced}
-                onChange={(e) => handleChange('canBeSeduced', e.target.checked)}
-              />
-              Can Be Seduced
-            </label>
+        {/* Schedule Tab */}
+        <FormTabPanel id="schedule" activeTab={activeTab}>
+          <div style={{ marginBottom: 'var(--space-sm)' }}>
+            <Button variant="success" size="sm" onClick={handleAddScheduleSlot}>
+              + Add Time Slot
+            </Button>
           </div>
-          {formData.canBeSeduced && (
-            <FormInput
-              label="Seduction Difficulty"
-              type="number"
-              value={formData.seductionDifficulty}
-              onChange={(v) => handleChange('seductionDifficulty', v)}
-              min={0}
-              max={100}
-              helper="0-100: Lower = easier"
-            />
-          )}
-        </CollapsibleSection>
 
-        {/* Buy Config Section */}
-        <CollapsibleSection
-          title="Buy Configuration"
-          isCollapsed={collapsedSections.buyConfig}
-          onToggle={() => toggleSection('buyConfig')}
-        >
+          {(formData.schedule || []).length === 0 ? (
+            <div className="empty-list" style={{ padding: 'var(--space-md)' }}>
+              No schedule defined - merchant will always be at default location
+            </div>
+          ) : (
+            formData.schedule.map((slot, index) => (
+              <div key={index} className="array-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                <div className="creator-form-row cols-4">
+                  <FormSelect
+                    label="From"
+                    value={slot.startHour}
+                    onChange={(v) => handleUpdateScheduleSlot(index, 'startHour', parseInt(v))}
+                    options={hourOptions}
+                  />
+                  <FormSelect
+                    label="To"
+                    value={slot.endHour}
+                    onChange={(v) => handleUpdateScheduleSlot(index, 'endHour', parseInt(v))}
+                    options={hourOptions}
+                  />
+                  {availableLocations.length > 0 ? (
+                    <FormSelect
+                      label="Location"
+                      value={slot.locationId}
+                      onChange={(v) => handleUpdateScheduleSlot(index, 'locationId', v)}
+                      options={[{ value: '', label: 'Select Location...' }, ...availableLocations]}
+                    />
+                  ) : (
+                    <FormInput
+                      label="Location ID"
+                      value={slot.locationId}
+                      onChange={(v) => handleUpdateScheduleSlot(index, 'locationId', v)}
+                      placeholder="location_id"
+                    />
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                    <Button variant="danger" size="sm" onClick={() => handleRemoveScheduleSlot(index)}>
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </FormTabPanel>
+
+        {/* Trading Tab */}
+        <FormTabPanel id="trading" activeTab={activeTab}>
+          {/* Buy Configuration */}
+          <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+            Buy Configuration
+          </h4>
           <div className="creator-form-row">
             <FormInput
               label="Buy Price Multiplier"
@@ -398,13 +438,13 @@ const MerchantCreator = ({
                   onClick={() => handleRemoveAcceptedTag(idx)}
                   style={{ cursor: 'pointer', backgroundColor: 'var(--color-accent-success)' }}
                 >
-                  {tag} ×
+                  {tag} x
                 </span>
               ))}
             </div>
           </div>
 
-          <div>
+          <div style={{ marginBottom: 'var(--space-lg)' }}>
             <label className="form-label">Rejected Item Tags</label>
             <FormSelect
               value=""
@@ -422,19 +462,16 @@ const MerchantCreator = ({
                   onClick={() => handleRemoveRejectedTag(idx)}
                   style={{ cursor: 'pointer', backgroundColor: 'var(--color-accent-danger)' }}
                 >
-                  {tag} ×
+                  {tag} x
                 </span>
               ))}
             </div>
           </div>
-        </CollapsibleSection>
 
-        {/* Sell Config Section */}
-        <CollapsibleSection
-          title="Sell Configuration"
-          isCollapsed={collapsedSections.sellConfig}
-          onToggle={() => toggleSection('sellConfig')}
-        >
+          {/* Sell Configuration */}
+          <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+            Sell Configuration
+          </h4>
           <div className="creator-form-row">
             <FormSelect
               label="Inventory Mode"
@@ -505,21 +542,17 @@ const MerchantCreator = ({
                       onClick={() => handleNestedChange('sellConfig', 'saleTags', formData.sellConfig.saleTags.filter((_, i) => i !== idx))}
                       style={{ cursor: 'pointer' }}
                     >
-                      {tag} ×
+                      {tag} x
                     </span>
                   ))}
                 </div>
               </div>
             </>
           )}
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Dialogue Section */}
-        <CollapsibleSection
-          title="Dialogue"
-          isCollapsed={collapsedSections.dialogue}
-          onToggle={() => toggleSection('dialogue')}
-        >
+        {/* Dialogue Tab */}
+        <FormTabPanel id="dialogue" activeTab={activeTab}>
           <FormInput
             label="Greeting"
             type="textarea"
@@ -544,79 +577,115 @@ const MerchantCreator = ({
             placeholder="Come back soon!"
             rows={2}
           />
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Inventory Section (for static mode) */}
-        {formData.sellConfig.mode === 'static' && (
-          <CollapsibleSection
-            title="Inventory Items"
-            isCollapsed={collapsedSections.inventory}
-            onToggle={() => toggleSection('inventory')}
-            badge={formData.inventory.length}
-          >
-            {formData.inventory.map((item, index) => (
-              <div key={index} style={{
-                marginBottom: 'var(--space-md)',
-                padding: 'var(--space-md)',
-                background: 'var(--color-bg-tertiary)',
-                borderRadius: 'var(--radius-md)',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
-                  <span className="text-secondary text-sm">Item #{index + 1}</span>
-                  <Button variant="danger" size="sm" onClick={() => handleRemoveInventoryItem(index)}>
-                    Remove
-                  </Button>
-                </div>
+        {/* Inventory Tab */}
+        <FormTabPanel id="inventory" activeTab={activeTab}>
+          {formData.sellConfig.mode === 'static' ? (
+            <>
+              {formData.inventory.map((item, index) => (
+                <div key={index} style={{
+                  marginBottom: 'var(--space-md)',
+                  padding: 'var(--space-md)',
+                  background: 'var(--color-bg-tertiary)',
+                  borderRadius: 'var(--radius-md)',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
+                    <span className="text-secondary text-sm">Item #{index + 1}</span>
+                    <Button variant="danger" size="sm" onClick={() => handleRemoveInventoryItem(index)}>
+                      Remove
+                    </Button>
+                  </div>
 
-                <div className="creator-form-row">
-                  {availableItems.length > 0 ? (
-                    <FormSelect
-                      label="Item"
-                      value={item.itemId}
-                      onChange={(v) => handleUpdateInventoryItem(index, { itemId: v })}
-                      options={[{ value: '', label: 'Select item...' }, ...availableItems]}
-                    />
-                  ) : (
+                  <div className="creator-form-row">
+                    {availableItems.length > 0 ? (
+                      <FormSelect
+                        label="Item"
+                        value={item.itemId}
+                        onChange={(v) => handleUpdateInventoryItem(index, { itemId: v })}
+                        options={[{ value: '', label: 'Select item...' }, ...availableItems]}
+                      />
+                    ) : (
+                      <FormInput
+                        label="Item ID"
+                        value={item.itemId}
+                        onChange={(v) => handleUpdateInventoryItem(index, { itemId: v })}
+                        placeholder="item_id"
+                      />
+                    )}
                     <FormInput
-                      label="Item ID"
-                      value={item.itemId}
-                      onChange={(v) => handleUpdateInventoryItem(index, { itemId: v })}
-                      placeholder="item_id"
+                      label="Quantity"
+                      type="number"
+                      value={item.quantity}
+                      onChange={(v) => handleUpdateInventoryItem(index, { quantity: v })}
+                      min={1}
                     />
-                  )}
-                  <FormInput
-                    label="Quantity"
-                    type="number"
-                    value={item.quantity}
-                    onChange={(v) => handleUpdateInventoryItem(index, { quantity: v })}
-                    min={1}
-                  />
-                </div>
+                  </div>
 
-                <div className="creator-form-row">
-                  <FormInput
-                    label="Min Level"
-                    type="number"
-                    value={item.minLevel || ''}
-                    onChange={(v) => handleUpdateInventoryItem(index, { minLevel: v || null })}
-                    min={1}
-                    placeholder="Any"
-                  />
-                  <FormInput
-                    label="Requires Flag"
-                    value={item.requiresFlag || ''}
-                    onChange={(v) => handleUpdateInventoryItem(index, { requiresFlag: v || null })}
-                    placeholder="None"
-                  />
+                  <div className="creator-form-row">
+                    <FormInput
+                      label="Min Level"
+                      type="number"
+                      value={item.minLevel || ''}
+                      onChange={(v) => handleUpdateInventoryItem(index, { minLevel: v || null })}
+                      min={1}
+                      placeholder="Any"
+                    />
+                    <FormInput
+                      label="Requires Flag"
+                      value={item.requiresFlag || ''}
+                      onChange={(v) => handleUpdateInventoryItem(index, { requiresFlag: v || null })}
+                      placeholder="None"
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
-            <Button variant="success" size="sm" onClick={handleAddInventoryItem}>
-              + Add Inventory Item
-            </Button>
-          </CollapsibleSection>
-        )}
+              <Button variant="success" size="sm" onClick={handleAddInventoryItem}>
+                + Add Inventory Item
+              </Button>
+            </>
+          ) : (
+            <div className="empty-list" style={{ padding: 'var(--space-md)' }}>
+              Inventory items are only available in Static inventory mode.
+              <br />
+              Switch to Static mode in the Trading tab to define specific items.
+            </div>
+          )}
+        </FormTabPanel>
+
+        {/* NSFW Tab */}
+        <FormTabPanel id="nsfw" activeTab={activeTab}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+              <input
+                type="checkbox"
+                checked={formData.nsfwEnabled}
+                onChange={(e) => handleChange('nsfwEnabled', e.target.checked)}
+              />
+              NSFW Content Enabled
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+              <input
+                type="checkbox"
+                checked={formData.canBeSeduced}
+                onChange={(e) => handleChange('canBeSeduced', e.target.checked)}
+              />
+              Can Be Seduced
+            </label>
+          </div>
+          {formData.canBeSeduced && (
+            <FormInput
+              label="Seduction Difficulty"
+              type="number"
+              value={formData.seductionDifficulty}
+              onChange={(v) => handleChange('seductionDifficulty', v)}
+              min={0}
+              max={100}
+              helper="0-100: Lower = easier"
+            />
+          )}
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -632,73 +701,49 @@ const MerchantCreator = ({
       </div>
 
       {/* List Section */}
-      <div className="creator-list">
-        <h3 className="creator-form-section-title">
-          Created Merchants
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No merchants created yet.
-            <br />
-            Use the form to create your first merchant.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">
-                  {item.name}
-                  {item.nsfwEnabled && (
-                    <span className="rarity-badge" style={{ backgroundColor: '#e91e63' }}>
-                      NSFW
-                    </span>
-                  )}
-                  {item.canBeSeduced && (
-                    <span className="rarity-badge" style={{ backgroundColor: 'var(--color-accent-secondary)' }}>
-                      Seducible
-                    </span>
-                  )}
-                </div>
-                <div className="creator-item-id">
-                  ID: {item.id} | {item.locationId || 'Traveling'} | {item.sellConfig?.mode || 'static'}
-                </div>
-                <div className="creator-item-id">
-                  Buys: {item.buyConfig?.acceptedTags?.slice(0, 3).join(', ') || 'none'}
-                  {item.buyConfig?.acceptedTags?.length > 3 && ` +${item.buyConfig.acceptedTags.length - 3}`}
-                </div>
-                {item.tags?.length > 0 && (
-                  <div className="creator-item-tags">
-                    {item.tags.slice(0, 3).map(tag => (
-                      <span key={tag} className="tag-chip">{tag}</span>
-                    ))}
-                    {item.tags.length > 3 && (
-                      <span className="tag-chip more">+{item.tags.length - 3}</span>
-                    )}
-                  </div>
+      <CreatorItemsList
+        items={items}
+        title="Created Merchants"
+        itemType="merchant"
+        editingItem={editingItem}
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        renderItemContent={(item) => (
+          <>
+            <div className="creator-item-name">
+              {item.name}
+              {item.nsfwEnabled && (
+                <span className="rarity-badge" style={{ backgroundColor: '#e91e63' }}>
+                  NSFW
+                </span>
+              )}
+              {item.canBeSeduced && (
+                <span className="rarity-badge" style={{ backgroundColor: 'var(--color-accent-secondary)' }}>
+                  Seducible
+                </span>
+              )}
+            </div>
+            <div className="creator-item-id">
+              ID: {item.id} | {item.locationId || 'Traveling'} | {item.sellConfig?.mode || 'static'}
+            </div>
+            <div className="creator-item-id">
+              Buys: {item.buyConfig?.acceptedTags?.slice(0, 3).join(', ') || 'none'}
+              {item.buyConfig?.acceptedTags?.length > 3 && ` +${item.buyConfig.acceptedTags.length - 3}`}
+            </div>
+            {item.tags?.length > 0 && (
+              <div className="creator-item-tags">
+                {item.tags.slice(0, 3).map(tag => (
+                  <span key={tag} className="tag-chip">{tag}</span>
+                ))}
+                {item.tags.length > 3 && (
+                  <span className="tag-chip more">+{item.tags.length - 3}</span>
                 )}
               </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
-                  Duplicate
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
-                  Delete
-                </Button>
-              </div>
-            </div>
-          ))
+            )}
+          </>
         )}
-      </div>
+      />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
-import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, Button, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
 import './CreatorStyles.css';
 
@@ -87,16 +88,8 @@ const DialogueCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_DIALOGUE });
-  const [hoveredItem, setHoveredItem] = useState(null);
   const [expandedNodes, setExpandedNodes] = useState({});
-  const [collapsedSections, setCollapsedSections] = useState({
-    dialogueNodes: false,
-    tags: true,
-  });
-
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
+  const [activeTab, setActiveTab] = useState('basic');
 
   const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
     defaultValues: DEFAULT_DIALOGUE,
@@ -129,6 +122,20 @@ const DialogueCreator = ({
       label: npc.name || npc.id,
     }));
   }, [allNPCs]);
+
+  // Define tabs with badges
+  const tabs = useMemo(() => {
+    const hasConditions = formData.triggerConditions?.length > 0;
+    const totalResponses = formData.nodes.reduce((sum, node) => sum + (node.responses?.length || 0), 0);
+    const totalActions = formData.nodes.reduce((sum, node) => sum + (node.actions?.length || 0), 0);
+
+    return [
+      { id: 'basic', label: 'Basic' },
+      { id: 'conditions', label: 'Conditions', badge: hasConditions ? formData.triggerConditions.length : null },
+      { id: 'responses', label: 'Responses', badge: formData.nodes.length > 0 ? formData.nodes.length : null },
+      { id: 'actions', label: 'Actions', badge: totalActions > 0 ? totalActions : null },
+    ];
+  }, [formData.triggerConditions, formData.nodes]);
 
   useEffect(() => {
     if (editingItem) {
@@ -271,70 +278,147 @@ const DialogueCreator = ({
           {editingItem ? 'Edit Dialogue' : 'Create New Dialogue'}
         </h3>
 
-        {/* Basic Info */}
-        <div className="creator-form-section">
-          <div className="creator-form-row">
-            <FormInput
-              label="ID"
-              required
-              value={formData.id}
-              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
-              placeholder="innkeeper_greeting"
-            />
-            <FormInput
-              label="Name"
-              required
-              value={formData.name}
-              onChange={(v) => handleChange('name', v)}
-              placeholder="Innkeeper Greeting"
-            />
-          </div>
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-          <div className="creator-form-row">
-            <FormSelect
-              label="Associated NPC"
-              value={formData.npcId}
-              onChange={(v) => handleChange('npcId', v)}
-              options={npcOptions}
-              placeholder="Select NPC..."
+        {/* Basic Tab */}
+        <FormTabPanel id="basic" activeTab={activeTab}>
+          <div className="creator-form-section">
+            <IdNameFields
+              idValue={formData.id}
+              nameValue={formData.name}
+              onIdChange={(v) => handleChange('id', v)}
+              onNameChange={(v) => handleChange('name', v)}
+              idPlaceholder="innkeeper_greeting"
+              namePlaceholder="Innkeeper Greeting"
             />
-            <FormInput
-              label="Priority"
-              type="number"
-              value={formData.priority}
-              onChange={(v) => handleChange('priority', v)}
-              helper="Higher = shown first"
-            />
-          </div>
 
-          <FormInput
-            label="Description"
-            type="textarea"
-            value={formData.description}
-            onChange={(v) => handleChange('description', v)}
-            placeholder="Brief description of this dialogue tree..."
-            rows={2}
-          />
-
-          <div className="checkbox-row">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={formData.isRepeatable}
-                onChange={(e) => handleChange('isRepeatable', e.target.checked)}
+            <div className="creator-form-row">
+              <FormSelect
+                label="Associated NPC"
+                value={formData.npcId}
+                onChange={(v) => handleChange('npcId', v)}
+                options={npcOptions}
+                placeholder="Select NPC..."
               />
-              <span className="checkbox-text">Can be repeated (player can trigger this dialogue again)</span>
-            </label>
-          </div>
-        </div>
+              <FormInput
+                label="Priority"
+                type="number"
+                value={formData.priority}
+                onChange={(v) => handleChange('priority', v)}
+                helper="Higher = shown first"
+              />
+            </div>
 
-        {/* Dialogue Nodes */}
-        <CollapsibleSection
-          title="Dialogue Nodes"
-          isCollapsed={collapsedSections.dialogueNodes}
-          onToggle={() => toggleSection('dialogueNodes')}
-          badge={formData.nodes.length > 0 ? formData.nodes.length : null}
-        >
+            <DescriptionField
+              value={formData.description}
+              onChange={(v) => handleChange('description', v)}
+              placeholder="Brief description of this dialogue tree..."
+              rows={2}
+            />
+
+            <div className="checkbox-row">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={formData.isRepeatable}
+                  onChange={(e) => handleChange('isRepeatable', e.target.checked)}
+                />
+                <span className="checkbox-text">Can be repeated (player can trigger this dialogue again)</span>
+              </label>
+            </div>
+
+            {/* Tags */}
+            <h4 style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-sm)' }}>
+              Tags
+            </h4>
+            <TagInput
+              value={formData.tags}
+              onChange={(v) => handleChange('tags', v)}
+              suggestions={suggestedTags}
+              categories={TAG_CATEGORIES}
+              placeholder="Add tag..."
+              showSuggestions
+            />
+          </div>
+        </FormTabPanel>
+
+        {/* Conditions Tab */}
+        <FormTabPanel id="conditions" activeTab={activeTab}>
+          <div className="creator-form-section">
+            <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+              Display Conditions
+            </h4>
+            <p className="text-muted text-sm" style={{ marginBottom: 'var(--space-md)' }}>
+              Configure conditions that must be met for this dialogue to be available to the player.
+            </p>
+
+            <div style={{ marginBottom: 'var(--space-md)' }}>
+              <Button variant="success" size="sm" onClick={() => {
+                setFormData(prev => ({
+                  ...prev,
+                  triggerConditions: [...prev.triggerConditions, { type: 'none', value: '' }],
+                }));
+              }}>
+                + Add Condition
+              </Button>
+            </div>
+
+            {formData.triggerConditions.length === 0 ? (
+              <div className="empty-list">
+                No display conditions set.
+                <br />
+                This dialogue will always be available.
+              </div>
+            ) : (
+              formData.triggerConditions.map((condition, index) => (
+                <div key={index} className="array-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
+                    <span className="text-secondary text-sm">Condition {index + 1}</span>
+                    <Button variant="danger" size="sm" onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        triggerConditions: prev.triggerConditions.filter((_, i) => i !== index),
+                      }));
+                    }}>
+                      x
+                    </Button>
+                  </div>
+                  <div className="creator-form-row">
+                    <FormSelect
+                      label="Type"
+                      value={condition.type}
+                      onChange={(v) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          triggerConditions: prev.triggerConditions.map((c, i) =>
+                            i === index ? { ...c, type: v } : c
+                          ),
+                        }));
+                      }}
+                      options={CONDITION_TYPES}
+                    />
+                    <FormInput
+                      label="Value"
+                      value={condition.value || ''}
+                      onChange={(v) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          triggerConditions: prev.triggerConditions.map((c, i) =>
+                            i === index ? { ...c, value: v } : c
+                          ),
+                        }));
+                      }}
+                      placeholder="Condition value..."
+                    />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </FormTabPanel>
+
+        {/* Responses Tab (Dialogue Nodes) */}
+        <FormTabPanel id="responses" activeTab={activeTab}>
           <div className="creator-form-section">
             <div style={{ marginBottom: 'var(--space-md)' }}>
               <Button variant="success" size="sm" onClick={handleAddNode}>
@@ -432,7 +516,7 @@ const DialogueCreator = ({
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
                               <span className="text-secondary text-sm">Response {respIndex + 1}</span>
                               <Button variant="danger" size="sm" onClick={() => handleRemoveResponse(nodeIndex, respIndex)}>
-                                ×
+                                x
                               </Button>
                             </div>
                             <FormInput
@@ -469,26 +553,99 @@ const DialogueCreator = ({
               ))
             )}
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Tags */}
-        <CollapsibleSection
-          title="Tags"
-          isCollapsed={collapsedSections.tags}
-          onToggle={() => toggleSection('tags')}
-          badge={formData.tags.length > 0 ? formData.tags.length : null}
-        >
+        {/* Actions Tab */}
+        <FormTabPanel id="actions" activeTab={activeTab}>
           <div className="creator-form-section">
-            <TagInput
-              value={formData.tags}
-              onChange={(v) => handleChange('tags', v)}
-              suggestions={suggestedTags}
-              categories={TAG_CATEGORIES}
-              placeholder="Add tag..."
-              showSuggestions
-            />
+            <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+              Node Actions
+            </h4>
+            <p className="text-muted text-sm" style={{ marginBottom: 'var(--space-md)' }}>
+              Actions are triggered when a dialogue node is displayed. Select a node to configure its actions.
+            </p>
+
+            {formData.nodes.length === 0 ? (
+              <div className="empty-list">
+                No dialogue nodes yet.
+                <br />
+                Create nodes in the Responses tab first.
+              </div>
+            ) : (
+              formData.nodes.map((node, nodeIndex) => (
+                <div key={node.id || nodeIndex} className="collapsible">
+                  <div
+                    className="collapsible-header"
+                    onClick={() => toggleNodeExpanded(nodeIndex)}
+                  >
+                    <div className="collapsible-title">
+                      <span style={{ marginRight: 'var(--space-sm)' }}>
+                        {expandedNodes[nodeIndex] ? '▼' : '▶'}
+                      </span>
+                      {node.id || `Node ${nodeIndex + 1}`}
+                      <span className="text-muted text-sm" style={{ marginLeft: 'var(--space-sm)' }}>
+                        ({node.actions?.length || 0} actions)
+                      </span>
+                    </div>
+                  </div>
+
+                  {expandedNodes[nodeIndex] && (
+                    <div className="collapsible-content">
+                      <div style={{ marginBottom: 'var(--space-md)' }}>
+                        <Button variant="success" size="sm" onClick={() => {
+                          handleUpdateNode(nodeIndex, 'actions', [...(node.actions || []), { type: 'none', value: '' }]);
+                        }}>
+                          + Add Action
+                        </Button>
+                      </div>
+
+                      {(!node.actions || node.actions.length === 0) ? (
+                        <div className="text-muted text-sm" style={{ fontStyle: 'italic' }}>
+                          No actions for this node.
+                        </div>
+                      ) : (
+                        node.actions.map((action, actionIndex) => (
+                          <div key={actionIndex} className="array-item" style={{ flexDirection: 'column', alignItems: 'stretch', borderLeft: '3px solid var(--color-accent-info)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
+                              <span className="text-secondary text-sm">Action {actionIndex + 1}</span>
+                              <Button variant="danger" size="sm" onClick={() => {
+                                handleUpdateNode(nodeIndex, 'actions', node.actions.filter((_, i) => i !== actionIndex));
+                              }}>
+                                x
+                              </Button>
+                            </div>
+                            <div className="creator-form-row">
+                              <FormSelect
+                                label="Action Type"
+                                value={action.type}
+                                onChange={(v) => {
+                                  const newActions = [...node.actions];
+                                  newActions[actionIndex] = { ...action, type: v };
+                                  handleUpdateNode(nodeIndex, 'actions', newActions);
+                                }}
+                                options={ACTION_TYPES}
+                              />
+                              <FormInput
+                                label="Value"
+                                value={action.value || ''}
+                                onChange={(v) => {
+                                  const newActions = [...node.actions];
+                                  newActions[actionIndex] = { ...action, value: v };
+                                  handleUpdateNode(nodeIndex, 'actions', newActions);
+                                }}
+                                placeholder="Action value..."
+                              />
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -504,59 +661,35 @@ const DialogueCreator = ({
       </div>
 
       {/* List Section */}
-      <div className="creator-list">
-        <h3 className="creator-form-section-title">
-          Created Dialogues
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No dialogues created yet.
-            <br />
-            Use the form to create your first dialogue tree.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id || item.id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">
-                  {item.name}
-                </div>
-                <div className="creator-item-id">
-                  ID: {item.id} | {item.nodes?.length || 0} nodes | NPC: {allNPCs.find(n => n.id === item.npcId)?.name || item.npcId || 'None'}
-                </div>
-                {item.tags?.length > 0 && (
-                  <div className="creator-item-tags">
-                    {item.tags.slice(0, 4).map(tag => (
-                      <span key={tag} className="tag-chip">{tag}</span>
-                    ))}
-                    {item.tags.length > 4 && (
-                      <span className="tag-chip more">+{item.tags.length - 4}</span>
-                    )}
-                  </div>
+      <CreatorItemsList
+        items={items}
+        title="Created Dialogues"
+        itemType="dialogue tree"
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        editingItem={editingItem}
+        renderItemContent={(item) => (
+          <>
+            <div className="creator-item-name">
+              {item.name}
+            </div>
+            <div className="creator-item-id">
+              ID: {item.id} | {item.nodes?.length || 0} nodes | NPC: {allNPCs.find(n => n.id === item.npcId)?.name || item.npcId || 'None'}
+            </div>
+            {item.tags?.length > 0 && (
+              <div className="creator-item-tags">
+                {item.tags.slice(0, 4).map(tag => (
+                  <span key={tag} className="tag-chip">{tag}</span>
+                ))}
+                {item.tags.length > 4 && (
+                  <span className="tag-chip more">+{item.tags.length - 4}</span>
                 )}
               </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
-                  Duplicate
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
-                  Delete
-                </Button>
-              </div>
-            </div>
-          ))
+            )}
+          </>
         )}
-      </div>
+      />
     </div>
   );
 };

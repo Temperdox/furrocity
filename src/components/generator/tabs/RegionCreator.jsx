@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, Button, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
 import './CreatorStyles.css';
 
@@ -41,18 +42,7 @@ const RegionCreator = ({
   onCancelEdit,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_REGION });
-  const [hoveredItem, setHoveredItem] = useState(null);
-  const [collapsedSections, setCollapsedSections] = useState({
-    difficulty: true,
-    mapTravel: true,
-    connectedRegions: true,
-    tags: true,
-    audio: true,
-  });
-
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
+  const [activeTab, setActiveTab] = useState('basic');
 
   const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
     defaultValues: DEFAULT_REGION,
@@ -67,6 +57,22 @@ const RegionCreator = ({
     });
     return Array.from(allTags).sort();
   }, [items]);
+
+  // Define tabs with badges
+  const tabs = useMemo(() => {
+    const hasLevelRange = formData.levelRange.min > 1 || formData.levelRange.max > 10;
+    const hasDangerRange = formData.dangerRange.min > 1 || formData.dangerRange.max > 3;
+    const hasMapSettings = formData.mapPosition.x !== 0 || formData.mapPosition.y !== 0 || formData.travelCost.gold > 0;
+
+    return [
+      { id: 'basic', label: 'Basic' },
+      { id: 'difficulty', label: 'Difficulty', badge: hasLevelRange || hasDangerRange ? `Lvl ${formData.levelRange.min}-${formData.levelRange.max}` : null },
+      { id: 'mapTravel', label: 'Map & Travel', badge: hasMapSettings ? (formData.travelCost.gold > 0 ? `${formData.travelCost.gold}g` : null) : null },
+      { id: 'connections', label: 'Connections', badge: formData.neighborRegions.length > 0 ? `${formData.neighborRegions.length} links` : null },
+      { id: 'tags', label: 'Tags', badge: formData.tags.length > 0 ? `${formData.tags.length} tags` : null },
+      { id: 'audio', label: 'Audio', badge: formData.ambientMusic ? '✓' : null },
+    ];
+  }, [formData.levelRange, formData.dangerRange, formData.mapPosition, formData.travelCost, formData.neighborRegions.length, formData.tags.length, formData.ambientMusic]);
 
   useEffect(() => {
     if (editingItem) {
@@ -132,32 +138,23 @@ const RegionCreator = ({
           {editingItem ? 'Edit Region' : 'Create New Region'}
         </h3>
 
-        {/* Basic Info */}
-        <div className="creator-form-section">
-          <div className="creator-form-row">
-            <FormInput
-              label="ID"
-              required
-              value={formData.id}
-              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
-              placeholder="unique_region_id"
-            />
-            <FormInput
-              label="Name"
-              required
-              value={formData.name}
-              onChange={(v) => handleChange('name', v)}
-              placeholder="Region Name"
-            />
-          </div>
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-          <FormInput
-            label="Description"
-            type="textarea"
+        {/* Basic Tab */}
+        <FormTabPanel id="basic" activeTab={activeTab}>
+          <IdNameFields
+            idValue={formData.id}
+            nameValue={formData.name}
+            onIdChange={(v) => handleChange('id', v)}
+            onNameChange={(v) => handleChange('name', v)}
+            idPlaceholder="unique_region_id"
+            namePlaceholder="Region Name"
+          />
+
+          <DescriptionField
             value={formData.description}
             onChange={(v) => handleChange('description', v)}
             placeholder="Describe this region..."
-            rows={3}
           />
 
           <FormInput
@@ -166,15 +163,10 @@ const RegionCreator = ({
             onChange={(v) => handleChange('theme', v)}
             placeholder="A brief thematic description"
           />
-        </div>
+        </FormTabPanel>
 
-        {/* Difficulty Settings */}
-        <CollapsibleSection
-          title="Difficulty Settings"
-          isCollapsed={collapsedSections.difficulty}
-          onToggle={() => toggleSection('difficulty')}
-          badge={`Lvl ${formData.levelRange.min}-${formData.levelRange.max}`}
-        >
+        {/* Difficulty Tab */}
+        <FormTabPanel id="difficulty" activeTab={activeTab}>
           <div className="creator-form-row">
             <FormInput
               label="Min Level"
@@ -209,15 +201,10 @@ const RegionCreator = ({
               max={5}
             />
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Map & Travel */}
-        <CollapsibleSection
-          title="Map & Travel"
-          isCollapsed={collapsedSections.mapTravel}
-          onToggle={() => toggleSection('mapTravel')}
-          badge={formData.travelCost.gold > 0 ? `${formData.travelCost.gold}g` : null}
-        >
+        {/* Map & Travel Tab */}
+        <FormTabPanel id="mapTravel" activeTab={activeTab}>
           <div className="creator-form-row">
             <FormInput
               label="Map Position X"
@@ -254,15 +241,10 @@ const RegionCreator = ({
             onChange={(v) => handleChange('mapIcon', v)}
             placeholder="/icons/region_icon.png"
           />
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Connected Regions */}
-        <CollapsibleSection
-          title="Connected Regions"
-          isCollapsed={collapsedSections.connectedRegions}
-          onToggle={() => toggleSection('connectedRegions')}
-          badge={formData.neighborRegions.length > 0 ? `${formData.neighborRegions.length} links` : null}
-        >
+        {/* Connections Tab */}
+        <FormTabPanel id="connections" activeTab={activeTab}>
           <TagInput
             value={formData.neighborRegions}
             onChange={(v) => handleChange('neighborRegions', v)}
@@ -275,15 +257,10 @@ const RegionCreator = ({
               Click regions above to connect them, or type a region ID.
             </div>
           )}
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Tags */}
-        <CollapsibleSection
-          title="Tags"
-          isCollapsed={collapsedSections.tags}
-          onToggle={() => toggleSection('tags')}
-          badge={formData.tags.length > 0 ? `${formData.tags.length} tags` : null}
-        >
+        {/* Tags Tab */}
+        <FormTabPanel id="tags" activeTab={activeTab}>
           <TagInput
             value={formData.tags}
             onChange={(v) => handleChange('tags', v)}
@@ -292,22 +269,17 @@ const RegionCreator = ({
             placeholder="Add tag..."
             showSuggestions
           />
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Audio */}
-        <CollapsibleSection
-          title="Audio"
-          isCollapsed={collapsedSections.audio}
-          onToggle={() => toggleSection('audio')}
-          badge={formData.ambientMusic ? '✓' : null}
-        >
+        {/* Audio Tab */}
+        <FormTabPanel id="audio" activeTab={activeTab}>
           <FormInput
             label="Ambient Music"
             value={formData.ambientMusic}
             onChange={(v) => handleChange('ambientMusic', v)}
             placeholder="region_ambient_music"
           />
-        </CollapsibleSection>
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -323,59 +295,35 @@ const RegionCreator = ({
       </div>
 
       {/* List Section */}
-      <div className="creator-list">
-        <h3 className="creator-form-section-title">
-          Created Regions
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No regions created yet.
-            <br />
-            Use the form to create your first region.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">
-                  {item.name}
-                </div>
-                <div className="creator-item-id">
-                  ID: {item.id} | Levels: {item.levelRange?.min}-{item.levelRange?.max}
-                </div>
-                {item.tags?.length > 0 && (
-                  <div className="creator-item-tags">
-                    {item.tags.slice(0, 4).map(tag => (
-                      <span key={tag} className="tag-chip">{tag}</span>
-                    ))}
-                    {item.tags.length > 4 && (
-                      <span className="tag-chip more">+{item.tags.length - 4}</span>
-                    )}
-                  </div>
+      <CreatorItemsList
+        items={items}
+        title="Created Regions"
+        itemType="region"
+        editingItem={editingItem}
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        renderItemContent={(item) => (
+          <>
+            <div className="creator-item-name">
+              {item.name}
+            </div>
+            <div className="creator-item-id">
+              ID: {item.id} | Levels: {item.levelRange?.min}-{item.levelRange?.max}
+            </div>
+            {item.tags?.length > 0 && (
+              <div className="creator-item-tags">
+                {item.tags.slice(0, 4).map(tag => (
+                  <span key={tag} className="tag-chip">{tag}</span>
+                ))}
+                {item.tags.length > 4 && (
+                  <span className="tag-chip more">+{item.tags.length - 4}</span>
                 )}
               </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
-                  Duplicate
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
-                  Delete
-                </Button>
-              </div>
-            </div>
-          ))
+            )}
+          </>
         )}
-      </div>
+      />
     </div>
   );
 };

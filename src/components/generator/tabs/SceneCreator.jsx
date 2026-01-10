@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
-import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, Button, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
 import './CreatorStyles.css';
 
@@ -270,19 +271,10 @@ const SceneCreator = ({
   const allCharacters = [...(datapackContent.characters || []), ...(allContent?.characters || [])];
 
   const [formData, setFormData] = useState({ ...DEFAULT_SCENE });
-  const [hoveredItem, setHoveredItem] = useState(null);
   const [expandedNodes, setExpandedNodes] = useState({});
   const [activeTagCategory, setActiveTagCategory] = useState(null);
   const [activeNodeIndex, setActiveNodeIndex] = useState(null);
-  const [collapsedSections, setCollapsedSections] = useState({
-    nsfw: true,
-    tags: true,
-    nodes: false,
-  });
-
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
+  const [activeTab, setActiveTab] = useState('basic');
 
   const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
     defaultValues: DEFAULT_SCENE,
@@ -296,6 +288,15 @@ const SceneCreator = ({
       contentType: 'scenes',
     });
   }, [datapackContent, items]);
+
+  // Define tabs with badges
+  const tabs = useMemo(() => {
+    return [
+      { id: 'basic', label: 'Basic', badge: formData.isNSFW ? 'NSFW' : null },
+      { id: 'variables', label: 'Variables', badge: formData.tags.length || null },
+      { id: 'choices', label: 'Nodes', badge: formData.nodes.length || null },
+    ];
+  }, [formData.isNSFW, formData.tags.length, formData.nodes.length]);
 
   useEffect(() => {
     if (editingItem) {
@@ -1148,88 +1149,75 @@ const SceneCreator = ({
           {editingItem ? 'Edit Scene' : 'Create New Scene'}
         </h3>
 
-        {/* Basic Info */}
-        <div className="creator-form-section">
-          <div className="creator-form-row">
-            <FormInput
-              label="ID"
-              required
-              value={formData.id}
-              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
-              placeholder="unique_scene_id"
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+
+        {/* Basic Tab */}
+        <FormTabPanel id="basic" activeTab={activeTab}>
+          <div className="creator-form-section">
+            <IdNameFields
+              idValue={formData.id}
+              nameValue={formData.name}
+              onIdChange={(v) => handleChange('id', v)}
+              onNameChange={(v) => handleChange('name', v)}
+              idPlaceholder="unique_scene_id"
+              namePlaceholder="Scene Name"
             />
+
+            <DescriptionField
+              value={formData.description}
+              onChange={(v) => handleChange('description', v)}
+              placeholder="Scene description for reference..."
+            />
+
             <FormInput
-              label="Name"
-              required
-              value={formData.name}
-              onChange={(v) => handleChange('name', v)}
-              placeholder="Scene Name"
+              label="Required Location (optional)"
+              value={formData.location}
+              onChange={(v) => handleChange('location', v)}
+              placeholder="location_id"
             />
           </div>
 
-          <FormInput
-            label="Description"
-            type="textarea"
-            value={formData.description}
-            onChange={(v) => handleChange('description', v)}
-            placeholder="Scene description for reference..."
-            rows={3}
-          />
-
-          <FormInput
-            label="Required Location (optional)"
-            value={formData.location}
-            onChange={(v) => handleChange('location', v)}
-            placeholder="location_id"
-          />
-        </div>
-
-        {/* NSFW Settings */}
-        <CollapsibleSection
-          title="NSFW Settings"
-          isCollapsed={collapsedSections.nsfw}
-          onToggle={() => toggleSection('nsfw')}
-          badge={formData.isNSFW ? 'NSFW' : null}
-        >
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={formData.isNSFW}
-              onChange={(e) => handleChange('isNSFW', e.target.checked)}
-            />
-            <span style={{ color: formData.isNSFW ? '#ff6b9d' : undefined }}>
-              Mark as NSFW Scene
-            </span>
-          </label>
-          <div className="form-helper ml-lg">
-            NSFW scenes can be linked to enemy NSFW actions
-          </div>
-
-          {formData.isNSFW && (
-            <div className="mt-md">
-              <TagInput
-                label="NSFW Action Categories"
-                value={formData.nsfwActionTypes}
-                onChange={(v) => handleChange('nsfwActionTypes', v)}
-                suggestions={NSFW_ACTION_CATEGORIES.map(c => c.value)}
-                placeholder="Add action type..."
-                showSuggestions
+          {/* NSFW Settings */}
+          <div className="creator-form-section">
+            <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+              NSFW Settings
+            </h4>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={formData.isNSFW}
+                onChange={(e) => handleChange('isNSFW', e.target.checked)}
               />
-              <div className="form-helper mt-sm">
-                A scene can have multiple action types (e.g., penetrate + infest)
-              </div>
+              <span style={{ color: formData.isNSFW ? '#ff6b9d' : undefined }}>
+                Mark as NSFW Scene
+              </span>
+            </label>
+            <div className="form-helper ml-lg">
+              NSFW scenes can be linked to enemy NSFW actions
             </div>
-          )}
-        </CollapsibleSection>
 
-        {/* Tags */}
-        <CollapsibleSection
-          title="Tags"
-          isCollapsed={collapsedSections.tags}
-          onToggle={() => toggleSection('tags')}
-          badge={formData.tags.length > 0 ? `${formData.tags.length} tags` : null}
-        >
+            {formData.isNSFW && (
+              <div className="mt-md">
+                <TagInput
+                  label="NSFW Action Categories"
+                  value={formData.nsfwActionTypes}
+                  onChange={(v) => handleChange('nsfwActionTypes', v)}
+                  suggestions={NSFW_ACTION_CATEGORIES.map(c => c.value)}
+                  placeholder="Add action type..."
+                  showSuggestions
+                />
+                <div className="form-helper mt-sm">
+                  A scene can have multiple action types (e.g., penetrate + infest)
+                </div>
+              </div>
+            )}
+          </div>
+        </FormTabPanel>
+
+        {/* Variables Tab (Tags) */}
+        <FormTabPanel id="variables" activeTab={activeTab}>
           <TagInput
+            label="Scene Tags"
             value={formData.tags}
             onChange={(v) => handleChange('tags', v)}
             suggestions={suggestedTags}
@@ -1237,15 +1225,10 @@ const SceneCreator = ({
             placeholder="Add tag..."
             showSuggestions
           />
-        </CollapsibleSection>
+        </FormTabPanel>
 
-        {/* Scene Nodes */}
-        <CollapsibleSection
-          title="Scene Nodes"
-          isCollapsed={collapsedSections.nodes}
-          onToggle={() => toggleSection('nodes')}
-          badge={formData.nodes.length > 0 ? `${formData.nodes.length} nodes` : null}
-        >
+        {/* Choices/Nodes Tab */}
+        <FormTabPanel id="choices" activeTab={activeTab}>
           <div className="scene-add-node-bar">
             {NODE_TYPES.map(type => (
               <button
@@ -1266,7 +1249,7 @@ const SceneCreator = ({
           ) : (
             formData.nodes.map((node, index) => renderNode(node, index))
           )}
-        </CollapsibleSection>
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -1282,67 +1265,43 @@ const SceneCreator = ({
       </div>
 
       {/* List Section */}
-      <div className="creator-list">
-        <h3 className="creator-form-section-title">
-          Created Scenes
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No scenes created yet.
-            <br />
-            Use the form to create your first scene.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">
-                  {item.name}
-                  {item.isNSFW && (
-                    <span className="rarity-badge" style={{ backgroundColor: '#7c4a6a', color: '#ff9dbd' }}>
-                      NSFW
-                    </span>
-                  )}
-                </div>
-                <div className="creator-item-id">
-                  ID: {item.id} | Nodes: {item.nodes?.length || 0}
-                  {(item.nsfwActionTypes?.length > 0 || item.nsfwActionType) && (
-                    <> | Actions: {(item.nsfwActionTypes || [item.nsfwActionType].filter(Boolean)).join(', ')}</>
-                  )}
-                </div>
-                {item.tags?.length > 0 && (
-                  <div className="creator-item-tags">
-                    {item.tags.slice(0, 4).map(tag => (
-                      <span key={tag} className="tag-chip">{tag}</span>
-                    ))}
-                    {item.tags.length > 4 && (
-                      <span className="tag-chip more">+{item.tags.length - 4}</span>
-                    )}
-                  </div>
+      <CreatorItemsList
+        items={items}
+        title="Created Scenes"
+        itemType="scene"
+        editingItem={editingItem}
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        renderItemContent={(item) => (
+          <>
+            <div className="creator-item-name">
+              {item.name}
+              {item.isNSFW && (
+                <span className="rarity-badge" style={{ backgroundColor: '#7c4a6a', color: '#ff9dbd' }}>
+                  NSFW
+                </span>
+              )}
+            </div>
+            <div className="creator-item-id">
+              ID: {item.id} | Nodes: {item.nodes?.length || 0}
+              {(item.nsfwActionTypes?.length > 0 || item.nsfwActionType) && (
+                <> | Actions: {(item.nsfwActionTypes || [item.nsfwActionType].filter(Boolean)).join(', ')}</>
+              )}
+            </div>
+            {item.tags?.length > 0 && (
+              <div className="creator-item-tags">
+                {item.tags.slice(0, 4).map(tag => (
+                  <span key={tag} className="tag-chip">{tag}</span>
+                ))}
+                {item.tags.length > 4 && (
+                  <span className="tag-chip more">+{item.tags.length - 4}</span>
                 )}
               </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
-                  Duplicate
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
-                  Delete
-                </Button>
-              </div>
-            </div>
-          ))
+            )}
+          </>
         )}
-      </div>
+      />
     </div>
   );
 };

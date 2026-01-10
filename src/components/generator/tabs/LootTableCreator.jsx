@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
-import { FormInput, FormSelect, TagInput, Button, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, Button, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
 import './CreatorStyles.css';
 
@@ -69,20 +70,9 @@ const LootTableCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_LOOT_TABLE });
-  const [hoveredItem, setHoveredItem] = useState(null);
   const [newEntry, setNewEntry] = useState({ ...DEFAULT_ENTRY });
   const [newGuaranteed, setNewGuaranteed] = useState({ itemId: '', count: 1 });
-  const [collapsedSections, setCollapsedSections] = useState({
-    rollSettings: false,
-    goldDrops: false,
-    guaranteedDrops: false,
-    lootPool: false,
-    tags: true,
-  });
-
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
+  const [activeTab, setActiveTab] = useState('basic');
 
   const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
     defaultValues: DEFAULT_LOOT_TABLE,
@@ -105,6 +95,30 @@ const LootTableCreator = ({
       label: `${item.name || item.id} (${item.rarity || 'common'})`,
     }));
   }, [allItems]);
+
+  // Calculate total weight for probability display
+  const totalWeight = formData.entries.reduce((sum, entry) => sum + entry.weight, 0);
+
+  // Define tabs with badges
+  const tabs = useMemo(() => {
+    const hasGold = formData.goldRange.min > 0 || formData.goldRange.max > 0;
+    const hasRollSettings = formData.rolls > 1 || formData.bonusRollChance > 0 || formData.levelScaling;
+
+    return [
+      {
+        id: 'basic',
+        label: 'Basic',
+        badge: hasRollSettings || hasGold ? '...' : null
+      },
+      {
+        id: 'entries',
+        label: 'Entries',
+        badge: formData.entries.length + formData.guaranteedDrops.length > 0
+          ? `${formData.entries.length + formData.guaranteedDrops.length}`
+          : null
+      },
+    ];
+  }, [formData.rolls, formData.bonusRollChance, formData.levelScaling, formData.goldRange, formData.entries.length, formData.guaranteedDrops.length]);
 
   useEffect(() => {
     if (editingItem) {
@@ -203,9 +217,6 @@ const LootTableCreator = ({
     if (onCancelEdit) onCancelEdit();
   };
 
-  // Calculate total weight for probability display
-  const totalWeight = formData.entries.reduce((sum, entry) => sum + entry.weight, 0);
-
   return (
     <div className="creator-container">
       {/* Form Section */}
@@ -214,41 +225,31 @@ const LootTableCreator = ({
           {editingItem ? 'Edit Loot Table' : 'Create New Loot Table'}
         </h3>
 
-        {/* Basic Info */}
-        <div className="creator-form-section">
-          <div className="creator-form-row">
-            <FormInput
-              label="ID"
-              required
-              value={formData.id}
-              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
-              placeholder="forest_common_loot"
-            />
-            <FormInput
-              label="Name"
-              required
-              value={formData.name}
-              onChange={(v) => handleChange('name', v)}
-              placeholder="Forest Common Loot"
-            />
-          </div>
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-          <FormInput
-            label="Description"
-            type="textarea"
+        {/* Basic Tab */}
+        <FormTabPanel id="basic" activeTab={activeTab}>
+          {/* Basic Info */}
+          <IdNameFields
+            idValue={formData.id}
+            nameValue={formData.name}
+            onIdChange={(v) => handleChange('id', v)}
+            onNameChange={(v) => handleChange('name', v)}
+            idPlaceholder="forest_common_loot"
+            namePlaceholder="Forest Common Loot"
+          />
+
+          <DescriptionField
             value={formData.description}
             onChange={(v) => handleChange('description', v)}
             placeholder="Describe when this loot table is used..."
             rows={2}
           />
-        </div>
 
-        {/* Roll Settings */}
-        <CollapsibleSection
-          title="Roll Settings"
-          isCollapsed={collapsedSections.rollSettings}
-          onToggle={() => toggleSection('rollSettings')}
-        >
+          {/* Roll Settings */}
+          <h4 style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-sm)' }}>
+            Roll Settings
+          </h4>
           <div className="creator-form-row cols-3">
             <FormInput
               label="Number of Rolls"
@@ -276,14 +277,11 @@ const LootTableCreator = ({
               </label>
             </div>
           </div>
-        </CollapsibleSection>
 
-        {/* Gold Range */}
-        <CollapsibleSection
-          title="Gold Drops"
-          isCollapsed={collapsedSections.goldDrops}
-          onToggle={() => toggleSection('goldDrops')}
-        >
+          {/* Gold Range */}
+          <h4 style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-sm)' }}>
+            Gold Drops
+          </h4>
           <div className="creator-form-row">
             <FormInput
               label="Minimum Gold"
@@ -300,15 +298,33 @@ const LootTableCreator = ({
               min={0}
             />
           </div>
-        </CollapsibleSection>
 
-        {/* Guaranteed Drops */}
-        <CollapsibleSection
-          title="Guaranteed Drops"
-          isCollapsed={collapsedSections.guaranteedDrops}
-          onToggle={() => toggleSection('guaranteedDrops')}
-          badge={formData.guaranteedDrops.length > 0 ? formData.guaranteedDrops.length : null}
-        >
+          {/* Tags */}
+          <h4 style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-sm)' }}>
+            Tags
+          </h4>
+          <TagInput
+            value={formData.tags}
+            onChange={(v) => handleChange('tags', v)}
+            suggestions={suggestedTags}
+            categories={TAG_CATEGORIES}
+            placeholder="Add tag..."
+            showSuggestions
+          />
+        </FormTabPanel>
+
+        {/* Entries Tab */}
+        <FormTabPanel id="entries" activeTab={activeTab}>
+          {/* Guaranteed Drops */}
+          <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+            Guaranteed Drops
+            {formData.guaranteedDrops.length > 0 && (
+              <span className="count-badge" style={{ marginLeft: 'var(--space-sm)' }}>
+                {formData.guaranteedDrops.length}
+              </span>
+            )}
+          </h4>
+
           {formData.guaranteedDrops.map((drop, index) => {
             const itemData = allItems.find(i => i.id === drop.itemId);
             return (
@@ -319,7 +335,7 @@ const LootTableCreator = ({
                   </span>
                 </div>
                 <Button variant="danger" size="sm" onClick={() => handleRemoveGuaranteed(index)}>
-                  ×
+                  x
                 </Button>
               </div>
             );
@@ -353,15 +369,17 @@ const LootTableCreator = ({
               </div>
             </div>
           </div>
-        </CollapsibleSection>
 
-        {/* Loot Entries */}
-        <CollapsibleSection
-          title="Loot Pool (Weighted Random)"
-          isCollapsed={collapsedSections.lootPool}
-          onToggle={() => toggleSection('lootPool')}
-          badge={formData.entries.length > 0 ? `${formData.entries.length}${totalWeight > 0 ? ` | ${totalWeight}w` : ''}` : null}
-        >
+          {/* Loot Pool */}
+          <h4 style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-sm)' }}>
+            Loot Pool (Weighted Random)
+            {formData.entries.length > 0 && (
+              <span className="count-badge" style={{ marginLeft: 'var(--space-sm)' }}>
+                {formData.entries.length}{totalWeight > 0 ? ` | ${totalWeight}w` : ''}
+              </span>
+            )}
+          </h4>
+
           {formData.entries.map((entry, index) => {
             const itemData = allItems.find(i => i.id === entry.itemId);
             const probability = totalWeight > 0 ? ((entry.weight / totalWeight) * 100).toFixed(1) : 0;
@@ -397,7 +415,7 @@ const LootTableCreator = ({
                       title="Weight"
                     />
                     <Button variant="danger" size="sm" onClick={() => handleRemoveEntry(index)}>
-                      ×
+                      x
                     </Button>
                   </div>
                 </div>
@@ -457,24 +475,7 @@ const LootTableCreator = ({
               </div>
             </div>
           </div>
-        </CollapsibleSection>
-
-        {/* Tags */}
-        <CollapsibleSection
-          title="Tags"
-          isCollapsed={collapsedSections.tags}
-          onToggle={() => toggleSection('tags')}
-          badge={formData.tags.length > 0 ? formData.tags.length : null}
-        >
-          <TagInput
-            value={formData.tags}
-            onChange={(v) => handleChange('tags', v)}
-            suggestions={suggestedTags}
-            categories={TAG_CATEGORIES}
-            placeholder="Add tag..."
-            showSuggestions
-          />
-        </CollapsibleSection>
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -490,64 +491,40 @@ const LootTableCreator = ({
       </div>
 
       {/* List Section */}
-      <div className="creator-list">
-        <h3 className="creator-form-section-title">
-          Created Loot Tables
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No loot tables created yet.
-            <br />
-            Use the form to create your first loot table.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id || item.id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">
-                  {item.name}
-                </div>
-                <div className="creator-item-id">
-                  ID: {item.id} | {item.entries?.length || 0} items | {item.rolls || 1} roll(s)
-                </div>
-                {(item.goldRange?.min > 0 || item.goldRange?.max > 0) && (
-                  <div className="creator-item-id">
-                    Gold: {item.goldRange.min}-{item.goldRange.max}
-                  </div>
-                )}
-                {item.tags?.length > 0 && (
-                  <div className="creator-item-tags">
-                    {item.tags.slice(0, 4).map(tag => (
-                      <span key={tag} className="tag-chip">{tag}</span>
-                    ))}
-                    {item.tags.length > 4 && (
-                      <span className="tag-chip more">+{item.tags.length - 4}</span>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
-                  Duplicate
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
-                  Delete
-                </Button>
-              </div>
+      <CreatorItemsList
+        items={items}
+        title="Created Loot Tables"
+        itemType="loot table"
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        editingItem={editingItem}
+        renderItemContent={(item) => (
+          <>
+            <div className="creator-item-name">
+              {item.name}
             </div>
-          ))
+            <div className="creator-item-id">
+              ID: {item.id} | {item.entries?.length || 0} items | {item.rolls || 1} roll(s)
+            </div>
+            {(item.goldRange?.min > 0 || item.goldRange?.max > 0) && (
+              <div className="creator-item-id">
+                Gold: {item.goldRange.min}-{item.goldRange.max}
+              </div>
+            )}
+            {item.tags?.length > 0 && (
+              <div className="creator-item-tags">
+                {item.tags.slice(0, 4).map(tag => (
+                  <span key={tag} className="tag-chip">{tag}</span>
+                ))}
+                {item.tags.length > 4 && (
+                  <span className="tag-chip more">+{item.tags.length - 4}</span>
+                )}
+              </div>
+            )}
+          </>
         )}
-      </div>
+      />
     </div>
   );
 };

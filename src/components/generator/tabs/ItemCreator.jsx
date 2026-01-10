@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collectTags } from '../DatapackLoader';
-import { FormInput, FormSelect, TagInput, ChipSelect, Button, CollapsibleSection } from '../../ui/shared';
+import { FormInput, FormSelect, TagInput, ChipSelect, Button, FormTabs, FormTabPanel } from '../../ui/shared';
+import { CreatorItemsList, IdNameFields, DescriptionField } from '../shared';
 import { useFormDraft } from '../../../hooks/useFormDraft';
 import './CreatorStyles.css';
 
@@ -188,19 +189,7 @@ const ItemCreator = ({
   datapackLoading = false,
 }) => {
   const [formData, setFormData] = useState({ ...DEFAULT_ITEM });
-  const [hoveredItem, setHoveredItem] = useState(null);
-  const [collapsedSections, setCollapsedSections] = useState({
-    equipment: true,
-    icon: true,
-    paperdoll: true,
-    tags: true,
-    stats: true,
-    requirements: true,
-  });
-
-  const toggleSection = (section) => {
-    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
+  const [activeTab, setActiveTab] = useState('basic');
 
   // Use the draft persistence hook
   const { clearDraft } = useFormDraft(DRAFT_KEY, formData, setFormData, editingItem, {
@@ -216,6 +205,20 @@ const ItemCreator = ({
       contentType: 'items',
     });
   }, [datapackContent, items]);
+
+  // Define tabs with badges
+  const tabs = useMemo(() => {
+    const hasStats = Object.values(formData.baseStats).some(v => v !== 0);
+    const hasRequirements = formData.requirements.level > 1 || formData.requirements.strength > 0 || formData.requirements.intelligence > 0;
+
+    return [
+      { id: 'basic', label: 'Basic' },
+      { id: 'equipment', label: 'Equipment', badge: formData.equipSlots.length || null },
+      { id: 'visuals', label: 'Visuals', badge: formData.paperdoll.enabled ? '✓' : null },
+      { id: 'stats', label: 'Stats', badge: hasStats || hasRequirements ? '✓' : null },
+      { id: 'tags', label: 'Tags', badge: formData.tags.length || null },
+    ];
+  }, [formData.equipSlots.length, formData.paperdoll.enabled, formData.baseStats, formData.requirements, formData.tags.length]);
 
   // Load editing item when it changes
   useEffect(() => {
@@ -276,15 +279,6 @@ const ItemCreator = ({
     }));
   };
 
-  const handleToggleEquipSlot = (slot) => {
-    setFormData(prev => ({
-      ...prev,
-      equipSlots: prev.equipSlots.includes(slot)
-        ? prev.equipSlots.filter(s => s !== slot)
-        : [...prev.equipSlots, slot],
-    }));
-  };
-
   const handleSubmit = () => {
     if (!formData.id || !formData.name) {
       alert('ID and Name are required');
@@ -311,11 +305,6 @@ const ItemCreator = ({
     onCancelEdit();
   };
 
-  // Convert EQUIPMENT_SLOTS object to flat array for ChipSelect
-  const getSlotOptions = (category) => {
-    return EQUIPMENT_SLOTS[category] || [];
-  };
-
   return (
     <div className="creator-container">
       {/* Form Section */}
@@ -324,33 +313,23 @@ const ItemCreator = ({
           {editingItem ? 'Edit Item' : 'Create New Item'}
         </h3>
 
-        {/* Basic Info */}
-        <div className="creator-form-section">
-          <div className="creator-form-row">
-            <FormInput
-              label="ID"
-              required
-              value={formData.id}
-              onChange={(v) => handleChange('id', String(v).toLowerCase().replace(/\s/g, '_'))}
-              placeholder="unique_item_id"
-              helper="Unique identifier for this item"
-            />
-            <FormInput
-              label="Name"
-              required
-              value={formData.name}
-              onChange={(v) => handleChange('name', v)}
-              placeholder="Item Name"
-            />
-          </div>
+        <FormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-          <FormInput
-            label="Description"
-            type="textarea"
+        {/* Basic Tab */}
+        <FormTabPanel id="basic" activeTab={activeTab}>
+          <IdNameFields
+            idValue={formData.id}
+            nameValue={formData.name}
+            onIdChange={(v) => handleChange('id', v)}
+            onNameChange={(v) => handleChange('name', v)}
+            idPlaceholder="unique_item_id"
+            namePlaceholder="Item Name"
+          />
+
+          <DescriptionField
             value={formData.description}
             onChange={(v) => handleChange('description', v)}
             placeholder="A detailed description of the item..."
-            rows={3}
           />
 
           <div className="creator-form-row">
@@ -400,72 +379,76 @@ const ItemCreator = ({
               />
             )}
           </div>
-        </div>
+        </FormTabPanel>
 
-        {/* Equippable Toggle */}
-        <div className={`creator-form-section highlight-section ${formData.isEquippable ? 'active' : ''}`}>
-          <div className="form-group">
-            <label className="form-label checkbox-label">
-              <input
-                type="checkbox"
-                checked={formData.isEquippable}
-                onChange={(e) => {
-                  handleChange('isEquippable', e.target.checked);
-                  if (!e.target.checked) {
-                    handleChange('equipSlots', []);
-                    handleNestedChange('paperdoll', 'enabled', false);
-                  }
-                }}
-              />
-              <span className="checkbox-text">Equippable Item</span>
-            </label>
-            <div className="form-helper">
-              Check this if the item can be equipped by the player
+        {/* Equipment Tab */}
+        <FormTabPanel id="equipment" activeTab={activeTab}>
+          <div className={`creator-form-section highlight-section ${formData.isEquippable ? 'active' : ''}`}>
+            <div className="form-group">
+              <label className="form-label checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={formData.isEquippable}
+                  onChange={(e) => {
+                    handleChange('isEquippable', e.target.checked);
+                    if (!e.target.checked) {
+                      handleChange('equipSlots', []);
+                      handleNestedChange('paperdoll', 'enabled', false);
+                    }
+                  }}
+                />
+                <span className="checkbox-text">Equippable Item</span>
+              </label>
+              <div className="form-helper">
+                Check this if the item can be equipped by the player
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Equipment Slots */}
-        {formData.isEquippable && (
-          <CollapsibleSection
-            title="Equipment Slots"
-            isCollapsed={collapsedSections.equipment}
-            onToggle={() => toggleSection('equipment')}
-            badge={formData.equipSlots.length > 0 ? `${formData.equipSlots.length} selected` : null}
-          >
-            {Object.entries(EQUIPMENT_SLOTS).map(([category, slots]) => (
-              <div key={category} className={`slot-category ${category === 'nsfw' ? 'nsfw' : ''}`}>
-                <div className="slot-category-label">{category}</div>
-                <ChipSelect
-                  value={formData.equipSlots}
-                  onChange={(v) => handleChange('equipSlots', v)}
-                  options={slots}
-                  multiple
-                  showCheckbox
-                />
-              </div>
-            ))}
+          {formData.isEquippable && (
+            <>
+              <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+                Equipment Slots
+              </h4>
+              {Object.entries(EQUIPMENT_SLOTS).map(([category, slots]) => (
+                <div key={category} className={`slot-category ${category === 'nsfw' ? 'nsfw' : ''}`}>
+                  <div className="slot-category-label">{category}</div>
+                  <ChipSelect
+                    value={formData.equipSlots}
+                    onChange={(v) => handleChange('equipSlots', v)}
+                    options={slots}
+                    multiple
+                    showCheckbox
+                  />
+                </div>
+              ))}
 
-            {formData.equipSlots.length > 0 && (
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => handleChange('equipSlots', [])}
-                className="mt-sm"
-              >
-                Clear All Slots
-              </Button>
-            )}
-          </CollapsibleSection>
-        )}
+              {formData.equipSlots.length > 0 && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => handleChange('equipSlots', [])}
+                  className="mt-sm"
+                >
+                  Clear All Slots
+                </Button>
+              )}
+            </>
+          )}
 
-        {/* Icon Configuration */}
-        <CollapsibleSection
-          title="Icon"
-          isCollapsed={collapsedSections.icon}
-          onToggle={() => toggleSection('icon')}
-          badge={formData.icon.iconId && formData.icon.iconId !== 'default' ? formData.icon.iconId : null}
-        >
+          {!formData.isEquippable && (
+            <div className="empty-list" style={{ marginTop: 'var(--space-md)' }}>
+              Enable "Equippable Item" above to configure equipment slots.
+            </div>
+          )}
+        </FormTabPanel>
+
+        {/* Visuals Tab */}
+        <FormTabPanel id="visuals" activeTab={activeTab}>
+          {/* Icon Configuration */}
+          <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+            Item Icon
+          </h4>
           <div className="creator-form-row">
             <FormInput
               label="Sprite Sheet ID"
@@ -480,134 +463,124 @@ const ItemCreator = ({
               placeholder="sword_icon"
             />
           </div>
-        </CollapsibleSection>
 
-        {/* Paperdoll Configuration */}
-        {formData.isEquippable && (
-          <CollapsibleSection
-            title="Equipment Image (Paperdoll)"
-            isCollapsed={collapsedSections.paperdoll}
-            onToggle={() => toggleSection('paperdoll')}
-            badge={formData.paperdoll.enabled ? 'Enabled' : null}
-          >
-            <div className="form-group">
-              <label className="form-label checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={formData.paperdoll.enabled}
-                  onChange={(e) => handleNestedChange('paperdoll', 'enabled', e.target.checked)}
-                />
-                <span className="checkbox-text">Show on Character Portrait</span>
-              </label>
-            </div>
-
-            {formData.paperdoll.enabled && (
-              <>
-                <div className="creator-form-row">
-                  <FormInput
-                    label="Image Folder"
-                    value={formData.paperdoll.folder}
-                    onChange={(v) => handleNestedChange('paperdoll', 'folder', String(v).toLowerCase().replace(/\s/g, '_'))}
-                    placeholder="chastity, armor, toys, etc."
-                    helper="Subfolder in public/images/equipment/"
-                  />
-                  <FormInput
-                    label="Image Filename"
-                    value={formData.paperdoll.filename}
-                    onChange={(v) => handleNestedChange('paperdoll', 'filename', String(v).toLowerCase().replace(/\s/g, '_'))}
-                    placeholder="steel_cage, leather_armor, etc."
-                    helper="Without file extension (.png added automatically)"
-                  />
-                </div>
-
-                <div className="creator-form-row">
-                  <FormSelect
-                    label="Render Layer"
-                    value={formData.paperdoll.layer}
-                    onChange={(v) => handleNestedChange('paperdoll', 'layer', v)}
-                    groups={{
-                      'Standard Layers': PAPERDOLL_LAYERS,
-                      'NSFW Layers': PAPERDOLL_LAYERS_NSFW,
-                    }}
-                    placeholder="Select layer..."
-                    helper="Which paperdoll layer to render on"
-                  />
-                  <FormInput
-                    label="Z-Index Offset"
-                    type="number"
-                    value={formData.paperdoll.zIndexOffset}
-                    onChange={(v) => handleNestedChange('paperdoll', 'zIndexOffset', v)}
-                    helper="Adjust rendering order (+/-)"
-                  />
-                </div>
-
-                {/* Path Preview */}
-                <div className="path-preview">
-                  <div className="path-preview-label">Full Image Path:</div>
-                  <div className={`path-preview-value ${formData.paperdoll.folder && formData.paperdoll.filename ? 'valid' : 'invalid'}`}>
-                    {formData.paperdoll.folder && formData.paperdoll.filename
-                      ? `/images/equipment/${formData.paperdoll.folder}/${formData.paperdoll.filename}.png`
-                      : '(Please enter folder and filename)'}
-                  </div>
-                  {formData.paperdoll.layer && (
-                    <div className="path-preview-layer">
-                      <strong>Render Layer:</strong> {formData.paperdoll.layer}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </CollapsibleSection>
-        )}
-
-        {/* Tags */}
-        <CollapsibleSection
-          title="Tags"
-          isCollapsed={collapsedSections.tags}
-          onToggle={() => toggleSection('tags')}
-          badge={formData.tags.length > 0 ? `${formData.tags.length} tags` : null}
-        >
-          <TagInput
-            value={formData.tags}
-            onChange={(v) => handleChange('tags', v)}
-            suggestions={suggestedTags}
-            categories={TAG_CATEGORIES}
-            placeholder="Add tag..."
-            showSuggestions
-          />
-        </CollapsibleSection>
-
-        {/* Base Stats */}
-        {formData.equipSlots.length > 0 && (
-          <CollapsibleSection
-            title="Base Stats"
-            isCollapsed={collapsedSections.stats}
-            onToggle={() => toggleSection('stats')}
-            badge={Object.values(formData.baseStats).some(v => v !== 0) ? '✓' : null}
-          >
-            <div className="stats-grid">
-              {Object.entries(formData.baseStats).map(([stat, value]) => (
-                <div key={stat} className="stat-row">
-                  <span className="stat-label">{stat.charAt(0).toUpperCase() + stat.slice(1)}</span>
+          {/* Paperdoll Configuration */}
+          {formData.isEquippable && (
+            <>
+              <h4 style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-sm)' }}>
+                Equipment Image (Paperdoll)
+              </h4>
+              <div className="form-group">
+                <label className="form-label checkbox-label">
                   <input
-                    type="number"
-                    className="stat-input"
-                    value={value}
-                    onChange={(e) => handleNestedChange('baseStats', stat, parseInt(e.target.value) || 0)}
+                    type="checkbox"
+                    checked={formData.paperdoll.enabled}
+                    onChange={(e) => handleNestedChange('paperdoll', 'enabled', e.target.checked)}
                   />
-                </div>
-              ))}
-            </div>
-          </CollapsibleSection>
-        )}
+                  <span className="checkbox-text">Show on Character Portrait</span>
+                </label>
+              </div>
 
-        {/* Requirements */}
-        <CollapsibleSection
-          title="Requirements"
-          isCollapsed={collapsedSections.requirements}
-          onToggle={() => toggleSection('requirements')}
-          badge={formData.requirements.level > 1 || formData.requirements.strength > 0 || formData.requirements.intelligence > 0 ? '✓' : null}
-        >
+              {formData.paperdoll.enabled && (
+                <>
+                  <div className="creator-form-row">
+                    <FormInput
+                      label="Image Folder"
+                      value={formData.paperdoll.folder}
+                      onChange={(v) => handleNestedChange('paperdoll', 'folder', String(v).toLowerCase().replace(/\s/g, '_'))}
+                      placeholder="chastity, armor, toys, etc."
+                      helper="Subfolder in public/images/equipment/"
+                    />
+                    <FormInput
+                      label="Image Filename"
+                      value={formData.paperdoll.filename}
+                      onChange={(v) => handleNestedChange('paperdoll', 'filename', String(v).toLowerCase().replace(/\s/g, '_'))}
+                      placeholder="steel_cage, leather_armor, etc."
+                      helper="Without file extension (.png added automatically)"
+                    />
+                  </div>
+
+                  <div className="creator-form-row">
+                    <FormSelect
+                      label="Render Layer"
+                      value={formData.paperdoll.layer}
+                      onChange={(v) => handleNestedChange('paperdoll', 'layer', v)}
+                      groups={{
+                        'Standard Layers': PAPERDOLL_LAYERS,
+                        'NSFW Layers': PAPERDOLL_LAYERS_NSFW,
+                      }}
+                      placeholder="Select layer..."
+                      helper="Which paperdoll layer to render on"
+                    />
+                    <FormInput
+                      label="Z-Index Offset"
+                      type="number"
+                      value={formData.paperdoll.zIndexOffset}
+                      onChange={(v) => handleNestedChange('paperdoll', 'zIndexOffset', v)}
+                      helper="Adjust rendering order (+/-)"
+                    />
+                  </div>
+
+                  {/* Path Preview */}
+                  <div className="path-preview">
+                    <div className="path-preview-label">Full Image Path:</div>
+                    <div className={`path-preview-value ${formData.paperdoll.folder && formData.paperdoll.filename ? 'valid' : 'invalid'}`}>
+                      {formData.paperdoll.folder && formData.paperdoll.filename
+                        ? `/images/equipment/${formData.paperdoll.folder}/${formData.paperdoll.filename}.png`
+                        : '(Please enter folder and filename)'}
+                    </div>
+                    {formData.paperdoll.layer && (
+                      <div className="path-preview-layer">
+                        <strong>Render Layer:</strong> {formData.paperdoll.layer}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
+          {!formData.isEquippable && (
+            <div className="empty-list" style={{ marginTop: 'var(--space-lg)' }}>
+              Paperdoll settings are only available for equippable items.
+              <br />
+              Enable "Equippable Item" in the Equipment tab first.
+            </div>
+          )}
+        </FormTabPanel>
+
+        {/* Stats Tab */}
+        <FormTabPanel id="stats" activeTab={activeTab}>
+          {formData.isEquippable && formData.equipSlots.length > 0 ? (
+            <>
+              <h4 style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-sm)' }}>
+                Base Stats
+              </h4>
+              <div className="stats-grid">
+                {Object.entries(formData.baseStats).map(([stat, value]) => (
+                  <div key={stat} className="stat-row">
+                    <span className="stat-label">{stat.charAt(0).toUpperCase() + stat.slice(1)}</span>
+                    <input
+                      type="number"
+                      className="stat-input"
+                      value={value}
+                      onChange={(e) => handleNestedChange('baseStats', stat, parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="empty-list" style={{ marginBottom: 'var(--space-lg)' }}>
+              Base stats are only available for equippable items with slots selected.
+              <br />
+              Configure equipment in the Equipment tab first.
+            </div>
+          )}
+
+          <h4 style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-sm)' }}>
+            Requirements
+          </h4>
           <div className="creator-form-row cols-3">
             <FormInput
               label="Level"
@@ -631,7 +604,19 @@ const ItemCreator = ({
               min={0}
             />
           </div>
-        </CollapsibleSection>
+        </FormTabPanel>
+
+        {/* Tags Tab */}
+        <FormTabPanel id="tags" activeTab={activeTab}>
+          <TagInput
+            value={formData.tags}
+            onChange={(v) => handleChange('tags', v)}
+            suggestions={suggestedTags}
+            categories={TAG_CATEGORIES}
+            placeholder="Add tag..."
+            showSuggestions
+          />
+        </FormTabPanel>
 
         {/* Action Buttons */}
         <div className="creator-actions">
@@ -647,70 +632,46 @@ const ItemCreator = ({
       </div>
 
       {/* List Section */}
-      <div className="creator-list">
-        <h3 className="creator-form-section-title">
-          Created Items
-          <span className="count-badge">{items.length}</span>
-        </h3>
-
-        {items.length === 0 ? (
-          <div className="empty-list">
-            No items created yet.
-            <br />
-            Use the form to create your first item.
-          </div>
-        ) : (
-          items.map(item => (
-            <div
-              key={item._id}
-              className={`creator-item-card ${hoveredItem === item._id ? 'hovered' : ''} ${editingItem?._id === item._id ? 'editing' : ''}`}
-              onMouseEnter={() => setHoveredItem(item._id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="creator-item-info">
-                <div className="creator-item-name">
-                  {item.name}
-                  <span
-                    className="rarity-badge"
-                    style={{ backgroundColor: getRarityColor(item.rarity) }}
-                  >
-                    {item.rarity}
-                  </span>
-                </div>
-                <div className="creator-item-id">
-                  ID: {item.id} | Type: {item.type} | Value: {item.value}g
-                </div>
-                {(item.equipSlots?.length > 0 || item.equipSlot) && (
-                  <div className="creator-item-slots">
-                    Slots: {(item.equipSlots || [item.equipSlot]).join(', ')}
-                  </div>
-                )}
-                {item.tags?.length > 0 && (
-                  <div className="creator-item-tags">
-                    {item.tags.slice(0, 5).map(tag => (
-                      <span key={tag} className="tag-chip">{tag}</span>
-                    ))}
-                    {item.tags.length > 5 && (
-                      <span className="tag-chip more">+{item.tags.length - 5}</span>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="creator-item-actions">
-                <Button variant="success" size="sm" onClick={() => onEdit(item)}>
-                  Edit
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onDuplicate(item)}>
-                  Duplicate
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onDelete(item._id)}>
-                  Delete
-                </Button>
-              </div>
+      <CreatorItemsList
+        items={items}
+        title="Created Items"
+        itemType="item"
+        editingItem={editingItem}
+        onEdit={onEdit}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        renderItemContent={(item) => (
+          <>
+            <div className="creator-item-name">
+              {item.name}
+              <span
+                className="rarity-badge"
+                style={{ backgroundColor: getRarityColor(item.rarity) }}
+              >
+                {item.rarity}
+              </span>
             </div>
-          ))
+            <div className="creator-item-id">
+              ID: {item.id} | Type: {item.type} | Value: {item.value}g
+            </div>
+            {(item.equipSlots?.length > 0 || item.equipSlot) && (
+              <div className="creator-item-slots">
+                Slots: {(item.equipSlots || [item.equipSlot]).join(', ')}
+              </div>
+            )}
+            {item.tags?.length > 0 && (
+              <div className="creator-item-tags">
+                {item.tags.slice(0, 5).map(tag => (
+                  <span key={tag} className="tag-chip">{tag}</span>
+                ))}
+                {item.tags.length > 5 && (
+                  <span className="tag-chip more">+{item.tags.length - 5}</span>
+                )}
+              </div>
+            )}
+          </>
         )}
-      </div>
+      />
     </div>
   );
 };

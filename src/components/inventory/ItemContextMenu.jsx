@@ -7,11 +7,20 @@
  * IMPORTANT: Favorite and Junk options are ALWAYS displayed at the top
  * of the menu for quick access (per user requirement).
  *
+ * Uses Floating UI for intelligent positioning that stays within viewport.
+ *
  * @module components/inventory/ItemContextMenu
  */
 
 import React, { useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  useFloating,
+  offset,
+  flip,
+  shift,
+  autoUpdate,
+} from '@floating-ui/react';
 
 /**
  * ItemContextMenu - Right-click context menu for inventory items
@@ -41,10 +50,58 @@ const ItemContextMenu = ({
 }) => {
   const menuRef = useRef(null);
 
+  // Create a virtual reference element at the click position for Floating UI
+  const virtualRef = useRef({
+    getBoundingClientRect() {
+      return {
+        x: position.x,
+        y: position.y,
+        top: position.y,
+        left: position.x,
+        bottom: position.y,
+        right: position.x,
+        width: 0,
+        height: 0,
+      };
+    },
+  });
+
+  // Update virtual reference when position changes
+  useEffect(() => {
+    virtualRef.current = {
+      getBoundingClientRect() {
+        return {
+          x: position.x,
+          y: position.y,
+          top: position.y,
+          left: position.x,
+          bottom: position.y,
+          right: position.x,
+          width: 0,
+          height: 0,
+        };
+      },
+    };
+  }, [position]);
+
+  // Use Floating UI for intelligent positioning
+  const { refs, floatingStyles } = useFloating({
+    elements: {
+      reference: virtualRef.current,
+    },
+    placement: 'bottom-start',
+    middleware: [
+      offset(4), // Small offset from click point
+      flip({ padding: 10 }), // Flip to opposite side if not enough space
+      shift({ padding: 10 }), // Shift along axis to stay in viewport
+    ],
+    whileElementsMounted: autoUpdate,
+  });
+
   // Close on click outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      if (refs.floating.current && !refs.floating.current.contains(event.target)) {
         onClose();
       }
     };
@@ -62,30 +119,7 @@ const ItemContextMenu = ({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [onClose]);
-
-  // Position adjustment to keep menu on screen
-  useEffect(() => {
-    if (menuRef.current) {
-      const rect = menuRef.current.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-
-      let adjustedX = position.x;
-      let adjustedY = position.y;
-
-      if (position.x + rect.width > viewportWidth) {
-        adjustedX = viewportWidth - rect.width - 10;
-      }
-
-      if (position.y + rect.height > viewportHeight) {
-        adjustedY = viewportHeight - rect.height - 10;
-      }
-
-      menuRef.current.style.left = `${adjustedX}px`;
-      menuRef.current.style.top = `${adjustedY}px`;
-    }
-  }, [position]);
+  }, [onClose, refs.floating]);
 
   const handleAction = useCallback((action) => {
     onAction(action, item);
@@ -209,12 +243,10 @@ const ItemContextMenu = ({
   // Use portal to render at document.body level to avoid transform issues
   return createPortal(
     <div
-      ref={menuRef}
+      ref={refs.setFloating}
       className="context-menu"
       style={{
-        position: 'fixed',
-        left: `${position.x}px`,
-        top: `${position.y}px`,
+        ...floatingStyles,
         zIndex: 10000
       }}
     >

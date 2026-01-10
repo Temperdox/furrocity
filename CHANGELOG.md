@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.8.3] - 2026-01-08
+
+### Added
+
+#### Content Generator - Collapsible Sections
+- **CollapsibleSection shared component** - Reusable collapsible UI component for form organization
+  - Arrow indicators (▶/▼) for collapsed/expanded state
+  - Optional badge prop for showing counts or status when collapsed
+  - Consistent styling across all creator tabs
+- **All 14 creator tabs now use CollapsibleSection** for consistent UI:
+  - ItemCreator: Effects, NSFW, Tags, Sprites sections
+  - LocationCreator: Properties, Encounters, Services, NSFW, Sprites sections
+  - EnemyCreator: Base Stats, Combat, Loot, Dialogue, Sprites sections
+  - NPCCreator: Appearance, Dialogue, Schedule, Sprites sections
+  - SceneCreator: Variables, Choices sections
+  - QuestCreator: Requirements, Objectives, Rewards sections
+  - EffectCreator: Stat Modifications, Duration, Stacking sections
+  - SkillCreator: Effects, Requirements sections
+  - CharacterCreator: Stats, Biography, Equipment sections
+  - DialogueCreator: Conditions, Responses, Actions sections
+  - RegionCreator: Locations, Connections, Weather sections
+  - LootTableCreator: Pool Entries section
+  - EncounterTableCreator: Conditions, Encounters, Loot Tables sections
+  - SubstanceCreator: Dosing, Timing, Effects, Tolerance, Addiction, Overdose, Resistance sections
+  - MerchantCreator: NSFW Settings, Buy/Sell Config, Dialogue, Inventory sections
+- **Badge indicators** show item counts when sections are collapsed (e.g., "3" for 3 effects)
+- **Smart defaults** - Less frequently used sections start collapsed to reduce visual clutter
+
+### Changed
+
+- Basic Info sections remain always visible (not collapsible) across all creator tabs
+- Improved form organization with logical section groupings
+
+---
+
 ## [0.8.2] - 2026-01-07
 
 ### Added

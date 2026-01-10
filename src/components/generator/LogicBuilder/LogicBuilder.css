@@ -1,0 +1,255 @@
+/* LogicBuilder - Blockly-based visual logic editor styles */
+
+.logic-builder {
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-bg-tertiary, #1a1a2e);
+  overflow: hidden;
+}
+
+/* Header */
+.logic-builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm, 8px) var(--space-md, 12px);
+  background: var(--color-bg-secondary, #16213e);
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+}
+
+.logic-builder-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 8px);
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary, #f5f5f5);
+  font-size: var(--font-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  cursor: pointer;
+  padding: var(--space-xs, 4px);
+  border-radius: var(--radius-sm, 4px);
+  transition: background 150ms ease;
+}
+
+.logic-builder-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.toggle-icon {
+  font-size: 10px;
+  transition: transform 200ms ease;
+  color: var(--color-text-muted, #9ca3af);
+}
+
+.toggle-icon.expanded {
+  transform: rotate(0deg);
+}
+
+.logic-builder-title {
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.logic-builder-summary {
+  font-size: var(--font-xs, 0.75rem);
+  color: var(--color-text-muted, #9ca3af);
+  margin-left: var(--space-sm, 8px);
+  font-family: monospace;
+}
+
+.logic-builder-clear {
+  padding: var(--space-xs, 4px) var(--space-sm, 8px);
+  background: var(--color-accent-danger, #ef4444);
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  color: white;
+  font-size: var(--font-xs, 0.75rem);
+  font-weight: var(--font-weight-semibold, 600);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.logic-builder-clear:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Workspace container */
+.logic-builder-workspace {
+  overflow: hidden;
+  transition: height 200ms ease;
+}
+
+.logic-builder-workspace.collapsed {
+  height: 0 !important;
+}
+
+.blockly-container {
+  width: 100%;
+}
+
+.blocklyFieldRect{
+  fill: #1a1a2e !important;
+}
+
+/* Ensure Blockly dropdowns appear above everything */
+.blocklyDropDownDiv {
+  z-index: 9999 !important;
+}
+
+.blocklyWidgetDiv {
+  z-index: 9999 !important;
+}
+
+.blocklyTooltipDiv {
+  z-index: 9999 !important;
+}
+
+/* Override Blockly styles for dark theme */
+.blocklyMainBackground {
+  fill: #1a1a2e !important;
+}
+
+.blocklyToolboxDiv {
+  background: #16213e !important;
+  padding: 4px;
+}
+
+.blocklyTreeRow {
+  padding: 6px 12px !important;
+  margin: 2px 0;
+  border-radius: 4px;
+}
+
+.blocklyTreeRow:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.blocklyTreeSelected {
+  background: rgba(255, 215, 0, 0.2) !important;
+}
+
+.blocklyTreeLabel {
+  color: #f5f5f5 !important;
+  font-size: 13px !important;
+}
+
+.blocklyFlyoutBackground {
+  fill: #252a48 !important;
+  fill-opacity: 0.95 !important;
+}
+
+.blocklyScrollbarBackground {
+  fill: #2a2a4a !important;
+}
+
+.blocklyScrollbarHandle {
+  fill: #4a4a6a !important;
+}
+
+.blocklyTrash {
+  opacity: 0.6;
+}
+
+.blocklyTrash:hover {
+  opacity: 1;
+}
+
+/* Collapsed preview */
+.logic-builder-preview {
+  padding: var(--space-sm, 8px) var(--space-md, 12px);
+  background: var(--color-bg-primary, #0f0f1e);
+  border-top: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  max-height: 100px;
+  overflow: auto;
+}
+
+.logic-builder-preview code {
+  font-size: var(--font-xs, 0.75rem);
+  color: var(--color-text-muted, #9ca3af);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Blockly category icons - add some spacing */
+.blocklyTreeIcon {
+  margin-right: 8px !important;
+}
+
+/* Make zoom controls visible */
+.blocklyZoom {
+  opacity: 0.7;
+}
+
+.blocklyZoom:hover {
+  opacity: 1;
+}
+
+/* Block shadow improvements */
+.blocklyPathDark {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Improved block text visibility - force white text on all elements */
+.blocklyText {
+  fill: white !important;
+  font-weight: 500 !important;
+}
+
+.blocklyDropdownText {
+  fill: white !important;
+}
+
+/* Custom field text */
+.blocklyEditableText text,
+.blocklyNonEditableText text,
+.blocklyEditableText .blocklyText,
+.blocklyNonEditableText .blocklyText {
+  fill: white !important;
+}
+
+/* Ensure all SVG text in blocks is visible */
+.blocklyDraggable text,
+.blocklyBlockCanvas text,
+g.blocklyDraggable text {
+  fill: white !important;
+}
+
+/* Field text specifically */
+.blocklyFieldRect + text,
+.blocklyBlockBackground + g text {
+  fill: white !important;
+}
+
+/* Input field styling */
+.blocklyEditableText rect {
+  fill: rgba(0, 0, 0, 0.3) !important;
+  rx: 4 !important;
+  ry: 4 !important;
+}
+
+.blocklyEditableText:hover rect {
+  fill: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Dropdown arrow */
+.blocklyDropdownArrow {
+  fill: white !important;
+}
+
+/* Connection highlights */
+.blocklyHighlightedConnectionPath {
+  stroke: #ffd700 !important;
+  stroke-width: 3px !important;
+}
+
+/* Block insertion marker */
+.blocklyInsertionMarker {
+  fill: #ffd700 !important;
+  fill-opacity: 0.3 !important;
+}
+
+/* Dragging state */
+.blocklyDragging .blocklyPath {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+}

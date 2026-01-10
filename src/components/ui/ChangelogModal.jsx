@@ -6,12 +6,13 @@
  * - Shows last 3 versions by default
  * - Infinite scroll to load older versions
  * - Dropdown to jump to specific version
+ * - Uses Radix UI Dialog for accessibility
  *
  * @module components/ui/ChangelogModal
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import * as Dialog from '@radix-ui/react-dialog';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import './ChangelogModal.css';
@@ -156,158 +157,150 @@ const ChangelogModal = ({ isOpen, onClose }) => {
     }
   }, []);
 
-  // Handle close with escape key
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
+  // Radix Dialog handles escape key automatically
 
   const hasMoreVersions = selectedVersion === 'all' && visibleCount < versions.length;
 
-  return createPortal(
-    <div className="changelog-overlay" onClick={onClose}>
-      <div className="changelog-modal" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="changelog-header">
-          <div className="changelog-title-section">
-            <h2 className="changelog-title">Changelog</h2>
-            <span className="changelog-subtitle">Version History</span>
-          </div>
-
-          <div className="changelog-controls">
-            {/* Version dropdown */}
-            <div className="version-select-wrapper">
-              <label htmlFor="version-select">Version:</label>
-              <select
-                id="version-select"
-                value={selectedVersion}
-                onChange={handleVersionChange}
-                className="version-select"
-              >
-                <option value="all">All Versions</option>
-                {versions.map(v => (
-                  <option key={v.version} value={v.version}>
-                    v{v.version} ({v.date})
-                  </option>
-                ))}
-              </select>
+  return (
+    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="changelog-overlay" />
+        <Dialog.Content className="changelog-modal">
+          {/* Header */}
+          <div className="changelog-header">
+            <div className="changelog-title-section">
+              <Dialog.Title className="changelog-title">Changelog</Dialog.Title>
+              <Dialog.Description className="changelog-subtitle">Version History</Dialog.Description>
             </div>
 
-            <button className="changelog-close-btn" onClick={onClose}>
-              Close
-            </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="changelog-content" ref={contentRef}>
-          {isLoading && (
-            <div className="changelog-loading">
-              <div className="loading-spinner" />
-              <span>Loading changelog...</span>
-            </div>
-          )}
-
-          {error && (
-            <div className="changelog-error">
-              <span className="error-icon">!</span>
-              <p>{error}</p>
-              <button onClick={() => window.location.reload()}>Retry</button>
-            </div>
-          )}
-
-          {!isLoading && !error && displayedVersions.length === 0 && (
-            <div className="changelog-empty">
-              <p>No changelog entries found.</p>
-            </div>
-          )}
-
-          {!isLoading && !error && displayedVersions.map((version, index) => (
-            <div key={version.version} className="version-section">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  // Custom heading styling
-                  h2: ({ children }) => (
-                    <h2 className="version-header">
-                      <span className="version-tag">v{version.version}</span>
-                      <span className="version-date">{version.date}</span>
-                    </h2>
-                  ),
-                  h3: ({ children }) => (
-                    <h3 className="change-category">{children}</h3>
-                  ),
-                  // Style lists
-                  ul: ({ children }) => (
-                    <ul className="change-list">{children}</ul>
-                  ),
-                  li: ({ children }) => (
-                    <li className="change-item">{children}</li>
-                  ),
-                  // Style code
-                  code: ({ inline, children }) => (
-                    inline
-                      ? <code className="inline-code">{children}</code>
-                      : <code className="code-block">{children}</code>
-                  ),
-                  // Style strong text
-                  strong: ({ children }) => (
-                    <strong className="highlight-text">{children}</strong>
-                  )
-                }}
-              >
-                {version.content}
-              </ReactMarkdown>
-
-              {index < displayedVersions.length - 1 && (
-                <div className="version-divider" />
-              )}
-            </div>
-          ))}
-
-          {/* Infinite scroll trigger */}
-          {hasMoreVersions && (
-            <div ref={loadMoreRef} className="load-more-trigger">
-              <div className="loading-more">
-                <div className="loading-spinner small" />
-                <span>Loading more versions...</span>
+            <div className="changelog-controls">
+              {/* Version dropdown */}
+              <div className="version-select-wrapper">
+                <label htmlFor="version-select">Version:</label>
+                <select
+                  id="version-select"
+                  value={selectedVersion}
+                  onChange={handleVersionChange}
+                  className="version-select"
+                >
+                  <option value="all">All Versions</option>
+                  {versions.map(v => (
+                    <option key={v.version} value={v.version}>
+                      v{v.version} ({v.date})
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
-          )}
 
-          {/* End of list indicator */}
-          {selectedVersion === 'all' && visibleCount >= versions.length && versions.length > 0 && (
-            <div className="changelog-end">
-              <span>Beginning of changelog</span>
+              <Dialog.Close asChild>
+                <button className="changelog-close-btn">
+                  Close
+                </button>
+              </Dialog.Close>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Footer */}
-        <div className="changelog-footer">
-          <span className="version-count">
-            Showing {displayedVersions.length} of {versions.length} version(s)
-          </span>
-          {selectedVersion === 'all' && visibleCount < versions.length && (
-            <button
-              className="load-all-btn"
-              onClick={() => setVisibleCount(versions.length)}
-            >
-              Load All
-            </button>
-          )}
-        </div>
-      </div>
-    </div>,
-    document.body
+          {/* Content */}
+          <div className="changelog-content" ref={contentRef}>
+            {isLoading && (
+              <div className="changelog-loading">
+                <div className="loading-spinner" />
+                <span>Loading changelog...</span>
+              </div>
+            )}
+
+            {error && (
+              <div className="changelog-error">
+                <span className="error-icon">!</span>
+                <p>{error}</p>
+                <button onClick={() => window.location.reload()}>Retry</button>
+              </div>
+            )}
+
+            {!isLoading && !error && displayedVersions.length === 0 && (
+              <div className="changelog-empty">
+                <p>No changelog entries found.</p>
+              </div>
+            )}
+
+            {!isLoading && !error && displayedVersions.map((version, index) => (
+              <div key={version.version} className="version-section">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    // Custom heading styling
+                    h2: ({ children }) => (
+                      <h2 className="version-header">
+                        <span className="version-tag">v{version.version}</span>
+                        <span className="version-date">{version.date}</span>
+                      </h2>
+                    ),
+                    h3: ({ children }) => (
+                      <h3 className="change-category">{children}</h3>
+                    ),
+                    // Style lists
+                    ul: ({ children }) => (
+                      <ul className="change-list">{children}</ul>
+                    ),
+                    li: ({ children }) => (
+                      <li className="change-item">{children}</li>
+                    ),
+                    // Style code
+                    code: ({ inline, children }) => (
+                      inline
+                        ? <code className="inline-code">{children}</code>
+                        : <code className="code-block">{children}</code>
+                    ),
+                    // Style strong text
+                    strong: ({ children }) => (
+                      <strong className="highlight-text">{children}</strong>
+                    )
+                  }}
+                >
+                  {version.content}
+                </ReactMarkdown>
+
+                {index < displayedVersions.length - 1 && (
+                  <div className="version-divider" />
+                )}
+              </div>
+            ))}
+
+            {/* Infinite scroll trigger */}
+            {hasMoreVersions && (
+              <div ref={loadMoreRef} className="load-more-trigger">
+                <div className="loading-more">
+                  <div className="loading-spinner small" />
+                  <span>Loading more versions...</span>
+                </div>
+              </div>
+            )}
+
+            {/* End of list indicator */}
+            {selectedVersion === 'all' && visibleCount >= versions.length && versions.length > 0 && (
+              <div className="changelog-end">
+                <span>Beginning of changelog</span>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="changelog-footer">
+            <span className="version-count">
+              Showing {displayedVersions.length} of {versions.length} version(s)
+            </span>
+            {selectedVersion === 'all' && visibleCount < versions.length && (
+              <button
+                className="load-all-btn"
+                onClick={() => setVisibleCount(versions.length)}
+              >
+                Load All
+              </button>
+            )}
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 };
 

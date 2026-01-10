@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { nanoid } from 'nanoid';
 
 // Import system
 import { ImportSystem } from './ImportSystem';
@@ -516,11 +517,11 @@ const ContentGenerator = ({ onClose }) => {
 
     setContent(prev => ({
       ...prev,
-      items: [...prev.items, ...importedData.items.map(item => ({ ...item, _id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }))],
-      characters: [...prev.characters, ...importedData.characters.map(char => ({ ...char, _id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }))],
-      locations: [...prev.locations, ...importedData.locations.map(loc => ({ ...loc, _id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }))],
-      enemies: [...prev.enemies, ...importedData.enemies.map(enemy => ({ ...enemy, _id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }))],
-      scenes: [...prev.scenes, ...importedData.scenes.map(scene => ({ ...scene, _id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}` }))],
+      items: [...prev.items, ...importedData.items.map(item => ({ ...item, _id: nanoid() }))],
+      characters: [...prev.characters, ...importedData.characters.map(char => ({ ...char, _id: nanoid() }))],
+      locations: [...prev.locations, ...importedData.locations.map(loc => ({ ...loc, _id: nanoid() }))],
+      enemies: [...prev.enemies, ...importedData.enemies.map(enemy => ({ ...enemy, _id: nanoid() }))],
+      scenes: [...prev.scenes, ...importedData.scenes.map(scene => ({ ...scene, _id: nanoid() }))],
     }));
 
     setShowImportModal(false);
